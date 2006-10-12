@@ -1,0 +1,13 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.rb: 1.2 2006/10/12 16:36:39 ichiki Exp
+	updated for the current libstokes.
+
+	* Makefile: 1.1 2006/10/12 15:46:42 ichiki Exp
+	initial revision.
+
+2006-10-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.rb: 1.1 2006/10/03 21:48:35 ichiki Exp
+	initial revision.
+

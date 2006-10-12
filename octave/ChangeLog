@@ -1,0 +1,16 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes_res_ewald_3f.cc: 1.2 2006/10/12 16:08:46 ichiki Exp
+	updated for the current libstokes.
+
+	* Makefile: 1.1 2006/10/12 16:07:28 ichiki Exp
+	initial revision.
+
+2006-10-04  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.m: 1.1 2006/10/04 20:39:16 ichiki Exp
+	initial revision.
+
+	* stokes_res_ewald_3f.cc: 1.1 2006/10/04 20:38:56 ichiki Exp
+	initial revision.
+

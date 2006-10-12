@@ -1,0 +1,13 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.py: 1.2 2006/10/12 16:36:02 ichiki Exp
+	updated for the current libstokes.
+
+	* Makefile: 1.1 2006/10/12 16:01:40 ichiki Exp
+	initial revision.
+
+2006-10-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.py: 1.1 2006/10/03 21:44:01 ichiki Exp
+	initial revision.
+
