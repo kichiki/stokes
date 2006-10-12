@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.2 2006/10/12 16:09:44 ichiki Exp $
+; $Id: test-stokes.scm,v 1.3 2006/10/12 16:33:54 ichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -17,6 +17,20 @@
 ; Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 (load-extension "./stokes.so" "SWIG_init")
+
+; diaplay darray in 3
+(define (display-darray3 da n)
+  (do ((i 0 (1+ i)))
+      ((>= i n))
+    (display i)
+    (display ": ")
+    (display (darray-getitem da (* i 3)))
+    (display " ")
+    (display (darray-getitem da (+ 1 (* i 3))))
+    (display " ")
+    (display (darray-getitem da (+ 2 (* i 3))))
+    (newline)))
+
 
 (define sys (stokes-init))
 
@@ -91,29 +105,11 @@
 
 (display "pos:")
 (newline)
-(do ((i 0 (1+ i)))
-    ((>= i np))
-  (display i)
-  (display " ")
-  (display (darray-getitem pos (* i 3)))
-  (display " ")
-  (display (darray-getitem pos (+ 1 (* i 3))))
-  (display " ")
-  (display (darray-getitem pos (+ 2 (* i 3))))
-  (newline))
+(display-darray3 pos np)
 
 (display "u:")
 (newline)
-(do ((i 0 (1+ i)))
-    ((>= i np))
-  (display i)
-  (display " ")
-  (display (darray-getitem u (* i 3)))
-  (display " ")
-  (display (darray-getitem u (+ 1 (* i 3))))
-  (display " ")
-  (display (darray-getitem u (+ 2 (* i 3))))
-  (newline))
+(display-darray3 u np)
 
 (stokes-set-pos sys pos)
 (calc-res-ewald-3f sys u f)
@@ -131,13 +127,4 @@
 
 (display "f:")
 (newline)
-(do ((i 0 (1+ i)))
-    ((>= i np))
-  (display i)
-  (display " ")
-  (display (darray-getitem f (* i 3)))
-  (display " ")
-  (display (darray-getitem f (+ 1 (* i 3))))
-  (display " ")
-  (display (darray-getitem f (+ 2 (* i 3))))
-  (newline))
+(display-darray3 f np)
