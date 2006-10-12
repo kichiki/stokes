@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.pl,v 1.1 2006/10/04 03:25:19 ichiki Exp $
+# $Id: test-stokes.pl,v 1.2 2006/10/12 16:34:44 ichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,9 +22,9 @@ $sys = stokes::stokes_init();
 
 $np = 8;
 $nm = 8;
-# stokes::stokes_set_np($sys, $np, $nm);
-$sys->{np} = $np;
-$sys->{nm} = $nm;
+stokes::stokes_set_np($sys, $np, $nm);
+# you must call stokes_set_np() because
+# this also allocate the memory for pos.
 
 $lx = 10.0;
 $ly = 10.0;
@@ -32,14 +32,15 @@ $lz = 10.0;
 stokes::stokes_set_ll($sys, $lx, $ly, $lz);
 
 $tratio = 60.25;
-$zeta = stokes::zeta_by_tratio($sys, $tratio);
+$xi = stokes::xi_by_tratio($sys, $tratio);
 $cutlim = 1.0e-12;
-stokes::stokes_set_zeta($sys, $zeta, $cutlim);
+stokes::stokes_set_xi($sys, $xi, $cutlim);
 
-print "zeta = ", $zeta, "\n";
+print "xi = ", $xi, "\n";
 
 $sys->{lubcut} = 2.0000000001;
-$sys->{it} = stokes::iter_init ("gmres", 2000, 20, 1.0e-6, 1);
+stokes::stokes_set_iter($sys, "gmres", 2000, 20, 1.0e-6,
+			1, stokes::get_stdout());
 
 $pos = new stokes::darray($np*3);
 $u   = new stokes::darray($np*3);
@@ -77,9 +78,19 @@ for ($i=0; $i < $np; $i++){
 	    $u->getitem($i*3+2));
 }
 
-$sys->{pos} = $pos;
-
+#$sys->{pos} = $pos;
+stokes::stokes_set_pos($sys, $pos);
 stokes::calc_res_ewald_3f($sys, $u, $f);
+
+$nc_f = stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", $np);
+# f0, x, u are active
+stokes::stokes_nc_set_f0($nc_f, $f);
+stokes::stokes_nc_set_time($nc_f, 0, 0.0);
+stokes::stokes_nc_set_x($nc_f, 0, 0.0, $pos);
+stokes::stokes_nc_set_u($nc_f, 0, 0.0, $u);
+
+stokes::stokes_nc_free($nc_f);
+
 
 print "f:\n";
 for ($i=0; $i < $np; $i++){

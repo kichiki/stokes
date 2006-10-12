@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.py,v 1.1 2006/10/03 21:44:01 ichiki Exp $
+# $Id: test-stokes.py,v 1.2 2006/10/12 16:36:02 ichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,14 +29,15 @@ lz = 10.0
 stokes.stokes_set_ll(sys, lx, ly, lz)
 
 tratio = 60.25
-zeta = stokes.zeta_by_tratio(sys, tratio)
+xi = stokes.xi_by_tratio(sys, tratio)
 cutlim = 1.0e-12
-stokes.stokes_set_zeta(sys, zeta, cutlim)
+stokes.stokes_set_xi(sys, xi, cutlim)
 
-print 'zeta =', zeta
+print 'xi =', xi
 
 sys.lubcut = 2.0000000001
-sys.it = stokes.iter_init ("gmres", 2000, 20, 1.0e-6, 1)
+stokes.stokes_set_iter(sys, "gmres", 2000, 20, 1.0e-6,
+                       1, stokes.get_stdout())
 
 pos = stokes.darray(np*3)
 u   = stokes.darray(np*3)
@@ -79,15 +80,24 @@ for i in range(np*3):
 
 print 'pos:'
 for i in range(np):
-    print i,pos[i*3],pos[i*3+1],pos[i*3+2]
+    print i, pos[i*3], pos[i*3+1], pos[i*3+2]
 
 print 'u:'
 for i in range(np):
     print i, u[i*3], u[i*3+1], u[i*3+2]
 
-sys.pos = pos
-
+stokes.stokes_set_pos(sys, pos)
 stokes.calc_res_ewald_3f(sys, u, f)
+
+nc_f = stokes.stokes_nc_mob_f_init("test-stokes.res-3f.nc", np)
+# f0, x, u are active
+stokes.stokes_nc_set_f0(nc_f, f)
+stokes.stokes_nc_set_time(nc_f, 0, 0.0)
+stokes.stokes_nc_set_x(nc_f, 0, 0.0, pos)
+stokes.stokes_nc_set_u(nc_f, 0, 0.0, u)
+
+stokes.stokes_nc_free(nc_f)
+
 
 print 'f:'
 for i in range(np):
