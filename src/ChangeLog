@@ -1,0 +1,13 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.c: 1.2 2006/10/12 17:05:40 ichiki Exp
+	updated for the current libstokes.
+
+2006-10-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes.i: 1.1 2006/10/03 21:23:22 ichiki Exp
+	initial revision.
+
+	* test-stokes.c: 1.1 2006/10/03 21:22:02 ichiki Exp
+	initial revision.
+
