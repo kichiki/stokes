@@ -1,6 +1,6 @@
 /* octave wrapper of calc_res_ewald_3f()
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes_res_ewald_3f.cc,v 1.1 2006/10/04 20:38:56 ichiki Exp $
+ * $Id: stokes_res_ewald_3f.cc,v 1.2 2006/10/12 16:08:46 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,13 +110,13 @@ f = stokes_res_ewald_3f (pos, u, l)\n\
   double lz = l(2);
   stokes_set_ll (sys, lx, ly, lz);
 
-  double cutlim, zeta;
-  zeta = zeta_by_tratio (sys, tratio);
+  double cutlim, xi;
+  xi = xi_by_tratio (sys, tratio);
   cutlim = 1.0e-12;
-  stokes_set_zeta (sys, zeta, cutlim);
+  stokes_set_xi (sys, xi, cutlim);
 
   sys->lubcut = 2.0000000001;
-  sys->it = iter_init ("gmres", 2000, 20, 1.0e-6, 1);
+  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
   double * d_pos = NULL;
@@ -131,7 +131,7 @@ f = stokes_res_ewald_3f (pos, u, l)\n\
       d_u[i]   = u(i);
     }
 
-  sys->pos = d_pos;
+  stokes_set_pos (sys, d_pos);
   calc_res_ewald_3f (sys, d_u, d_f);
 
   ColumnVector f (n);

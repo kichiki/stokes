@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.1 2006/10/03 21:38:11 ichiki Exp $
+; $Id: test-stokes.scm,v 1.2 2006/10/12 16:09:44 ichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -30,13 +30,13 @@
 (stokes-set-ll sys lx ly lz)
 
 (define tratio 60.25)
-(define zeta (zeta-by-tratio sys tratio))
+(define xi (xi-by-tratio sys tratio))
 
 (define cutlim 1.0e-12)
-(stokes-set-zeta sys zeta cutlim)
+(stokes-set-xi sys xi cutlim)
 
-(display "zeta = ")
-(display zeta)
+(display "xi = ")
+(display xi)
 (newline)
 
 ;(stokes-lubcut-set sys 2.0000000001)
@@ -45,7 +45,7 @@
 (set! (stokes-lubcut sys) 2.0000000001)
 (stokes-lubcut sys)
 
-(stokes-it-set sys (iter-init "gmres" 2000 20 1.0e-6 1))
+(stokes-set-iter sys "gmres" 2000 20 1.0e-6 1 (get-stdout))
 
 (define pos (new-darray (* np 3)))
 (define u   (new-darray (* np 3)))
@@ -115,9 +115,19 @@
   (display (darray-getitem u (+ 2 (* i 3))))
   (newline))
 
-(set! (stokes-pos sys) pos)
-
+(stokes-set-pos sys pos)
 (calc-res-ewald-3f sys u f)
+
+(define nc-f (stokes-nc-mob-f-init "test-stokes.res-3f.nc" np))
+;; f0, x, u are active
+
+(stokes-nc-set-f0 nc-f f)
+(stokes-nc-set-time nc-f 0 0.0)
+(stokes-nc-set-x nc-f 0 0.0 pos)
+(stokes-nc-set-u nc-f 0 0.0 u)
+
+(stokes-nc-free nc-f)
+
 
 (display "f:")
 (newline)
