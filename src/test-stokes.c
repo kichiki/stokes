@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-stokes.c,v 1.1 2006/10/03 21:22:02 ichiki Exp $
+ * $Id: test-stokes.c,v 1.2 2006/10/12 17:05:40 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,10 +35,6 @@ main (int argc, char** argv)
   np = 8;
   nm = 8;
   stokes_set_np (sys, np, nm);
-  /* or directly
-  sys->np = np;
-  sys->nm = nm;
-  */
 
   double lx, ly, lz;
   lx = 10.0;
@@ -46,17 +42,17 @@ main (int argc, char** argv)
   lz = 10.0;
   stokes_set_ll (sys, lx, ly, lz);
 
-  double tratio, cutlim, zeta;
+  double tratio, cutlim, xi;
   tratio = 60.25;
-  zeta = zeta_by_tratio (sys, tratio);
+  xi = xi_by_tratio (sys, tratio);
 
   cutlim = 1.0e-12;
-  stokes_set_zeta (sys, zeta, cutlim);
+  stokes_set_xi (sys, xi, cutlim);
 
-  fprintf (stdout, "zeta = %f\n", zeta);
+  fprintf (stdout, "xi = %f\n", xi);
 
   sys->lubcut = 2.0000000001;
-  sys->it = iter_init ("gmres", 2000, 20, 1.0e-6, 1);
+  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
   double * pos;
@@ -102,7 +98,7 @@ main (int argc, char** argv)
 	       u[i*3 + 2]);
     }
 
-  sys->pos = pos;
+  stokes_set_pos (sys, pos);
 
   calc_res_ewald_3f (sys, u, f);
 
