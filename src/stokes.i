@@ -1,6 +1,6 @@
 /* SWIG interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.i,v 1.1 2006/10/03 21:23:22 ichiki Exp $
+ * $Id: stokes.i,v 1.2 2006/10/18 15:17:00 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,8 +18,22 @@
  */
 %module stokes
 %{
+#include <stdio.h>
+
 #include <libiter.h>
 #include <libstokes.h>
+%}
+
+%inline%{
+  FILE * get_stdin (void) {
+    return (stdin);
+  }
+  FILE * get_stdout (void) {
+    return (stdout);
+  }
+  FILE * get_stderr (void) {
+    return (stderr);
+  }
 %}
 
 %include "carrays.i"
