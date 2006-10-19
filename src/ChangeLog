@@ -1,3 +1,14 @@
+2006-10-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.2 2006/10/19 18:49:36 ichiki Exp
+	* test-stokes.c: 1.3 2006/10/19 18:48:53 ichiki Exp
+	update for the current libstokes 0.4.
+
+2006-10-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes.i: 1.2 2006/10/18 15:17:00 ichiki Exp
+	add FILE utility functions for new iter_init() in libiter.
+
 2006-10-12  Kengo Ichiki  <ichiki@tpr60>
 
 	* test-stokes.c: 1.2 2006/10/12 17:05:40 ichiki Exp

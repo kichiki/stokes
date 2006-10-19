@@ -1,14 +1,17 @@
 # makefile for python binding of libstokes
-# $Id: Makefile,v 1.1 2006/10/12 16:01:40 ichiki Exp $
+# $Id: Makefile,v 1.2 2006/10/19 23:19:21 ichiki Exp $
 SWIG		= /usr/local/bin/swig
 PYTHON		= /usr/local/bin/python
-INC_PYTHON	= -I/usr/local/include/python2.5
+#INC_PYTHON	= -I/usr/local/include/python2.5
+INC_PYTHON	= -I/usr/local/include/python2.4
 CC		= /usr/bin/cc
+GUILE_LIB = `guile-config link`
 LIB_STOKES	= \
 		-lm -L/usr/local/lib -liter -lstokes	\
 		-lg2c -lblas -llapack			\
 		-lcblas -lf77blas -latlas		\
-		-lnetcdf
+		-lnetcdf\
+		$(GUILE_LIB)
 
 CFLAGS		= -Wall -I/usr/local/include
 
