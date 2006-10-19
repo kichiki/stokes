@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.3 2006/10/12 16:33:54 ichiki Exp $
+; $Id: test-stokes.scm,v 1.4 2006/10/19 18:53:21 ichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@
 (define lx 10.0)
 (define ly 10.0)
 (define lz 10.0)
-(stokes-set-ll sys lx ly lz)
+(stokes-set-l sys lx ly lz)
 
 (define tratio 60.25)
 (define xi (xi-by-tratio sys tratio))
@@ -112,7 +112,7 @@
 (display-darray3 u np)
 
 (stokes-set-pos sys pos)
-(calc-res-ewald-3f sys u f)
+(solve-res-ewald-3f sys u f)
 
 (define nc-f (stokes-nc-mob-f-init "test-stokes.res-3f.nc" np))
 ;; f0, x, u are active

@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.pl,v 1.2 2006/10/12 16:34:44 ichiki Exp $
+# $Id: test-stokes.pl,v 1.3 2006/10/19 18:51:43 ichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ stokes::stokes_set_np($sys, $np, $nm);
 $lx = 10.0;
 $ly = 10.0;
 $lz = 10.0;
-stokes::stokes_set_ll($sys, $lx, $ly, $lz);
+stokes::stokes_set_l($sys, $lx, $ly, $lz);
 
 $tratio = 60.25;
 $xi = stokes::xi_by_tratio($sys, $tratio);
@@ -80,7 +80,7 @@ for ($i=0; $i < $np; $i++){
 
 #$sys->{pos} = $pos;
 stokes::stokes_set_pos($sys, $pos);
-stokes::calc_res_ewald_3f($sys, $u, $f);
+stokes::solve_res_ewald_3f($sys, $u, $f);
 
 $nc_f = stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", $np);
 # f0, x, u are active

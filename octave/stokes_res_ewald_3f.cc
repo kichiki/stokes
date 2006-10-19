@@ -1,6 +1,6 @@
 /* octave wrapper of calc_res_ewald_3f()
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes_res_ewald_3f.cc,v 1.2 2006/10/12 16:08:46 ichiki Exp $
+ * $Id: stokes_res_ewald_3f.cc,v 1.3 2006/10/19 18:52:32 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -108,7 +108,7 @@ f = stokes_res_ewald_3f (pos, u, l)\n\
   double lx = l(0);
   double ly = l(1);
   double lz = l(2);
-  stokes_set_ll (sys, lx, ly, lz);
+  stokes_set_l (sys, lx, ly, lz);
 
   double cutlim, xi;
   xi = xi_by_tratio (sys, tratio);
@@ -132,7 +132,7 @@ f = stokes_res_ewald_3f (pos, u, l)\n\
     }
 
   stokes_set_pos (sys, d_pos);
-  calc_res_ewald_3f (sys, d_u, d_f);
+  solve_res_ewald_3f (sys, d_u, d_f);
 
   ColumnVector f (n);
   for (i = 0; i < n; i ++)
