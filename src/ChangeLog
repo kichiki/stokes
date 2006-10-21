@@ -1,3 +1,12 @@
+2006-10-21  Kengo Ichiki  <ichiki@tpr60>
+
+	* xi3.scm: 1.1 2006/10/21 19:05:27 kichiki Exp
+	initial revision.
+
+	* xi3.c: 1.1 2006/10/21 19:03:16 kichiki Exp
+	imported from stokes-src.
+	using current libstokes guile interface for parameter settings.
+
 2006-10-19  Kengo Ichiki  <ichiki@tpr60>
 
 	* Makefile: 1.2 2006/10/19 18:49:36 ichiki Exp
