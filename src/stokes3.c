@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator under the periodic boundary condition
  * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.1 2006/10/23 17:04:39 kichiki Exp $
+ * $Id: stokes3.c,v 1.2 2006/10/23 17:12:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,13 @@ usage (const char *argv0)
 	   " for ewald-summation cut-off\n");
   fprintf (stderr, "\tUi         : imposed translational velocity"
 	   " (list or vector of length 3)\n");
+  fprintf (stderr, "\tOi         : imposed angular velocity"
+	   " (list or vector of length 3)\n");
+  fprintf (stderr, "\tEi         : imposed strain"
+	   " (list or vector of length 5)\n");
   fprintf (stderr, "\tF0         : applied force"
+	   " (list or vector of length 3)\n");
+  fprintf (stderr, "\tT0         : applied torque"
 	   " (list or vector of length 3)\n");
   fprintf (stderr, "\tlattice    : dimensions of the periodic box"
 	   " (list or vector of length 3)\n");
