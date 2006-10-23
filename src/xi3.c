@@ -1,6 +1,6 @@
 /* tuning program of xi for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: xi3.c,v 1.1 2006/10/21 19:03:16 kichiki Exp $
+ * $Id: xi3.c,v 1.2 2006/10/23 17:07:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 
 void
 do_xi (struct stokes * sys,
-       double tratio, double cutlim,
+       double ewald_tr, double ewald_eps,
        int flag_notbl,
        int flag_mat,
        int version)
@@ -67,8 +67,8 @@ do_xi (struct stokes * sys,
       fts [i] = 1.0;
     }
 
-  xi = xi_by_tratio (sys, tratio);
-  stokes_set_xi (sys, xi, cutlim);
+  xi = xi_by_tratio (sys, ewald_tr);
+  stokes_set_xi (sys, xi, ewald_eps);
   sys->version = version;
 
   /* call atimes routine */
@@ -108,7 +108,7 @@ do_xi (struct stokes * sys,
       if (flag_notbl == 0)
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %d %d %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -120,7 +120,7 @@ do_xi (struct stokes * sys,
       else
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -148,7 +148,7 @@ do_xi (struct stokes * sys,
       if (flag_notbl == 0)
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %.17e %d %d %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -160,7 +160,7 @@ do_xi (struct stokes * sys,
       else
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %.17e %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -196,7 +196,7 @@ do_xi (struct stokes * sys,
       if (flag_notbl == 0)
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %.17e %.17e %d %d %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -208,7 +208,7 @@ do_xi (struct stokes * sys,
       else
 	{
 	  fprintf (stdout, "%f %f %.3f %.3f %.3f %.17e %.17e %.17e %d %d\n",
-		   tratio, xi,
+		   ewald_tr, xi,
 		   sys->cpu1,
 		   sys->cpu2,
 		   sys->cpu3,
@@ -232,12 +232,12 @@ usage (const char *argv0)
   fprintf (stderr, "Parameters in the init-file:\n");
   fprintf (stderr, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
   fprintf (stderr,
-	   "\tflag-mat   : t for matrix-scheme\n"
-	   "\t           : nil for atimes-scheme\n");
+	   "\tflag-mat   : #t for matrix-scheme\n"
+	   "\t           : #f for atimes-scheme\n");
   fprintf (stderr,
 	   "\tflag-notbl : calculation scheme for the ewald-summation\n"
-	   "\t           : t for no-table\n"
-	   "\t           : nil for with table\n");
+	   "\t           : #t for no-table\n"
+	   "\t           : #f for with table\n");
   fprintf (stderr, "\tlattice    : dimensions of the periodic box"
 	   " (list or vector of length 3)\n");
   fprintf (stderr, "\tewald-eps  : tolerance value"
@@ -246,7 +246,7 @@ usage (const char *argv0)
   fprintf (stderr, "\tx          : particle configuration"
 	   " (list or vector with length 3*np)\n");
   fprintf (stderr,
-	   "\tewald-trs  : (optional) list of tratio parameters\n "
+	   "\tewald-trs  : (optional) list of ewald_tr parameters\n "
 	   "\t           : (list or vector with any length)\n");
 }
 
@@ -265,8 +265,8 @@ main (int argc, char** argv)
   int np;
   int len;
 
-  double cutlim;
-  double tratio;
+  double ewald_eps;
+  double ewald_tr;
 
   char init_file [256];
 
@@ -334,10 +334,9 @@ main (int argc, char** argv)
       exit (1);
     }
 
-  // np
-  np         = guile_get_int    ("np",         0);
-  // ewald-eps
-  cutlim     = guile_get_double ("ewald-eps",  0.0);
+  // parameters
+  np        = guile_get_int    ("np",        0);
+  ewald_eps = guile_get_double ("ewald-eps", 0.0);
 
 
   /* initialization */
@@ -371,13 +370,13 @@ main (int argc, char** argv)
   trs = guile_get_doubles_ ("ewald-trs");
   if (trs == NULL)
     {
-      /*tratio = 1.0;*/
-      tratio = 0.1;
+      /*ewald_tr = 1.0;*/
+      ewald_tr = 0.1;
       for (i = 1; i < 100; i++)
 	{
-	  tratio *= 1.1;
+	  ewald_tr *= 1.1;
 
-	  do_xi (sys, tratio, cutlim,
+	  do_xi (sys, ewald_tr, ewald_eps,
 		 flag_notbl, flag_mat, version);
 	}
     }
@@ -386,7 +385,7 @@ main (int argc, char** argv)
       len = guile_get_length ("ewald-trs");
       for (i = 0; i < len; i ++)
 	{
-	  do_xi (sys, trs[i], cutlim,
+	  do_xi (sys, trs[i], ewald_eps,
 		 flag_notbl, flag_mat, version);
 	}
       free (trs);
