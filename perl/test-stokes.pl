@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.pl,v 1.3 2006/10/19 18:51:43 ichiki Exp $
+# $Id: test-stokes.pl,v 1.4 2006/10/23 17:26:27 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -86,8 +86,8 @@ $nc_f = stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", $np);
 # f0, x, u are active
 stokes::stokes_nc_set_f0($nc_f, $f);
 stokes::stokes_nc_set_time($nc_f, 0, 0.0);
-stokes::stokes_nc_set_x($nc_f, 0, 0.0, $pos);
-stokes::stokes_nc_set_u($nc_f, 0, 0.0, $u);
+stokes::stokes_nc_set_x($nc_f, 0, $pos);
+stokes::stokes_nc_set_u($nc_f, 0, $u);
 
 stokes::stokes_nc_free($nc_f);
 

@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.4 2006/10/19 18:53:21 ichiki Exp $
+; $Id: test-stokes.scm,v 1.5 2006/10/23 17:21:47 kichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -119,8 +119,8 @@
 
 (stokes-nc-set-f0 nc-f f)
 (stokes-nc-set-time nc-f 0 0.0)
-(stokes-nc-set-x nc-f 0 0.0 pos)
-(stokes-nc-set-u nc-f 0 0.0 u)
+(stokes-nc-set-x nc-f 0 pos)
+(stokes-nc-set-u nc-f 0 u)
 
 (stokes-nc-free nc-f)
 
