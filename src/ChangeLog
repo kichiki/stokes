@@ -1,4 +1,43 @@
+2006-10-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* bench3.c: 1.2 2006/10/26 02:00:49 kichiki Exp
+	remove unnecessary header file (now functions in bench.h is included
+	in libstokes.h).
+
+	* Makefile: 1.5 2006/10/26 01:58:36 kichiki Exp
+	add stvis-glut.
+
+	* stvis-glut.c: 1.1 2006/10/26 01:56:41 kichiki Exp
+	imported from stokes-src (based on my very old mesa code).
+
+2006-10-23  Kengo Ichiki  <ichiki@tpr60>
+
+	* xi3.scm: 1.2 2006/10/23 17:18:11 kichiki Exp
+	bug fixed on bool values in scheme...
+
+	* stokes3.scm: 1.1 2006/10/23 17:15:09 kichiki Exp
+	initial revision.
+	nothing interesting, though.
+
+	* stokes3.c: 1.2 2006/10/23 17:12:37 kichiki Exp
+	update help message.
+
+	* Makefile: 1.4 2006/10/23 17:09:59 kichiki Exp
+	add bench3 and stokes3.
+
+	* xi3.c: 1.2 2006/10/23 17:07:36 kichiki Exp
+	change the names of (local) variables ewald_eps and ewald_tr.
+
+	* stokes3.c: 1.1 2006/10/23 17:04:39 kichiki Exp
+	imported from stokes.src.
+	this is the simulator.
+
 2006-10-21  Kengo Ichiki  <ichiki@tpr60>
+
+	* configs.h: 1.1 2006/10/22 03:55:38 kichiki Exp
+	* configs.c: 1.1 2006/10/22 03:53:41 kichiki Exp
+	* bench3.c: 1.1 2006/10/22 03:51:13 kichiki Exp
+	imported from stokes-src.
 
 	* xi3.scm: 1.1 2006/10/21 19:05:27 kichiki Exp
 	initial revision.
