@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.1 2006/10/22 03:51:13 kichiki Exp $
+ * $Id: bench3.c,v 1.2 2006/10/26 02:00:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,8 +24,6 @@
 #include <libiter.h> /* struct iter */
 #include <libstokes.h> /* struct stokes */
 #include "configs.h"
-
-#include <bench.h> // at libstokes/src
 
 
 /*
