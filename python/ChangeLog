@@ -1,3 +1,21 @@
+2006-10-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* stvis-vtk.py: 1.2 2006/10/26 02:42:10 kichiki Exp
+	some minor style change.
+
+	* stnc2pov.py: 1.1 2006/10/26 02:37:48 kichiki Exp
+	imported from stokes-src.
+
+	* stvis-vtk.py: 1.1 2006/10/26 02:19:15 kichiki Exp
+	imported from stokes-src.
+
+2006-10-23  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.4-RELEASE
+
+	* test-stokes.py: 1.4 2006/10/23 17:28:08 kichiki Exp
+	update for libstokes-0.4.
+
 2006-10-19  Kengo Ichiki  <ichiki@tpr60>
 
 	* test-stokes.py: 1.3 2006/10/19 18:50:33 ichiki Exp
