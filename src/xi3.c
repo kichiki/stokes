@@ -1,6 +1,6 @@
 /* tuning program of xi for stokes simulator in 3D for F/FT/FTS versions
- * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: xi3.c,v 1.2 2006/10/23 17:07:36 kichiki Exp $
+ * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: xi3.c,v 1.3 2007/03/08 00:20:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,8 @@
 
 #include <libstokes.h> /* struct stokes */
 #include <libguile.h> // scm_init_guile()
+
+#include <ewald.h> // atimes routines
 
 
 void
@@ -67,6 +69,7 @@ do_xi (struct stokes * sys,
       fts [i] = 1.0;
     }
 
+  sys->periodic = 1; // periodic boundary condition
   xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
   sys->version = version;
@@ -76,11 +79,14 @@ do_xi (struct stokes * sys,
     {
       if (flag_mat != 0)
 	{
-	  atimes_ewald_3all_matrix (n, fts, uoe, (void *) sys);
+	  //atimes_ewald_3all_matrix (n, fts, uoe, (void *) sys);
+	  atimes_3all_matrix (n, fts, uoe, (void *) sys);
+	  // this is a wrapper for both ewald and nonewald.
 	}
       else
 	{
 	  atimes_ewald_3all (n, fts, uoe, (void *) sys);
+	  // this is direct call for ewald routine.
 	}
     }
   else
@@ -88,10 +94,12 @@ do_xi (struct stokes * sys,
       if (flag_mat != 0)
 	{
 	  atimes_ewald_3all_matrix_notbl (n, fts, uoe, (void *) sys);
+	  // this is direct call for ewald routine.
 	}
       else
 	{
 	  atimes_ewald_3all_notbl (n, fts, uoe, (void *) sys);
+	  // this is direct call for ewald routine.
 	}
     }
 

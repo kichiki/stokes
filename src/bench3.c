@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
- * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.2 2006/10/26 02:00:49 kichiki Exp $
+ * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bench3.c,v 1.3 2007/03/08 00:20:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,6 +71,7 @@ bench_SC (int n_sc, double phi,
 
   stokes_set_np (sys, np, nm);
 
+  sys->periodic = 1; // periodic boundary condition
   init_config_SC (phi, n_sc, n_sc, n_sc,
 		  sys->pos, &lx, &ly, &lz);
   stokes_set_l (sys, lx, ly, lz);
@@ -232,21 +233,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3f
+		  solve_mix_3f
 		    (sys, f, uf,
 		     u, ff);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3ft
+		  solve_mix_3ft
 		    (sys, f, t, uf, of,
 		     u, o, ff, tf);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3fts
+		  solve_mix_3fts
 		    (sys, f, t, e, uf, of, ef,
 		     u, o, s, ff, tf, sf);
 		  t1 = ptime_ms_d();
@@ -262,21 +263,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3f_matrix
+		  solve_mix_3f_matrix
 		    (sys, f, uf,
 		     u, ff);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3ft_matrix
+		  solve_mix_3ft_matrix
 		    (sys, f, t, uf, of,
 		     u, o, ff, tf);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_mix_ewald_3fts_matrix
+		  solve_mix_3fts_matrix
 		    (sys, f, t, e, uf, of, ef,
 		     u, o, s, ff, tf, sf);
 		  t1 = ptime_ms_d();
@@ -295,21 +296,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3f
+		  solve_mix_lub_3f
 		    (sys, f, uf,
 		     u, ff);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3ft
+		  solve_mix_lub_3ft
 		    (sys, f, t, uf, of,
 		     u, o, ff, tf);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3fts
+		  solve_mix_lub_3fts
 		    (sys, f, t, e, uf, of, ef,
 		     u, o, s, ff, tf, sf);
 		  t1 = ptime_ms_d();
@@ -325,21 +326,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3f_matrix
+		  solve_mix_lub_3f_matrix
 		    (sys, f, uf,
 		     u, ff);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3ft_matrix
+		  solve_mix_lub_3ft_matrix
 		    (sys, f, t, uf, of,
 		     u, o, ff, tf);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_mix_lub_ewald_3fts_matrix
+		  solve_mix_lub_3fts_matrix
 		    (sys, f, t, e, uf, of, ef,
 		     u, o, s, ff, tf, sf);
 		  t1 = ptime_ms_d();
@@ -361,21 +362,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3f
+		  solve_res_3f
 		    (sys, u,
 		     f);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3ft
+		  solve_res_3ft
 		    (sys, u, o,
 		     f, t);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3fts
+		  solve_res_3fts
 		    (sys, u, o, e,
 		     f, t, s);
 		  t1 = ptime_ms_d();
@@ -391,21 +392,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3f_matrix
+		  solve_res_3f_matrix
 		    (sys, u,
 		     f);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3ft_matrix
+		  solve_res_3ft_matrix
 		    (sys, u, o,
 		     f, t);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_res_ewald_3fts_matrix
+		  solve_res_3fts_matrix
 		    (sys, u, o, e,
 		     f, t, s);
 		  t1 = ptime_ms_d();
@@ -424,21 +425,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3f
+		  solve_res_lub_3f
 		    (sys, u,
 		     f);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3ft
+		  solve_res_lub_3ft
 		    (sys, u, o,
 		     f, t);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3fts
+		  solve_res_lub_3fts
 		    (sys, u, o, e,
 		     f, t, s);
 		  t1 = ptime_ms_d();
@@ -454,21 +455,21 @@ bench_SC (int n_sc, double phi,
 		{
 		case 0: // F version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3f_matrix
+		  solve_res_lub_3f_matrix
 		    (sys, u,
 		     f);
 		  t1 = ptime_ms_d();
 		  break;
 		case 1: // FT version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3ft_matrix
+		  solve_res_lub_3ft_matrix
 		    (sys, u, o,
 		     f, t);
 		  t1 = ptime_ms_d();
 		  break;
 		case 2: // FTS version
 		  t0 = ptime_ms_d();
-		  solve_res_lub_ewald_3fts_matrix
+		  solve_res_lub_3fts_matrix
 		    (sys, u, o, e,
 		     f, t, s);
 		  t1 = ptime_ms_d();

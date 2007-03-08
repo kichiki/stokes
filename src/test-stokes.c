@@ -1,6 +1,6 @@
 /* test code for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-stokes.c,v 1.3 2006/10/19 18:48:53 ichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: test-stokes.c,v 1.4 2007/03/08 00:19:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,6 +36,7 @@ main (int argc, char** argv)
   nm = 8;
   stokes_set_np (sys, np, nm);
 
+  sys->periodic = 1; // periodic boundary condition
   double lx, ly, lz;
   lx = 10.0;
   ly = 10.0;
@@ -100,7 +101,7 @@ main (int argc, char** argv)
 
   stokes_set_pos (sys, pos);
 
-  solve_res_ewald_3f (sys, u, f);
+  solve_res_3f (sys, u, f);
 
   fprintf (stdout, "f:\n");
   for (i = 0; i < np; i ++)

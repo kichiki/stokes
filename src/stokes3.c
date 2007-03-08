@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator under the periodic boundary condition
- * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.2 2006/10/23 17:12:37 kichiki Exp $
+ * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes3.c,v 1.3 2007/03/08 00:20:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -82,14 +82,14 @@ solve_mix_3all (struct stokes * sys,
 	{
 	  if (flag_mat == 0)
 	    {
-	      solve_mix_ewald_3f
+	      solve_mix_3f
 		(sys,
 		 fm, uf,
 		 um, ff);
 	    }
 	  else
 	    {
-	      solve_mix_ewald_3f_matrix
+	      solve_mix_3f_matrix
 		(sys,
 		 fm, uf,
 		 um, ff);
@@ -99,14 +99,14 @@ solve_mix_3all (struct stokes * sys,
 	{
 	  if (flag_mat == 0)
 	    {
-	      solve_mix_lub_ewald_3f
+	      solve_mix_lub_3f
 		(sys,
 		 fm, uf,
 		 um, ff);
 	    }
 	  else
 	    {
-	      solve_mix_lub_ewald_3f_matrix
+	      solve_mix_lub_3f_matrix
 		(sys,
 		 fm, uf,
 		 um, ff);
@@ -117,14 +117,14 @@ solve_mix_3all (struct stokes * sys,
     {
       if (flag_lub == 0)
 	{
-	  solve_mix_ewald_3ft
+	  solve_mix_3ft
 	    (sys,
 	     fm, tm, uf, of,
 	     um, om, ff, tf);
 	}
       else
 	{
-	  solve_mix_lub_ewald_3ft
+	  solve_mix_lub_3ft
 	    (sys,
 	     fm, tm, uf, of,
 	     um, om, ff, tf);
@@ -134,14 +134,14 @@ solve_mix_3all (struct stokes * sys,
     {
       if (flag_lub == 0)
 	{
-	  solve_mix_ewald_3fts
+	  solve_mix_3fts
 	    (sys,
 	     fm, tm, em, uf, of, ef,
 	     um, om, sm, ff, tf, sf);
 	}
       else
 	{
-	  solve_mix_lub_ewald_3fts
+	  solve_mix_lub_3fts
 	    (sys,
 	     fm, tm, em, uf, of, ef,
 	     um, om, sm, ff, tf, sf);
@@ -323,6 +323,7 @@ main (int argc, char** argv)
   sys = stokes_init ();
   sys->version = version;
   stokes_set_np (sys, np, nm);
+  sys->periodic = 1; // periodic boundary condition
   stokes_set_l (sys, lat[0], lat[1], lat[2]);
   xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
