@@ -1,6 +1,6 @@
 # test code for libstokes
-# Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.pl,v 1.4 2006/10/23 17:26:27 kichiki Exp $
+# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: test-stokes.pl,v 1.5 2007/03/08 00:45:53 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@ stokes::stokes_set_np($sys, $np, $nm);
 # you must call stokes_set_np() because
 # this also allocate the memory for pos.
 
+$sys->{periodic} = 1; # periodic boundary condition
 $lx = 10.0;
 $ly = 10.0;
 $lz = 10.0;
@@ -80,7 +81,7 @@ for ($i=0; $i < $np; $i++){
 
 #$sys->{pos} = $pos;
 stokes::stokes_set_pos($sys, $pos);
-stokes::solve_res_ewald_3f($sys, $u, $f);
+stokes::solve_res_3f($sys, $u, $f);
 
 $nc_f = stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", $np);
 # f0, x, u are active

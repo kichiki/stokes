@@ -1,6 +1,6 @@
 ; test code for libstokes
-; Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.5 2006/10/23 17:21:47 kichiki Exp $
+; Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+; $Id: test-stokes.scm,v 1.6 2007/03/08 00:42:36 kichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@
 (define nm 8)
 (stokes-set-np sys np nm)
 
+(set! (stokes-periodic sys) 1) ; periodic boundary condition
 (define lx 10.0)
 (define ly 10.0)
 (define lz 10.0)
@@ -112,7 +113,7 @@
 (display-darray3 u np)
 
 (stokes-set-pos sys pos)
-(solve-res-ewald-3f sys u f)
+(solve-res-3f sys u f)
 
 (define nc-f (stokes-nc-mob-f-init "test-stokes.res-3f.nc" np))
 ;; f0, x, u are active

@@ -1,6 +1,6 @@
 # test code for libstokes
-# Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.py,v 1.4 2006/10/23 17:28:08 kichiki Exp $
+# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: test-stokes.py,v 1.5 2007/03/08 00:48:35 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@ np = 8
 nm = 8
 stokes.stokes_set_np(sys, np, nm)
 
+sys.periodic = 1 # periodic boundary condition
 lx = 10.0
 ly = 10.0
 lz = 10.0
@@ -87,7 +88,7 @@ for i in range(np):
     print i, u[i*3], u[i*3+1], u[i*3+2]
 
 stokes.stokes_set_pos(sys, pos)
-stokes.solve_res_ewald_3f(sys, u, f)
+stokes.solve_res_3f(sys, u, f)
 
 nc_f = stokes.stokes_nc_mob_f_init("test-stokes.res-3f.nc", np)
 # f0, x, u are active
