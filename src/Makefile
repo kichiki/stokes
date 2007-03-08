@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 2006/10/26 01:58:36 kichiki Exp $
+# $Id: Makefile,v 1.6 2007/03/08 00:17:22 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
@@ -6,7 +6,7 @@ LD           = $(CC)
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
 
-# for libstokes/src/bench.h
+# for header file besides libstokes.h
 RYUON_INC = -I../../libstokes/src
 
 ## for OpenGL, GLUT
@@ -18,8 +18,17 @@ CFLAGS	     = -Wall\
 		-pipe -O3 -march=prescott -fomit-frame-pointer\
 		-mfpmath=sse -ffast-math\
 		$(GUILE_INC)
+
+#ATLAS_LIBS	= \
+#	-lg2c -lblas -llapack\
+#	-lcblas -lf77blas -latlas
+ATLAS_LIBS	= \
+	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
+
 LDFLAGS      =
 LIBS         = -lm -L/usr/local/lib -liter -lstokes\
+		$(ATLAS_LIBS)\
 		-lg2c -lblas -llapack\
 		-lcblas -lf77blas -latlas\
 		-lnetcdf\
@@ -44,6 +53,9 @@ test-stokes:	$(test-stokes-OBJ)
 # xi3
 xi3-OBJ =	xi3.o
 
+xi3.o: xi3.c
+	$(CC) $(CFLAGS) $(RYUON_INC) -c xi3.c
+
 xi3:	$(xi3-OBJ)
 	$(LD) $(LDFLAGS) -o xi3	\
 	$(xi3-OBJ)		\
@@ -51,9 +63,6 @@ xi3:	$(xi3-OBJ)
 
 
 ## bench3
-#bench3.o:	bench3.c
-#	$(CC) $(CFLAGS) $(RYUON_INC) -c bench3.c
-
 bench3-OBJ =	\
 		bench3.o\
 		configs.o
