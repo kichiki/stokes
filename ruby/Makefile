@@ -1,11 +1,17 @@
 # makefile for ruby binding of libstokes
-# $Id: Makefile,v 1.1 2006/10/12 15:46:42 ichiki Exp $
+# $Id: Makefile,v 1.2 2007/03/08 00:50:33 kichiki Exp $
 INC_RUBY	= -I/usr/local/lib/ruby/1.8/i386-freebsd6
+
+#ATLAS_LIBS	= \
+#	-lg2c -lblas -llapack\
+#	-lcblas -lf77blas -latlas
+ATLAS_LIBS	= \
+	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
 
 LIB_STOKES	= \
 		-lm -L/usr/local/lib -liter -lstokes	\
-		-lg2c -lblas -llapack			\
-		-lcblas -lf77blas -latlas		\
+		$(ATLAS_LIBS)\
 		-lnetcdf
 
 CFLAGS		= -Wall -I/usr/local/include
