@@ -1,6 +1,6 @@
 ## sample code for stokes_res_ewald_3f()
-## Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-## $Id: test-stokes.m,v 1.1 2006/10/04 20:39:16 ichiki Exp $
+## Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+## $Id: test-stokes.m,v 1.2 2007/03/08 00:55:09 kichiki Exp $
 ##
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License
@@ -40,4 +40,4 @@ u = [1.0, 1.0, 1.0,\
       1.0, 1.0, 1.0]
 
 # solve resistance problem and obtain force
-f = stokes_res_ewald_3f(pos, u, l, 60.25)
+f = stokes_res_3f(pos, u, l, 60.25)
