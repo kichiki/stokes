@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
-# Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.2 2006/10/26 02:42:10 kichiki Exp $
+# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: stvis-vtk.py,v 1.3 2007/03/27 07:04:04 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,10 +38,50 @@ def pData_read(np, x):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.2 2006/10/26 02:42:10 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.3 2007/03/27 07:04:04 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
+
+
+def bounding_box (np, x):
+    (cx,cy,cz) = (0.0, 0.0, 0.0)
+    for i in range(np):
+        xx = x[i*3]
+        yy = x[i*3+1]
+        zz = x[i*3+2]
+
+        cx = cx + xx
+        cy = cy + yy
+        cz = cz + zz
+
+        if i == 0:
+            lx0 = lx1 = xx
+            ly0 = ly1 = yy
+            lz0 = lz1 = zz
+        else:
+            if lx0 > xx:
+                lx0 = xx
+            if lx1 < xx:
+                lx1 = xx
+            if ly0 > yy:
+                ly0 = yy
+            if ly1 < yy:
+                ly1 = yy
+            if lz0 > zz:
+                lz0 = zz
+            if lz1 < zz:
+                lz1 = zz
+        
+    cx = cx / float(np)
+    cy = cy / float(np)
+    cz = cz / float(np)
+
+    lx = lx1 - lx0
+    ly = ly1 - ly0
+    lz = lz1 - lz0
+
+    return (cx,cy,cz, lx,ly,lz)
 
 
 def main():
@@ -61,10 +101,6 @@ def main():
     lattice = stokes.darray(3)
     stokes.stokes_nc_get_l (nc, lattice)
     print 'lattice = ', lattice[0], lattice[1], lattice[2]
-    if lattice[0] > lattice[2]:
-        l = lattice[0]
-    else:                  
-        l = lattice[2]
 
     x  = stokes.darray(nc.np  * nc.nvec)
 
@@ -128,13 +164,33 @@ def main():
 
     aCamera = vtk.vtkCamera()
     ren.SetActiveCamera (aCamera)
-    aCamera.SetFocalPoint (0.5*lattice[0], 0, 0.2*lattice[2])
-    aCamera.SetPosition (0.5*lattice[0], 2.0*l, 0.1*lattice[2])
+    if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
+        # periodic boundary
+        if lattice[0] > lattice[2]:
+            l = lattice[0]
+        else:                  
+            l = lattice[2]
+
+        aCamera.SetFocalPoint (0.5*lattice[0], 0, 0.2*lattice[2])
+        aCamera.SetPosition (0.5*lattice[0], 2.0*l, 0.1*lattice[2])
+        ren.ResetCamera ()
 
     # loop
     while 1:
         for i in range(nc.ntime):
             stokes.stokes_nc_get_data (nc, "x", i, x)
+
+            if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
+                # non-periodic boundary
+                (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
+                if lx > lz:
+                    l = lx
+                else:                  
+                    l = lz
+
+                aCamera.SetFocalPoint (cx, cy, cz)
+                aCamera.SetPosition (cx, cy + l, cz + 2.0*l)
+                ren.ResetCamera ()
 
             pData = pData_read(nc.np, x)
             pGlyph.SetInput(pData)
