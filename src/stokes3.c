@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.4 2007/04/15 21:12:30 kichiki Exp $
+ * $Id: stokes3.c,v 1.5 2007/04/20 02:09:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.4 2007/04/15 21:12:30 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.5 2007/04/20 02:09:36 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s init-file\n", argv0);
   fprintf (stderr, "\twhere init-file is a SCM file"
@@ -287,12 +287,13 @@ main (int argc, char** argv)
 
 
   // initialize struct stokes *sys
-  struct stokes * sys = NULL;
+  struct stokes *sys = NULL;
   sys = stokes_init ();
   sys->version = version;
   stokes_set_np (sys, np, nm);
 
-  sys->lubcut = 2.0000000001;
+  sys->lubmin = guile_get_double ("lub-min", 2.0000000001);
+  sys->lubmax = guile_get_double ("lub-max", 4.0);
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
   stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
