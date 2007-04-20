@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.2 2007/04/15 21:13:18 kichiki Exp $
+; $Id: stokes3.scm,v 1.3 2007/04/20 02:10:10 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -11,6 +11,8 @@
 (define version    "F")     ; version. "F", "FT", or "FTS"
 (define flag-mat   #t)      ; #t => matrix scheme, #f => atimes scheme
 (define flag-lub   #t)      ; #t => with lub,      #f => without lub
+(define lub-min    2.0000000001) ; min cutoff of distance for lub
+(define lub-max    4.0)          ; max cutoff of distance for lub
 
 ;; periodic systems
 (define periodic   #t)      ; #f => non periodic, #t => periodic
