@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-stokes.c,v 1.4 2007/03/08 00:19:38 kichiki Exp $
+ * $Id: test-stokes.c,v 1.5 2007/04/20 02:11:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,9 +27,7 @@
 int
 main (int argc, char** argv)
 {
-  struct stokes * sys = NULL;
-
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
 
   int np, nm;
   np = 8;
@@ -43,25 +41,25 @@ main (int argc, char** argv)
   lz = 10.0;
   stokes_set_l (sys, lx, ly, lz);
 
-  double tratio, cutlim, xi;
-  tratio = 60.25;
-  xi = xi_by_tratio (sys, tratio);
+  double ewald_tr = 60.25;
+  double xi = xi_by_tratio (sys, ewald_tr);
 
-  cutlim = 1.0e-12;
-  stokes_set_xi (sys, xi, cutlim);
+  double ewald_eps = 1.0e-12;
+  stokes_set_xi (sys, xi, ewald_eps);
 
   fprintf (stdout, "xi = %f\n", xi);
 
-  sys->lubcut = 2.0000000001;
+  sys->lubmin = 2.0000000001;
+  sys->lubmax = 4.0;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
   double * pos;
   double * u;
   double * f;
-  pos = (double *) calloc (np * 3, sizeof (double));
-  u   = (double *) calloc (np * 3, sizeof (double));
-  f   = (double *) calloc (np * 3, sizeof (double));
+  pos = (double *)calloc (np * 3, sizeof (double));
+  u   = (double *)calloc (np * 3, sizeof (double));
+  f   = (double *)calloc (np * 3, sizeof (double));
 
   pos[ 0] = 0.0; // x component
   pos[ 1] = 0.0; // y component
