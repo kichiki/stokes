@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.6 2007/03/08 00:42:36 kichiki Exp $
+; $Id: test-stokes.scm,v 1.7 2007/04/20 02:17:23 kichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -44,21 +44,23 @@
 (define lz 10.0)
 (stokes-set-l sys lx ly lz)
 
-(define tratio 60.25)
-(define xi (xi-by-tratio sys tratio))
+(define ewald-tr 60.25)
+(define xi (xi-by-tratio sys ewald-tr))
 
-(define cutlim 1.0e-12)
-(stokes-set-xi sys xi cutlim)
+(define ewald-eps 1.0e-12)
+(stokes-set-xi sys xi ewald-eps)
 
 (display "xi = ")
 (display xi)
 (newline)
 
-;(stokes-lubcut-set sys 2.0000000001)
-;(stokes-lubcut-get sys)
+;(stokes-lubmin-set sys 2.0000000001)
+;(stokes-lubmin-get sys)
 ; with '-emit-setter' on swig, you can write those as
-(set! (stokes-lubcut sys) 2.0000000001)
-(stokes-lubcut sys)
+(set! (stokes-lubmin sys) 2.0000000001)
+;(stokes-lubmin sys)
+(set! (stokes-lubmax sys) 4.0)
+;(stokes-lubmax sys)
 
 (stokes-set-iter sys "gmres" 2000 20 1.0e-6 1 (get-stdout))
 

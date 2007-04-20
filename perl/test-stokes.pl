@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.pl,v 1.5 2007/03/08 00:45:53 kichiki Exp $
+# $Id: test-stokes.pl,v 1.6 2007/04/20 02:19:52 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,14 +32,15 @@ $ly = 10.0;
 $lz = 10.0;
 stokes::stokes_set_l($sys, $lx, $ly, $lz);
 
-$tratio = 60.25;
-$xi = stokes::xi_by_tratio($sys, $tratio);
-$cutlim = 1.0e-12;
-stokes::stokes_set_xi($sys, $xi, $cutlim);
+$ewald_tr = 60.25;
+$xi = stokes::xi_by_tratio($sys, $ewald_tr);
+$ewald_eps = 1.0e-12;
+stokes::stokes_set_xi($sys, $xi, $ewald_eps);
 
 print "xi = ", $xi, "\n";
 
-$sys->{lubcut} = 2.0000000001;
+$sys->{lubmin} = 2.0000000001;
+$sys->{lubmax} = 4.0;
 stokes::stokes_set_iter($sys, "gmres", 2000, 20, 1.0e-6,
 			1, stokes::get_stdout());
 

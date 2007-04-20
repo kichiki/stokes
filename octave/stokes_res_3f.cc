@@ -1,6 +1,6 @@
 /* octave wrapper of calc_res_3f()
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes_res_3f.cc,v 1.1 2007/03/08 00:52:30 kichiki Exp $
+ * $Id: stokes_res_3f.cc,v 1.2 2007/04/20 02:18:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,8 +47,6 @@ f = stokes_res_3f (pos, u, l)\n\
 {
   octave_value retval;
   int nargin = args.length();
-  double tratio;
-
 
   if (nargin < 3 || nargin > 4)
     {
@@ -62,13 +60,15 @@ f = stokes_res_3f (pos, u, l)\n\
   ColumnVector u   (args(1).vector_value ());
   // l
   ColumnVector l   (args(2).vector_value ());
+
   // z
+  double ewald_tr;
   if (nargin == 4)
     {
       octave_value tr_arg = args(3);
       if (tr_arg.is_scalar_type())
 	{
-	  tratio = tr_arg.double_value ();
+	  ewald_tr = tr_arg.double_value ();
 	}
       else
 	{
@@ -79,7 +79,7 @@ f = stokes_res_3f (pos, u, l)\n\
   else
     {
       // default value
-      tratio = 10.0;
+      ewald_tr = 10.0;
     }
 
   int n = pos.length();
@@ -101,7 +101,7 @@ f = stokes_res_3f (pos, u, l)\n\
       return retval;
     }
 
-  struct stokes * sys;
+  struct stokes *sys;
   sys = stokes_init ();
   stokes_set_np (sys, np, np);
 
@@ -111,21 +111,21 @@ f = stokes_res_3f (pos, u, l)\n\
   double lz = l(2);
   stokes_set_l (sys, lx, ly, lz);
 
-  double cutlim, xi;
-  xi = xi_by_tratio (sys, tratio);
-  cutlim = 1.0e-12;
-  stokes_set_xi (sys, xi, cutlim);
+  double xi = xi_by_tratio (sys, ewald_tr);
+  double ewald_eps = 1.0e-12;
+  stokes_set_xi (sys, xi, ewald_eps);
 
-  sys->lubcut = 2.0000000001;
+  sys->lubmin = 2.0000000001;
+  sys->lubmax = 4.0;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
-  double * d_pos = NULL;
-  double * d_u   = NULL;
-  double * d_f   = NULL;
-  d_pos = (double *) calloc (n, sizeof (double));
-  d_u   = (double *) calloc (n, sizeof (double));
-  d_f   = (double *) calloc (n, sizeof (double));
+  double *d_pos = NULL;
+  double *d_u   = NULL;
+  double *d_f   = NULL;
+  d_pos = (double *)calloc (n, sizeof (double));
+  d_u   = (double *)calloc (n, sizeof (double));
+  d_f   = (double *)calloc (n, sizeof (double));
   for (i = 0; i < n; i ++)
     {
       d_pos[i] = pos(i);

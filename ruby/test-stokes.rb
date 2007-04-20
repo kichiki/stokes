@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.rb,v 1.5 2007/03/08 00:50:58 kichiki Exp $
+# $Id: test-stokes.rb,v 1.6 2007/04/20 02:21:20 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,14 +34,15 @@ Stokes::stokes_set_l(sys, lx, ly, lz)
 # you must call stokes_set_l() becuase
 # this also initialize parameters other than lx,ly,lz.
 
-tratio = 60.25
-xi = Stokes::xi_by_tratio(sys, tratio)
-cutlim = 1.0e-12
-Stokes::stokes_set_xi(sys, xi, cutlim)
+ewald_tr = 60.25
+xi = Stokes::xi_by_tratio(sys, ewald_tr)
+ewald_eps = 1.0e-12
+Stokes::stokes_set_xi(sys, xi, ewald_eps)
 
 print "xi = ", xi, "\n"
 
-sys.lubcut = 2.0000000001
+sys.lubmin = 2.0000000001
+sys.lubmax = 4.0
 Stokes::stokes_set_iter(sys, "gmres", 2000, 20, 1.0e-6,
                         1, Stokes::get_stdout())
 
