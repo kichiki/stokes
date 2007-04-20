@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.3 2007/03/27 07:04:04 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.4 2007/04/20 02:24:28 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ def pData_read(np, x):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.3 2007/03/27 07:04:04 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.4 2007/04/20 02:24:28 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
@@ -171,9 +171,8 @@ def main():
         else:                  
             l = lattice[2]
 
-        aCamera.SetFocalPoint (0.5*lattice[0], 0, 0.2*lattice[2])
-        aCamera.SetPosition (0.5*lattice[0], 2.0*l, 0.1*lattice[2])
-        ren.ResetCamera ()
+        aCamera.SetFocalPoint (0.5*lattice[0], 0,      0.4*lattice[2])
+        aCamera.SetPosition   (0.5*lattice[0], -1.6*l, 0.5*lattice[2])
 
     # loop
     while 1:
@@ -188,9 +187,8 @@ def main():
                 else:                  
                     l = lz
 
-                aCamera.SetFocalPoint (cx, cy, cz)
-                aCamera.SetPosition (cx, cy + l, cz + 2.0*l)
-                ren.ResetCamera ()
+                aCamera.SetFocalPoint (cx, cy,       1.0*cz)
+                aCamera.SetPosition   (cx, cy-3.0*l, 0.9*cz)
 
             pData = pData_read(nc.np, x)
             pGlyph.SetInput(pData)
