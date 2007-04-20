@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.3 2007/03/08 00:20:57 kichiki Exp $
+ * $Id: bench3.c,v 1.4 2007/04/20 02:11:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,8 @@
  */
 void
 bench_SC (int n_sc, double phi,
-	  double tratio,
+	  double ewald_tr,
+	  double ewald_eps,
 	  int flag_prob,
 	  int flag_fix,
 	  int flag_lub,
@@ -42,15 +43,10 @@ bench_SC (int n_sc, double phi,
 	  char * iter_solver,
 	  int version)
 {
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  sys->version = version;
 
   int np, nm, nf;
-  int np3, nm3, nf3;
-  int np5, nm5, nf5;
-  double lx, ly, lz;
-  double cutlim, xi;
-
   np = n_sc * n_sc * n_sc;
   if (flag_fix != 0)
     {
@@ -62,6 +58,8 @@ bench_SC (int n_sc, double phi,
       nm = np;
       nf = 0;
     }
+  int np3, nm3, nf3;
+  int np5, nm5, nf5;
   np3 = np * 3;
   nm3 = nm * 3;
   nf3 = nf * 3;
@@ -72,17 +70,16 @@ bench_SC (int n_sc, double phi,
   stokes_set_np (sys, np, nm);
 
   sys->periodic = 1; // periodic boundary condition
+  double lx, ly, lz;
   init_config_SC (phi, n_sc, n_sc, n_sc,
 		  sys->pos, &lx, &ly, &lz);
   stokes_set_l (sys, lx, ly, lz);
 
-  xi = xi_by_tratio (sys, tratio);
-  cutlim = 1.0e-12;
-  stokes_set_xi (sys, xi, cutlim);
-  sys->version = version;
+  double xi = xi_by_tratio (sys, ewald_tr);
+  stokes_set_xi (sys, xi, ewald_eps);
 
-  sys->lubcut = 2.0000000001;
-  //sys->it = iter_init (iter_solver, 2000, 20, 1.0e-6, 1);
+  sys->lubmin = 2.0000000001;
+  sys->lubmax = 4.0;
   stokes_set_iter (sys, iter_solver, 2000, 20, 1.0e-6, 1, stderr);
 
   double *f = NULL;
@@ -104,10 +101,10 @@ bench_SC (int n_sc, double phi,
       switch (version)
 	{
 	case 0: // F version
-	  f  = (double *) calloc (nm3, sizeof (double));
-	  u  = (double *) calloc (nm3, sizeof (double));
-	  uf = (double *) calloc (nf3, sizeof (double));
-	  ff = (double *) calloc (nf3, sizeof (double));
+	  f  = (double *)calloc (nm3, sizeof (double));
+	  u  = (double *)calloc (nm3, sizeof (double));
+	  uf = (double *)calloc (nf3, sizeof (double));
+	  ff = (double *)calloc (nf3, sizeof (double));
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = 1.0;
@@ -118,14 +115,14 @@ bench_SC (int n_sc, double phi,
 	    }
 	  break;
 	case 1: // FT version
-	  f  = (double *) calloc (nm3, sizeof (double));
-	  t  = (double *) calloc (nm3, sizeof (double));
-	  u  = (double *) calloc (nm3, sizeof (double));
-	  o  = (double *) calloc (nm3, sizeof (double));
-	  uf = (double *) calloc (nf3, sizeof (double));
-	  of = (double *) calloc (nf3, sizeof (double));
-	  ff = (double *) calloc (nf3, sizeof (double));
-	  tf = (double *) calloc (nf3, sizeof (double));
+	  f  = (double *)calloc (nm3, sizeof (double));
+	  t  = (double *)calloc (nm3, sizeof (double));
+	  u  = (double *)calloc (nm3, sizeof (double));
+	  o  = (double *)calloc (nm3, sizeof (double));
+	  uf = (double *)calloc (nf3, sizeof (double));
+	  of = (double *)calloc (nf3, sizeof (double));
+	  ff = (double *)calloc (nf3, sizeof (double));
+	  tf = (double *)calloc (nf3, sizeof (double));
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = 1.0;
@@ -138,18 +135,18 @@ bench_SC (int n_sc, double phi,
 	    }
 	  break;
 	case 2: // FTS version
-	  f  = (double *) calloc (nm3, sizeof (double));
-	  t  = (double *) calloc (nm3, sizeof (double));
-	  s  = (double *) calloc (nm5, sizeof (double));
-	  u  = (double *) calloc (nm3, sizeof (double));
-	  o  = (double *) calloc (nm3, sizeof (double));
-	  e  = (double *) calloc (nm5, sizeof (double));
-	  uf = (double *) calloc (nf3, sizeof (double));
-	  of = (double *) calloc (nf3, sizeof (double));
-	  ef = (double *) calloc (nf5, sizeof (double));
-	  ff = (double *) calloc (nf3, sizeof (double));
-	  tf = (double *) calloc (nf3, sizeof (double));
-	  sf = (double *) calloc (nf5, sizeof (double));
+	  f  = (double *)calloc (nm3, sizeof (double));
+	  t  = (double *)calloc (nm3, sizeof (double));
+	  s  = (double *)calloc (nm5, sizeof (double));
+	  u  = (double *)calloc (nm3, sizeof (double));
+	  o  = (double *)calloc (nm3, sizeof (double));
+	  e  = (double *)calloc (nm5, sizeof (double));
+	  uf = (double *)calloc (nf3, sizeof (double));
+	  of = (double *)calloc (nf3, sizeof (double));
+	  ef = (double *)calloc (nf5, sizeof (double));
+	  ff = (double *)calloc (nf3, sizeof (double));
+	  tf = (double *)calloc (nf3, sizeof (double));
+	  sf = (double *)calloc (nf5, sizeof (double));
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = 1.0;
@@ -179,18 +176,18 @@ bench_SC (int n_sc, double phi,
       switch (version)
 	{
 	case 0: // F version
-	  f  = (double *) calloc (np3, sizeof (double));
-	  u  = (double *) calloc (np3, sizeof (double));
+	  f  = (double *)calloc (np3, sizeof (double));
+	  u  = (double *)calloc (np3, sizeof (double));
 	  for (i = 0; i < np3; i ++)
 	    {
 	      u[i] = 1.0;
 	    }
 	  break;
 	case 1: // FT version
-	  f  = (double *) calloc (np3, sizeof (double));
-	  t  = (double *) calloc (np3, sizeof (double));
-	  u  = (double *) calloc (np3, sizeof (double));
-	  o  = (double *) calloc (np3, sizeof (double));
+	  f  = (double *)calloc (np3, sizeof (double));
+	  t  = (double *)calloc (np3, sizeof (double));
+	  u  = (double *)calloc (np3, sizeof (double));
+	  o  = (double *)calloc (np3, sizeof (double));
 	  for (i = 0; i < np3; i ++)
 	    {
 	      u[i] = 1.0;
@@ -198,12 +195,12 @@ bench_SC (int n_sc, double phi,
 	    }
 	  break;
 	case 2: // FTS version
-	  f  = (double *) calloc (np3, sizeof (double));
-	  t  = (double *) calloc (np3, sizeof (double));
-	  s  = (double *) calloc (np5, sizeof (double));
-	  u  = (double *) calloc (np3, sizeof (double));
-	  o  = (double *) calloc (np3, sizeof (double));
-	  e  = (double *) calloc (np5, sizeof (double));
+	  f  = (double *)calloc (np3, sizeof (double));
+	  t  = (double *)calloc (np3, sizeof (double));
+	  s  = (double *)calloc (np5, sizeof (double));
+	  u  = (double *)calloc (np3, sizeof (double));
+	  o  = (double *)calloc (np3, sizeof (double));
+	  e  = (double *)calloc (np5, sizeof (double));
 	  for (i = 0; i < np3; i ++)
 	    {
 	      u[i] = 1.0;
@@ -695,31 +692,33 @@ bench_SC (int n_sc, double phi,
 void
 usage (char * argv0)
 {
+  fprintf (stderr, "Benchmark Test for libstokes\n");
+  fprintf (stderr, "$Id: bench3.c,v 1.4 2007/04/20 02:11:38 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [options]\n", argv0);
   fprintf (stderr, "OPTIONS\n");
-  fprintf (stderr, "  -f, -ft, -fts : specify version (default F)\n");
-  fprintf (stderr, "  -res    : calc res problem"
+  fprintf (stderr, "\t-f, -ft, -fts : specify version (default F)\n");
+  fprintf (stderr, "\t-res          : calc res problem"
 	   " (default: mob problem)\n");
-  fprintf (stderr, "  -fix    : make half of particles fixed"
-	   " (default: no fixed particles)\n"
-	   "\tNOTE this is ignored for res problem.\n");
-  fprintf (stderr, "  -lub    : calc with lub"
+  fprintf (stderr, "\t-fix          : make half of particles fixed"
+	   " (default: no fixed)\n"
+	   "\t\tNOTE this is ignored for res problem.\n");
+  fprintf (stderr, "\t-lub          : calc with lub"
 	   " (default: no lub)\n");
-  fprintf (stderr, "  -mat    : use matrix scheme"
+  fprintf (stderr, "\t-mat          : use matrix scheme"
 	   " (default: atimes)\n");
-  fprintf (stderr, "  -tr     : tratio (default: 10.0)\n");
-  fprintf (stderr, "  -cut    : cut-off limit for ewald-sum"
+  fprintf (stderr, "\t-tr           : ewald_tr (default: 10.0)\n");
+  fprintf (stderr, "\t-eps          : cut-off limit for ewald-sum"
 	   " (default: 1.0e-12)\n");
-  fprintf (stderr, "  -iter   : iterative scheme. if -mat, ignored\n");
-  fprintf (stderr, "            0 = cg\n");
-  fprintf (stderr, "            1 = cgs\n");
-  fprintf (stderr, "            2 = bicgstab\n");
-  fprintf (stderr, "            3 = sta (another bicgstab)\n");
-  fprintf (stderr, "            4 = sta2\n");
-  fprintf (stderr, "            5 = gpb\n");
-  fprintf (stderr, "            6 = otmk\n");
-  fprintf (stderr, "            7 = gmres (default)\n");
+  fprintf (stderr, "\t-iter         : iterative scheme. ignored for -mat.\n");
+  fprintf (stderr, "\t\t0 = cg\n");
+  fprintf (stderr, "\t\t1 = cgs\n");
+  fprintf (stderr, "\t\t2 = bicgstab\n");
+  fprintf (stderr, "\t\t3 = sta (another bicgstab)\n");
+  fprintf (stderr, "\t\t4 = sta2\n");
+  fprintf (stderr, "\t\t5 = gpb\n");
+  fprintf (stderr, "\t\t6 = otmk\n");
+  fprintf (stderr, "\t\t7 = gmres (default)\n");
 }
 
 
@@ -727,29 +726,16 @@ usage (char * argv0)
 int
 main (int argc, char** argv)
 {
-  int version;
-  int flag_mat;
-  int flag_lub;
-  int flag_prob;
-  int flag_fix;
-  int flag_iter;
-  char iter_solver [80];
-
-  int i;
-
-  double cutlim;
-  double tratio;
-
-
   /* option analysis */
-  version = 0;
-  flag_mat = 0;
-  flag_lub = 0;
-  flag_prob = 0;
-  flag_fix = 0;
-  flag_iter = 7; // gmres
-  tratio = 10.0;
-  cutlim = 1.0e-12;
+  int version   = 0;
+  int flag_mat  = 0;
+  int flag_lub  = 0;
+  int flag_prob = 0;
+  int flag_fix  = 0;
+  int flag_iter = 7; // gmres
+  double ewald_eps = 1.0e-12;
+  double ewald_tr  = 10.0;
+  int i;
   for (i = 1; i < argc; i++)
     {
       if (strcmp (argv [i], "-mat") == 0)
@@ -782,11 +768,11 @@ main (int argc, char** argv)
 	}
       else if (strcmp (argv [i], "-tr") == 0)
 	{
-	  tratio = atof (argv [++i]);
+	  ewald_tr = atof (argv [++i]);
 	}
-      else if (strcmp (argv [i], "-cut") == 0)
+      else if (strcmp (argv [i], "-eps") == 0)
 	{
-	  cutlim = atof (argv [++i]);
+	  ewald_eps = atof (argv [++i]);
 	}
       else if (strcmp (argv [i], "-iter") == 0)
 	{
@@ -799,6 +785,7 @@ main (int argc, char** argv)
 	}
     }
 
+  char iter_solver [80];
   switch (flag_iter)
     {
     case 0:
@@ -877,13 +864,12 @@ main (int argc, char** argv)
     }
 
   /* main loop */
-  double phi;
-
-  phi = 0.3;
+  double phi = 0.3;
   for (i = 2; i < 100; i ++)
     {
       bench_SC (i, phi,
-		tratio,
+		ewald_tr,
+		ewald_eps,
 		flag_prob,
 		flag_fix,
 		flag_lub,
