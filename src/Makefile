@@ -1,7 +1,10 @@
-# $Id: Makefile,v 1.6 2007/03/08 00:17:22 kichiki Exp $
+# $Id: Makefile,v 1.7 2007/04/20 02:15:07 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
+
+GSL_INC = `pkg-config --cflags gsl`
+GSL_LIB = `pkg-config --libs gsl`
 
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
@@ -17,7 +20,8 @@ GL_LIBS		= -L/usr/X11R6/lib -lglut
 CFLAGS	     = -Wall\
 		-pipe -O3 -march=prescott -fomit-frame-pointer\
 		-mfpmath=sse -ffast-math\
-		$(GUILE_INC)
+		$(GUILE_INC)	\
+		$(GSL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
@@ -28,11 +32,10 @@ ATLAS_LIBS	= \
 
 LDFLAGS      =
 LIBS         = -lm -L/usr/local/lib -liter -lstokes\
-		$(ATLAS_LIBS)\
-		-lg2c -lblas -llapack\
-		-lcblas -lf77blas -latlas\
-		-lnetcdf\
-		$(GUILE_LIB)
+		$(ATLAS_LIBS)	\
+		-lnetcdf	\
+		$(GUILE_LIB)	\
+		$(GSL_LIB)
 
 all:	test-stokes	\
 	xi3		\
