@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.3 2007/04/20 02:10:10 kichiki Exp $
+; $Id: stokes3.scm,v 1.4 2007/05/04 02:32:14 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -38,6 +38,21 @@
 (define np         8)       ; number of particles
 (define nm         8)       ; number of free particles
 
+; particle radius
+; set '() for monodisperse (a = 1.0 for all particles)
+;(define a '())
+; otherwise, poly codes are used in the calculations
+(define a #(
+1.0
+1.0
+1.0
+1.0
+1.0
+1.0
+1.0
+1.0
+))
+
 ; initial configuration
 (define x #(
 0.0  0.0  0.0
@@ -57,8 +72,8 @@
 (define F0 '(0.0  0.0 -0.1)) ; applied force
 (define T0 '(0.0  0.0  0.0)) ; applied torque
 
-(define stokes     0.0)     ; effective stokes number
-(define ncol       10)      ; frequency of collision check in dt for st != 0
+(define stokes 0.0)     ; effective stokes number
+(define ncol   10)      ; frequency of collision check in dt for st != 0
 
 
 ;; bond parameters
