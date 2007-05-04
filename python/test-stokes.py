@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.py,v 1.6 2007/04/20 02:22:20 kichiki Exp $
+# $Id: test-stokes.py,v 1.7 2007/05/04 02:37:40 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,7 +36,8 @@ stokes.stokes_set_xi(sys, xi, ewald_eps)
 
 print 'xi =', xi
 
-sys.lubmin = 2.0000000001
+#sys.lubmin = 2.0000000001
+sys.lubmin2 = 4.0000000001
 sys.lubmax = 4.0
 stokes.stokes_set_iter(sys, "gmres", 2000, 20, 1.0e-6,
                        1, stokes.get_stdout())
