@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-stokes.c,v 1.5 2007/04/20 02:11:08 kichiki Exp $
+ * $Id: test-stokes.c,v 1.6 2007/05/04 02:33:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,8 @@ main (int argc, char** argv)
 
   fprintf (stdout, "xi = %f\n", xi);
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   sys->lubmax = 4.0;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 

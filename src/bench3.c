@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.4 2007/04/20 02:11:38 kichiki Exp $
+ * $Id: bench3.c,v 1.5 2007/05/04 02:33:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,7 +78,8 @@ bench_SC (int n_sc, double phi,
   double xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   sys->lubmax = 4.0;
   stokes_set_iter (sys, iter_solver, 2000, 20, 1.0e-6, 1, stderr);
 
@@ -693,7 +694,7 @@ void
 usage (char * argv0)
 {
   fprintf (stderr, "Benchmark Test for libstokes\n");
-  fprintf (stderr, "$Id: bench3.c,v 1.4 2007/04/20 02:11:38 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: bench3.c,v 1.5 2007/05/04 02:33:38 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [options]\n", argv0);
   fprintf (stderr, "OPTIONS\n");
