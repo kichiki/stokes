@@ -1,6 +1,6 @@
 # stokes-netcdf to pov converter
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stnc2pov.py,v 1.2 2007/04/20 02:26:21 kichiki Exp $
+# $Id: stnc2pov.py,v 1.3 2007/05/04 02:35:31 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -185,7 +185,7 @@ def move_camera (camera, lookat):
 
 
 def usage():
-    print '$Id: stnc2pov.py,v 1.2 2007/04/20 02:26:21 kichiki Exp $'
+    print '$Id: stnc2pov.py,v 1.3 2007/05/04 02:35:31 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-nm          : number of mobile particles (default: all particles)'
@@ -214,7 +214,8 @@ def main():
     lattice = stokes.darray(3)
     stokes.stokes_nc_get_l (nc, lattice)
 
-    pos = stokes.darray(nc.np  * nc.nvec)
+    pos  = stokes.darray(nc.np  * nc.nvec)
+    pos0 = stokes.darray(nc.npf * nc.nvec)
 
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
         # periodic boundary
@@ -231,6 +232,7 @@ def main():
             sys.exit()
 
         stokes.stokes_nc_get_data (nc, "x", i, pos)
+        stokes.stokes_nc_get_data0 (nc, "xf0", pos0)
 
         if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
             # non-periodic boundary
@@ -252,11 +254,19 @@ def main():
             y = pos[j*3+1]
             z = pos[j*3+2]
             write_pov_particle (f, x, y, z, 1.0)
+        # in case nc.np contains both mobile and fixed
+        #print '# np = %d, nm = %d'%(nm, nc.np)
         for j in range(nm, nc.np):
             x = pos[j*3]
             y = pos[j*3+1]
             z = pos[j*3+2]
             write_pov_particle_fixed (f, x, y, z, 1.0)
+        for j in range(nc.npf):
+            x = pos0[j*3]
+            y = pos0[j*3+1]
+            z = pos0[j*3+2]
+            #write_pov_particle_fixed (f, x, y, z, 1.0)
+            write_pov_particle_fixed (f, x, y, z, 2.0)
         f.close()
 
         i += 1
