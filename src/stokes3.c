@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.5 2007/04/20 02:09:36 kichiki Exp $
+ * $Id: stokes3.c,v 1.6 2007/05/04 02:30:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.5 2007/04/20 02:09:36 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.6 2007/05/04 02:30:53 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s init-file\n", argv0);
   fprintf (stderr, "\twhere init-file is a SCM file"
@@ -262,8 +262,7 @@ main (int argc, char** argv)
 
   // position of ALL particles (BOTH mobile and fixed)
   // this is used to write into the output file, too.
-  double *x = NULL;
-  x = (double *)malloc (sizeof (double) * np3);
+  double *x = (double *)malloc (sizeof (double) * np3);
   CHECK_MALLOC (x, "main");
 
   // x -- particle configuration
@@ -274,8 +273,7 @@ main (int argc, char** argv)
     }
 
   // bonds
-  struct bonds *bonds = NULL;
-  bonds = guile_get_bonds ("bonds");
+  struct bonds *bonds = guile_get_bonds ("bonds");
   if (bonds == NULL) // FALSE
     {
       fprintf (stderr, "main: fail to parse bonds\n");
@@ -287,18 +285,36 @@ main (int argc, char** argv)
 
 
   // initialize struct stokes *sys
-  struct stokes *sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
   sys->version = version;
   stokes_set_np (sys, np, nm);
 
-  sys->lubmin = guile_get_double ("lub-min", 2.0000000001);
+  //sys->lubmin = guile_get_double ("lub-min", 2.0000000001);
+  double lubmin = guile_get_double ("lub-min", 2.0000000001);
+  sys->lubmin2 = lubmin * lubmin;
   sys->lubmax = guile_get_double ("lub-max", 4.0);
-  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
+  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 0, stderr);
 
   stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
   stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
   stokes_set_Ei (sys, Ei[0], Ei[1], Ei[2], Ei[3], Ei[4]);
+
+
+  // radius of ALL particles (BOTH mobile and fixed)
+  double *a = (double *)malloc (sizeof (double) * np);
+  CHECK_MALLOC (a, "main");
+  if (guile_get_doubles ("a", np, a) != 1) // FALSE
+    {
+      // "a" is not given, so that system is monodisperse
+      // sys->a is NULL by default, so do nothing here
+    }
+  else
+    {
+      // the system is polydisperse
+      stokes_set_radius (sys, a);
+    }
+  free (a);
+
 
   // periodic
   double lat[3];
@@ -341,8 +357,7 @@ main (int argc, char** argv)
       // position and velocity of mobile particles
       n = nm3 * 2;
     }
-  double *y = NULL;
-  y = (double *)malloc (sizeof (double) * n);
+  double *y = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y, "main");
 
   // set the initial configuration
@@ -360,14 +375,11 @@ main (int argc, char** argv)
     }
 
 
-  /** set constant parameters for ode_params **/
+  // set constant parameters for ode_params
   int nm5 = nm * 5;
-  double *F = NULL;
-  double *T = NULL;
-  double *E = NULL;
-  F = (double *)malloc (sizeof (double) * nm3);
-  T = (double *)malloc (sizeof (double) * nm3);
-  E = (double *)malloc (sizeof (double) * nm5);
+  double *F = (double *)malloc (sizeof (double) * nm3);
+  double *T = (double *)malloc (sizeof (double) * nm3);
+  double *E = (double *)malloc (sizeof (double) * nm5);
   CHECK_MALLOC (F, "main");
   CHECK_MALLOC (T, "main");
   CHECK_MALLOC (E, "main");
@@ -435,14 +447,14 @@ main (int argc, char** argv)
       pos_fixed = x + nm*3;
     }
 
-  struct ode_params *ode_params = NULL;
-  ode_params = ode_params_init (sys, pos_fixed,
-				F, T, E,
-				uf, of, ef,
-				flag_lub, flag_mat,
-				st,
-				bonds,
-				gamma);
+  struct ode_params *ode_params
+    = ode_params_init (sys, pos_fixed,
+		       F, T, E,
+		       uf, of, ef,
+		       flag_lub, flag_mat,
+		       st,
+		       bonds,
+		       gamma);
   CHECK_MALLOC (ode_params, "main");
 
 
@@ -550,14 +562,14 @@ main (int argc, char** argv)
       if (version == 0)
 	{
 	  // F version
-	  nc = stokes_nc_mob_fix_f_i0_init (out_file, nm, nf);
+	  nc = stokes_nc_mix_f_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_uf0 (nc, uf);
 	}
       else if (version == 1)
 	{
 	  // FT version
-	  nc = stokes_nc_mob_fix_ft_i0_init (out_file, nm, nf);
+	  nc = stokes_nc_mix_ft_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	  stokes_nc_set_uf0 (nc, uf);
@@ -566,7 +578,7 @@ main (int argc, char** argv)
       else
 	{
 	  // FTS version
-	  nc = stokes_nc_mob_fix_fts_i0_init (out_file, nm, nf);
+	  nc = stokes_nc_mix_fts_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	  stokes_nc_set_e0 (nc, E);
@@ -591,6 +603,7 @@ main (int argc, char** argv)
   double h = dt / (double)ncol; // initial time step for ODE integrator
   double ddt = dt / (double)ncol; // time step for collision check for st != 0
   int l;
+  double ptime0 = ptime_ms_d();
   for (l = 0; l < nloop; l++)
     {
       fprintf (stdout, "%d steps\n", l);
@@ -630,6 +643,7 @@ main (int argc, char** argv)
 
 		  // set pos for mobile particles
 		  // note that x[np3] has both mobile and fixed particles
+		  // and collide_* and check_periodic need that
 		  int j;
 		  for (j = 0; j < nm3; j ++)
 		    {
@@ -660,8 +674,10 @@ main (int argc, char** argv)
       // flush the data
       nc_sync(nc->id);
     }
+  double ptime1 = ptime_ms_d();
 
   printf ("Normaly Terminated !\n");
+  printf ("CPU time : %.3f [m sec]\n", ptime1 - ptime0);
 
 
   free (ode_params);
