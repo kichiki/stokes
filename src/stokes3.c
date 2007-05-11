@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.6 2007/05/04 02:30:53 kichiki Exp $
+ * $Id: stokes3.c,v 1.7 2007/05/11 02:10:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.6 2007/05/04 02:30:53 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.7 2007/05/11 02:10:14 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s init-file\n", argv0);
   fprintf (stderr, "\twhere init-file is a SCM file"
@@ -289,7 +289,6 @@ main (int argc, char** argv)
   sys->version = version;
   stokes_set_np (sys, np, nm);
 
-  //sys->lubmin = guile_get_double ("lub-min", 2.0000000001);
   double lubmin = guile_get_double ("lub-min", 2.0000000001);
   sys->lubmin2 = lubmin * lubmin;
   sys->lubmax = guile_get_double ("lub-max", 4.0);
@@ -301,6 +300,7 @@ main (int argc, char** argv)
 
 
   // radius of ALL particles (BOTH mobile and fixed)
+  int flag_poly = 0; // for stokes_nc_init()
   double *a = (double *)malloc (sizeof (double) * np);
   CHECK_MALLOC (a, "main");
   if (guile_get_doubles ("a", np, a) != 1) // FALSE
@@ -311,6 +311,7 @@ main (int argc, char** argv)
   else
     {
       // the system is polydisperse
+      flag_poly = 1;
       stokes_set_radius (sys, a);
     }
   free (a);
@@ -532,26 +533,31 @@ main (int argc, char** argv)
 
 
   // initialize NetCDF and set the constant parameters
-  struct stokes_nc *nc = NULL;
+  struct stokes_nc *nc
+    = stokes_nc_init (out_file, np, nf,
+		      version, flag_poly, 0);
   if (nf == 0)
     {
+      // mobility problem (no fixed particles)
+      if (flag_poly != 0)
+	{
+	  stokes_nc_set_a (nc, sys->a);
+	}
+
       if (version == 0)
 	{
 	  // F version
-	  nc = stokes_nc_mob_f_init (out_file, np);
 	  stokes_nc_set_f0 (nc, F);
 	}
       else if (version == 1)
 	{
 	  // FT version
-	  nc = stokes_nc_mob_ft_init (out_file, np);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	}
       else
 	{
 	  // FTS version
-	  nc = stokes_nc_mob_fts_init (out_file, np);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	  stokes_nc_set_e0 (nc, E);
@@ -559,17 +565,22 @@ main (int argc, char** argv)
     }
   else
     {
+      // mix problem (with fixed particles)
+      if (flag_poly != 0)
+	{
+	  stokes_nc_set_a (nc, sys->a);
+	  stokes_nc_set_af (nc, sys->a + sys->nm);
+	}
+
       if (version == 0)
 	{
 	  // F version
-	  nc = stokes_nc_mix_f_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_uf0 (nc, uf);
 	}
       else if (version == 1)
 	{
 	  // FT version
-	  nc = stokes_nc_mix_ft_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	  stokes_nc_set_uf0 (nc, uf);
@@ -578,7 +589,6 @@ main (int argc, char** argv)
       else
 	{
 	  // FTS version
-	  nc = stokes_nc_mix_fts_i0_init (out_file, nm, nf);
 	  stokes_nc_set_f0 (nc, F);
 	  stokes_nc_set_t0 (nc, T);
 	  stokes_nc_set_e0 (nc, E);

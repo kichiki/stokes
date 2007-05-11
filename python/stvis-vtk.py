@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.5 2007/05/04 02:36:26 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.6 2007/05/11 02:12:47 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,13 +21,16 @@ import sys
 #sys.path.append('/somewhere/ryuon/stokes/python')
 import stokes
 
-def pData_read(np, x):
+def pData_read(np, x, a):
     pos = vtk.vtkPoints()
     diameter = vtk.vtkDoubleArray()
     diameter.SetNumberOfComponents(1)
     for i in range(np):
         pos.InsertNextPoint(x[i*3], x[i*3+1], x[i*3+2])
-        diameter.InsertNextTuple1(2.0)
+        if a != []:
+            diameter.InsertNextTuple1(2.0*a[i])
+        else:
+            diameter.InsertNextTuple1(2.0)
 
     # first make pData containing particle coordinates
     pData = vtk.vtkPolyData()
@@ -38,7 +41,7 @@ def pData_read(np, x):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.5 2007/05/04 02:36:26 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.6 2007/05/11 02:12:47 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
@@ -103,8 +106,17 @@ def main():
     print 'lattice = ', lattice[0], lattice[1], lattice[2]
 
     x  = stokes.darray(nc.np  * nc.nvec)
-
-
+    if nc.flag_a != 0:
+        a = stokes.darray(nc.np)
+        stokes.stokes_nc_get_data0 (nc, "a", a)
+    else:
+        a = []
+    if nc.flag_af != 0:
+        af = stokes.darray(nc.npf)
+        stokes.stokes_nc_get_data0 (nc, "af", af)
+    else:
+        af = []
+    
     # then, make Actor
     pSource = vtk.vtkSphereSource()
     # pSource.SetPhiResolution(20)
@@ -128,10 +140,9 @@ def main():
 
     # fixed particles
     if nc.npf > 0:
-        print 'npf = ', nc.npf
         xf0  = stokes.darray(nc.npf * nc.nvec)
         stokes.stokes_nc_get_data0 (nc, "xf0", xf0)
-        pfData = pData_read(nc.npf, xf0)
+        pfData = pData_read(nc.npf, xf0, af)
 
         pfGlyph = vtk.vtkGlyph3D()
         pfGlyph.SetSource(pSource.GetOutput()) # use the same pSource
@@ -190,7 +201,7 @@ def main():
                 aCamera.SetFocalPoint (cx, cy,       cz)
                 aCamera.SetPosition   (cx, cy-3.0*l, cz+0.1*l)
 
-            pData = pData_read(nc.np, x)
+            pData = pData_read(nc.np, x, a)
             pGlyph.SetInput(pData)
             win.Render()
 
