@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.py,v 1.7 2007/05/04 02:37:40 kichiki Exp $
+# $Id: test-stokes.py,v 1.8 2007/05/12 04:38:50 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -92,7 +92,12 @@ for i in range(np):
 stokes.stokes_set_pos(sys, pos)
 stokes.solve_res_3f(sys, u, f)
 
-nc_f = stokes.stokes_nc_mob_f_init("test-stokes.res-3f.nc", np)
+nc_f = stokes.stokes_nc_init("test-stokes.res-3f.nc",
+                             np,
+                             0, # nf
+                             0, # version
+                             0, # flag_poly
+                             0) # flag_it (time-dependent imposed flow)
 # f0, x, u are active
 stokes.stokes_nc_set_f0(nc_f, f)
 stokes.stokes_nc_set_time(nc_f, 0, 0.0)
