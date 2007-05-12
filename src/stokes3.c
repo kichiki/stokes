@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.7 2007/05/11 02:10:14 kichiki Exp $
+ * $Id: stokes3.c,v 1.8 2007/05/12 04:33:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.7 2007/05/11 02:10:14 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.8 2007/05/12 04:33:35 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s init-file\n", argv0);
   fprintf (stderr, "\twhere init-file is a SCM file"
@@ -534,8 +534,11 @@ main (int argc, char** argv)
 
   // initialize NetCDF and set the constant parameters
   struct stokes_nc *nc
-    = stokes_nc_init (out_file, np, nf,
+    = stokes_nc_init (out_file, nm, nf,
 		      version, flag_poly, 0);
+  stokes_nc_set_ui0 (nc, Ui);
+  stokes_nc_set_oi0 (nc, Oi);
+  stokes_nc_set_ei0 (nc, Ei);
   if (nf == 0)
     {
       // mobility problem (no fixed particles)
