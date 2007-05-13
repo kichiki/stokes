@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.6 2007/05/11 02:12:47 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.7 2007/05/13 23:13:47 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,13 +15,105 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-import time
 import vtk
+from vtk.util.colors import peacock, tomato
 import sys
+import math
 #sys.path.append('/somewhere/ryuon/stokes/python')
 import stokes
 
-def pData_read(np, x, a):
+
+# make an Actor for mobile particles at (0,0,0) with radius 1
+# this is for the result with quaternion
+def make_pActor ():
+    pSource = vtk.vtkSphereSource()
+    pSource.SetPhiResolution(20)
+    pSource.SetThetaResolution(20)
+
+    pGlyph = vtk.vtkGlyph3D()
+    pGlyph.SetSource(pSource.GetOutput())
+
+    #pGlyph.ScalingOn()
+    #pGlyph.SetScaleModeToScaleByScalar()
+
+    pos = vtk.vtkPoints()
+    pos.InsertNextPoint(0, 0, 0)
+
+    pData = vtk.vtkPolyData()
+    pData.SetPoints(pos)
+
+    diameter = vtk.vtkDoubleArray()
+    diameter.SetNumberOfComponents(1)
+    diameter.InsertNextTuple1(2.0)
+
+    pData.GetPointData().SetScalars(diameter)
+    pGlyph.SetInput(pData)
+
+    pNormals = vtk.vtkPolyDataNormals()
+    pNormals.SetInput(pGlyph.GetOutput())
+
+    ###########################################################################
+    # clip plane
+    plane = vtk.vtkPlane()
+    plane.SetOrigin(0, 0, 0)
+    plane.SetNormal(0, 1, 0) # upper side
+
+    clipper = vtk.vtkClipPolyData()
+    clipper.SetInput(pNormals.GetOutput())
+    clipper.SetClipFunction(plane)
+    clipper.GenerateClipScalarsOn()
+    clipper.GenerateClippedOutputOn()
+    clipper.SetValue(0)
+
+    clipMapper = vtk.vtkPolyDataMapper()
+    clipMapper.SetInput(clipper.GetOutput())
+    clipMapper.ScalarVisibilityOff()
+
+    clipActor = vtk.vtkActor()
+    clipActor.SetMapper(clipMapper)
+    clipActor.GetProperty().SetColor(peacock)
+
+    ###########################################################################
+    # clipped part
+    restMapper = vtk.vtkPolyDataMapper()
+    restMapper.SetInput(clipper.GetClippedOutput())
+    restMapper.ScalarVisibilityOff()
+
+    restActor = vtk.vtkActor()
+    restActor.SetMapper(restMapper)
+    restActor.GetProperty().SetColor(tomato)
+
+    ###########################################################################
+    # assembly
+    assembly = vtk.vtkAssembly()
+    assembly.AddPart(clipActor)
+    assembly.AddPart(restActor)
+    assembly.RotateX(90)
+
+    return assembly
+
+
+# make transform matrix (3x3) by quaternion
+def Q2M (q1,q2,q3,q4):
+    m = []
+
+    m.append(2.0*(q1*q1 + q4*q4 - .5))
+    m.append(2.0*(q1*q2 + q3*q4))
+    m.append(2.0*(q1*q3 - q2*q4))
+
+    m.append(2.0*(q1*q2 - q3*q4))
+    m.append(2.0*(q2*q2 + q4*q4 - .5))
+    m.append(2.0*(q2*q3 + q1*q4))
+
+    m.append(2.0*(q1*q3 + q2*q4))
+    m.append(2.0*(q2*q3 - q1*q4))
+    m.append(2.0*(q3*q3 + q4*q4 - .5))
+
+    return m
+
+
+# make pData for np particles
+def make_pData (np, x, a):
     pos = vtk.vtkPoints()
     diameter = vtk.vtkDoubleArray()
     diameter.SetNumberOfComponents(1)
@@ -41,7 +133,7 @@ def pData_read(np, x, a):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.6 2007/05/11 02:12:47 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.7 2007/05/13 23:13:47 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
@@ -105,47 +197,39 @@ def main():
     stokes.stokes_nc_get_l (nc, lattice)
     print 'lattice = ', lattice[0], lattice[1], lattice[2]
 
+    # x[] : center of particles
     x  = stokes.darray(nc.np  * nc.nvec)
+    # q[] : quaternion
+    if nc.flag_q != 0:
+        q  = stokes.darray(nc.np  * nc.nquat)
+    else:
+        q = []
+    # a[] : radius of mobile particles
     if nc.flag_a != 0:
         a = stokes.darray(nc.np)
         stokes.stokes_nc_get_data0 (nc, "a", a)
     else:
         a = []
+    # af[] : radius of fixed particles
     if nc.flag_af != 0:
         af = stokes.darray(nc.npf)
         stokes.stokes_nc_get_data0 (nc, "af", af)
     else:
         af = []
     
-    # then, make Actor
-    pSource = vtk.vtkSphereSource()
-    # pSource.SetPhiResolution(20)
-    # pSource.SetThetaResolution(20)
-
-    pGlyph = vtk.vtkGlyph3D()
-    pGlyph.SetSource(pSource.GetOutput())
-    # pGlyph.SetInput(pData)
-    pGlyph.ScalingOn()
-    pGlyph.SetScaleModeToScaleByScalar()
-
-    pMapper = vtk.vtkPolyDataMapper()
-    pMapper.ScalarVisibilityOff()
-    pMapper.SetInput(pGlyph.GetOutput())
-
-    pActor = vtk.vtkActor()
-    pActor.SetMapper(pMapper)
-
-    pActor.GetProperty().SetColor(1,1,1)
-    pActor.GetProperty().SetOpacity(1)
 
     # fixed particles
     if nc.npf > 0:
         xf0  = stokes.darray(nc.npf * nc.nvec)
         stokes.stokes_nc_get_data0 (nc, "xf0", xf0)
-        pfData = pData_read(nc.npf, xf0, af)
+        pfData = make_pData(nc.npf, xf0, af)
+
+        pfSource = vtk.vtkSphereSource()
+        pfSource.SetPhiResolution(20)
+        pfSource.SetThetaResolution(20)
 
         pfGlyph = vtk.vtkGlyph3D()
-        pfGlyph.SetSource(pSource.GetOutput()) # use the same pSource
+        pfGlyph.SetSource(pfSource.GetOutput())
         pfGlyph.SetInput(pfData)
         pfGlyph.ScalingOn()
         pfGlyph.SetScaleModeToScaleByScalar()
@@ -161,20 +245,55 @@ def main():
         pfActor.GetProperty().SetOpacity(1)
 
     
+    # then, make Actor
+    if nc.flag_q != 0:
+        # with quaternion
+        pActors = []
+        for i in range (nc.np):
+            pActors.append(make_pActor())
+    else:
+        # no quaternion in the result
+        pSource = vtk.vtkSphereSource()
+        #pSource.SetPhiResolution(20)
+        #pSource.SetThetaResolution(20)
+
+        pGlyph = vtk.vtkGlyph3D()
+        pGlyph.SetSource(pSource.GetOutput())
+        # pGlyph.SetInput(pData)
+        pGlyph.ScalingOn()
+        pGlyph.SetScaleModeToScaleByScalar()
+
+        pMapper = vtk.vtkPolyDataMapper()
+        pMapper.ScalarVisibilityOff()
+        pMapper.SetInput(pGlyph.GetOutput())
+
+        pActor = vtk.vtkActor()
+        pActor.SetMapper(pMapper)
+
+        pActor.GetProperty().SetColor(1,1,1)
+        pActor.GetProperty().SetOpacity(1)
+
+
     ## prepare renderer
     ren = vtk.vtkRenderer()
     win = vtk.vtkRenderWindow()
     win.AddRenderer(ren)
+
+    ren.SetBackground (0.1, 0.2, 0.4)
+    win.SetSize(480,360)
     # iren = vtk.vtkRenderWindowInteractor ()
     # iren.SetRenderWindow(win)
 
-    ren.AddActor(pActor)
+    if nc.flag_q != 0:
+        for i in range(nc.np):
+            ren.AddActor(pActors[i])
+    else:
+        ren.AddActor(pActor)
     if nc.npf > 0: ren.AddActor(pfActor)
-    ren.SetBackground (0.1, 0.2, 0.4)
-    win.SetSize(480,360)
 
     aCamera = vtk.vtkCamera()
     ren.SetActiveCamera (aCamera)
+
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
         # periodic boundary
         if lattice[0] > lattice[2]:
@@ -189,7 +308,22 @@ def main():
     while 1:
         for i in range(nc.ntime):
             stokes.stokes_nc_get_data (nc, "x", i, x)
-
+            if nc.flag_q != 0:
+                # with quaternion
+                for j in range (nc.np):
+                    stokes.stokes_nc_get_data (nc, "q", i, q)
+                    m = Q2M (q[j*4+0],q[j*4+1],q[j*4+2],q[j*4+3])
+                    t = vtk.vtkTransform()
+                    t.SetMatrix((m[0],m[3],m[6], x[j*3+0],
+                                 m[1],m[4],m[7], x[j*3+1],
+                                 m[2],m[5],m[8], x[j*3+2],
+                                 0.0, 0.0, 0.0,  1.0));
+                    pActors[j].SetUserTransform(t)
+            else:
+                # no quaternion in the result
+                pData = make_pData(nc.np, x, a)
+                pGlyph.SetInput(pData)
+    
             if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
                 # non-periodic boundary
                 (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
@@ -197,17 +331,14 @@ def main():
                     l = lx
                 else:                  
                     l = lz
-
+                # prevent to go far away
+                if l > 50: l = 50
+    
                 aCamera.SetFocalPoint (cx, cy,       cz)
                 aCamera.SetPosition   (cx, cy-3.0*l, cz+0.1*l)
-
-            pData = pData_read(nc.np, x, a)
-            pGlyph.SetInput(pData)
+    
             win.Render()
 
 
 if __name__ == "__main__":
     main()
-
-
-  
