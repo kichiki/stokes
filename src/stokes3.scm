@@ -1,11 +1,12 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.4 2007/05/04 02:32:14 kichiki Exp $
+; $Id: stokes3.scm,v 1.5 2007/05/14 07:57:03 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
 (define dt         1.0)     ; time interval
 (define nloop      1000)    ; main loop
+(define flag-Q     #f)      ; #t => output quaternion, #f => no quaternion.
 
 ;; core libstokes parameters
 (define version    "F")     ; version. "F", "FT", or "FTS"
