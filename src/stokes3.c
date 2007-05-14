@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.8 2007/05/12 04:33:35 kichiki Exp $
+ * $Id: stokes3.c,v 1.9 2007/05/14 07:56:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.8 2007/05/12 04:33:35 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.9 2007/05/14 07:56:43 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s init-file\n", argv0);
   fprintf (stderr, "\twhere init-file is a SCM file"
@@ -44,6 +44,9 @@ usage (const char *argv0)
   fprintf (stderr, "\toutfile    : filename for NetCDF output\n");
   fprintf (stderr, "\tdt         : time interval for outputs\n");
   fprintf (stderr, "\tnloop      : number of loops for dt\n");
+  fprintf (stderr,
+	   "\tflag-Q     : #t output quaternion,\n"
+	   "\t           : #f no quaternion in the output.\n");
   fprintf (stderr, "* core libstokes parameters\n");
   fprintf (stderr, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
   fprintf (stderr,
@@ -155,8 +158,7 @@ main (int argc, char** argv)
 
 
   // flag-relax
-  int flag_relax;
-  flag_relax = 0;
+  int flag_relax = 0;
   if (guile_get_bool ("flag-relax") != 0) // TRUE
     {
       flag_relax = 1;
@@ -187,16 +189,14 @@ main (int argc, char** argv)
   free (str_version);
 
   // flag-mat
-  int flag_mat;
-  flag_mat = 0;
+  int flag_mat = 0;
   if (guile_get_bool ("flag-mat") != 0) // TRUE
     {
       flag_mat = 1;
     }
 
   // flag-lub
-  int flag_lub;
-  flag_lub = 0;
+  int flag_lub = 0;
   if (guile_get_bool ("flag-lub") != 0) // TRUE
     {
       flag_lub = 1;
@@ -342,11 +342,22 @@ main (int argc, char** argv)
       sys->periodic = 0;
     }
 
+  // quaternion
+  int flag_Q = 0;
+  if (guile_get_bool ("flag-Q") != 0) // TRUE
+    {
+      if (version > 1) flag_Q = 1;
+      // set flag_Q = 1 for F version
+    }
 
-
-  // initialize the dependent variable for ODE y[], where
-  // for st==0, y[nm3]   =  x[nm3], positions of mobile particles,
-  // for st!=0, y[nm3*2] = (x[nm3],U[nm3]), for st != 0
+  /* initialize the dependent variable for ODE y[], where
+   * for flag_Q == 0,
+   *   for st==0, y[nm3  ] =  x[nm3], positions of mobile particles,
+   *   for st!=0, y[nm3*2] = (x[nm3],U[nm3]), for st != 0
+   * for flag_Q != 0,
+   *   for st==0, y[nm3  +nm4], quaternion[nm4] is added
+   *   for st!=0, y[nm3*2+nm4], quaternion[nm4] is added
+   */
   int n; // dimension for ODE integrator
   if (st <= 0.0)
     {
@@ -357,6 +368,13 @@ main (int argc, char** argv)
     {
       // position and velocity of mobile particles
       n = nm3 * 2;
+    }
+  int nq = 0; // defined for flag_Q!=0 by nm3 (for st==0), nm3*2 (for st!=0)
+  if (flag_Q != 0)
+    {
+      // follow the angles by quaternion
+      nq = n;
+      n += nm * 4;
     }
   double *y = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y, "main");
@@ -372,6 +390,16 @@ main (int argc, char** argv)
       for (i = 0; i < nm3; i ++)
 	{
 	  y[nm3 + i] = 0.0;
+	}
+    }
+  if (flag_Q != 0)
+    {
+      for (i = 0; i < nm; i ++)
+	{
+	  y[nq + i*4+0] = 0.0;
+	  y[nq + i*4+1] = 0.0;
+	  y[nq + i*4+2] = 0.0;
+	  y[nq + i*4+3] = 1.0;
 	}
     }
 
@@ -461,14 +489,15 @@ main (int argc, char** argv)
 
   int (*f_dydt)(double, const double *, double *, void *) = NULL;
   // note that dydt_hydro() and dydt_hydro_st() can handle bonds.
-  if (st > 0.0)
+  if (flag_Q == 0)
     {
-      f_dydt = dydt_hydro_st;
+      if (st > 0.0) f_dydt = dydt_hydro_st;
+      else          f_dydt = dydt_hydro;
     }
   else
     {
-      // st == 0
-      f_dydt = dydt_hydro;
+      if (st > 0.0) f_dydt = dydt_Q_hydro_st;
+      else          f_dydt = dydt_Q_hydro;
     }
 
   gsl_odeiv_system GSL_ODE_SYSTEM
@@ -535,7 +564,7 @@ main (int argc, char** argv)
   // initialize NetCDF and set the constant parameters
   struct stokes_nc *nc
     = stokes_nc_init (out_file, nm, nf,
-		      version, flag_poly, 0);
+		      version, flag_poly, flag_Q, 0);
   stokes_nc_set_ui0 (nc, Ui);
   stokes_nc_set_oi0 (nc, Oi);
   stokes_nc_set_ei0 (nc, Ei);
@@ -683,6 +712,10 @@ main (int argc, char** argv)
       // output the results
       stokes_nc_set_time (nc, l, t);
       stokes_nc_set_x (nc, l, y);
+      if (flag_Q != 0)
+	{
+	  stokes_nc_set_q (nc, l, y + nq);
+	}
 
       // flush the data
       nc_sync(nc->id);
