@@ -1,6 +1,6 @@
 /* 3D Display Program by OpenGL
  * Copyright (C) 1997-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stvis-glut.c,v 1.1 2006/10/26 01:56:41 kichiki Exp $
+ * $Id: stvis-glut.c,v 1.2 2007/05/15 07:31:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -438,7 +438,7 @@ void
 usage (const char * argv0)
 {
   fprintf (stderr, "VERSION:\n");
-  fprintf (stderr, "$Id: stvis-glut.c,v 1.1 2006/10/26 01:56:41 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stvis-glut.c,v 1.2 2007/05/15 07:31:47 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE:\n");
   fprintf (stderr, "%s [OPTIONS]\n", argv0);
   fprintf (stderr, "OPTIONS:\n");
@@ -527,7 +527,7 @@ main (int argc, char** argv)
 	}
       stokes_nc_get_data0 (nc, "xf0", xf0);
     }
-  stokes_nc_get_l (nc, lattice);
+  stokes_nc_get_array1d (nc, "l", lattice);
 
   glutInitWindowPosition (0, 0);
   glutInitWindowSize (500, 500);
