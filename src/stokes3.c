@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.10 2007/05/15 07:33:10 kichiki Exp $
+ * $Id: stokes3.c,v 1.11 2007/05/15 07:47:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.10 2007/05/15 07:33:10 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.11 2007/05/15 07:47:36 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -566,6 +566,8 @@ main (int argc, char** argv)
   GSL_ODE_EVOLVE = gsl_odeiv_evolve_alloc (n);
 
 
+  double t;
+  int l0;
   // initialize NetCDF and set the constant parameters
   struct stokes_nc *nc;
   if (nloop_arg > 0)
@@ -591,6 +593,18 @@ main (int argc, char** argv)
 		   out_file, init_file);
 	  exit (1);
 	}
+
+      // set the loop parameters
+      l0 = nc->ntime;
+      nloop = l0 + nloop_arg;
+      t  = stokes_nc_get_time_step (nc, l0);
+
+      // set the configuration at the current time
+      stokes_nc_get_data (nc, "x", l0, y);
+      if (flag_Q != 0)
+	{
+	  stokes_nc_get_data (nc, "q", l0, y + nq);
+	}
     }
   else
     {
@@ -601,17 +615,21 @@ main (int argc, char** argv)
 				    Ui, Oi, Ei, F, T, E,
 				    uf, of, ef, x + nm3, // xf
 				    lat);
+
+      // set the loop parameters
+      l0 = 0;
+      // nloop is given by the script
+      t = 0.0;
     }
   free (out_file);
 
 
   /* mail loop */
-  double t = 0.0;
   double h = dt / (double)ncol; // initial time step for ODE integrator
   double ddt = dt / (double)ncol; // time step for collision check for st != 0
   int l;
   double ptime0 = ptime_ms_d();
-  for (l = 0; l < nloop; l++)
+  for (l = l0; l < nloop; l++)
     {
       fprintf (stdout, "%d steps\n", l);
 
