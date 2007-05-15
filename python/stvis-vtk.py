@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.7 2007/05/13 23:13:47 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.8 2007/05/15 07:52:56 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -133,7 +133,7 @@ def make_pData (np, x, a):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.7 2007/05/13 23:13:47 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.8 2007/05/15 07:52:56 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
@@ -194,7 +194,7 @@ def main():
     #stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
     print 'ntime = ', nc.ntime
     lattice = stokes.darray(3)
-    stokes.stokes_nc_get_l (nc, lattice)
+    stokes.stokes_nc_get_array1d (nc, 'l', lattice)
     print 'lattice = ', lattice[0], lattice[1], lattice[2]
 
     # x[] : center of particles

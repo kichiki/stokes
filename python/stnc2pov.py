@@ -1,6 +1,6 @@
 # stokes-netcdf to pov converter
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stnc2pov.py,v 1.5 2007/05/13 23:14:10 kichiki Exp $
+# $Id: stnc2pov.py,v 1.6 2007/05/15 07:51:52 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -325,7 +325,7 @@ def move_camera (camera, lookat):
 
 
 def usage():
-    print '$Id: stnc2pov.py,v 1.5 2007/05/13 23:14:10 kichiki Exp $'
+    print '$Id: stnc2pov.py,v 1.6 2007/05/15 07:51:52 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     sys.exit ()
@@ -347,7 +347,7 @@ def main():
     #stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
 
     lattice = stokes.darray(3)
-    stokes.stokes_nc_get_l (nc, lattice)
+    stokes.stokes_nc_get_array1d (nc, 'l', lattice)
 
     # x[] : center of particles
     pos  = stokes.darray(nc.np  * nc.nvec)
@@ -380,9 +380,11 @@ def main():
             l = lattice[0]
         else:                  
             l = lattice[2]
-        #camera = [0.5 * lattice[0], -110, 0.5 * lattice[2]]
-        camera = [0.5 * lattice[0], -1.7*l, 0.5 * lattice[2]]
-        lookat = [0.5 * lattice[0],  0.0, 0.5 * lattice[2]]
+        #camera = [0.5 * lattice[0], -1.7*l, 0.5 * lattice[2]]
+        #camera = [0.5 * lattice[0], -1.1*l, 0.5 * lattice[2]]
+        #lookat = [0.5 * lattice[0],  0.0, 0.5 * lattice[2]]
+        camera = [0.5 * lattice[0], -0.8*l, 0.28 * lattice[2]]
+        lookat = [0.5 * lattice[0],  0.0, 0.3 * lattice[2]]
 
     for i in range(nc.ntime):
         file = 'test%04d.pov'%i
