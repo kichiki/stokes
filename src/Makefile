@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2007/04/20 02:15:07 kichiki Exp $
+# $Id: Makefile,v 1.8 2007/05/15 07:55:44 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
@@ -77,7 +77,9 @@ bench3:	$(bench3-OBJ)
 	$(LIBS)
 
 ## stokes3
-stokes3-OBJ =	stokes3.o
+stokes3-OBJ =	\
+	stokes3.o	\
+	file.o
 
 stokes3:	$(stokes3-OBJ)
 	$(LD) $(LDFLAGS)	\
