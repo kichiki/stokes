@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.9 2007/05/14 07:56:43 kichiki Exp $
+ * $Id: stokes3.c,v 1.10 2007/05/15 07:33:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,24 +21,25 @@
 #include <string.h> /* strcmp() */
 #include "memory-check.h"
 
-#include <libiter.h> /* iter_init() */
-#include <libstokes.h> /* struct stokes */
+#include <libstokes.h>
 #include <netcdf.h> // nc_sync()
 #include <libguile.h> // scm_init_guile()
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv.h>
 
+#include "file.h" // check_file()
 
 void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.9 2007/05/14 07:56:43 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.10 2007/05/15 07:33:10 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
-  fprintf (stderr, "%s init-file\n", argv0);
-  fprintf (stderr, "\twhere init-file is a SCM file"
-	   " (default: stokes3.scm)\n\n");
+  fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
+  fprintf (stderr, "\t-h or --help     : this message.\n");
+  fprintf (stderr, "\t-c or --continue : give nloop for continuation\n");
+  fprintf (stderr, "\tinit-file : SCM file (default: stokes3.scm)\n\n");
   fprintf (stderr, "Parameters in the init-file:\n");
   fprintf (stderr, "* output parameters\n");
   fprintf (stderr, "\toutfile    : filename for NetCDF output\n");
@@ -123,8 +124,6 @@ usage (const char *argv0)
 }
 
 
-
-
 /* main program */
 int
 main (int argc, char** argv)
@@ -134,6 +133,7 @@ main (int argc, char** argv)
   strcpy (init_file, "stokes3.scm"); // default
 
   int i;
+  int nloop_arg = 0;
   for (i = 1; i < argc; i++)
     {
       if (strcmp (argv [i], "-h") == 0 ||
@@ -141,6 +141,11 @@ main (int argc, char** argv)
 	{
 	  usage (argv[0]);
 	  exit (1);
+	}
+      else if (strcmp (argv [i], "-c") == 0 ||
+	  strcmp (argv [i], "--continue") == 0)
+	{
+	  nloop_arg = atoi (argv [++i]);
 	}
       else
 	{
@@ -300,7 +305,7 @@ main (int argc, char** argv)
 
 
   // radius of ALL particles (BOTH mobile and fixed)
-  int flag_poly = 0; // for stokes_nc_init()
+  //int flag_poly = 0; // for stokes_nc_init()
   double *a = (double *)malloc (sizeof (double) * np);
   CHECK_MALLOC (a, "main");
   if (guile_get_doubles ("a", np, a) != 1) // FALSE
@@ -311,7 +316,7 @@ main (int argc, char** argv)
   else
     {
       // the system is polydisperse
-      flag_poly = 1;
+      //flag_poly = 1;
       stokes_set_radius (sys, a);
     }
   free (a);
@@ -562,82 +567,42 @@ main (int argc, char** argv)
 
 
   // initialize NetCDF and set the constant parameters
-  struct stokes_nc *nc
-    = stokes_nc_init (out_file, nm, nf,
-		      version, flag_poly, flag_Q, 0);
-  stokes_nc_set_ui0 (nc, Ui);
-  stokes_nc_set_oi0 (nc, Oi);
-  stokes_nc_set_ei0 (nc, Ei);
-  if (nf == 0)
+  struct stokes_nc *nc;
+  if (nloop_arg > 0)
     {
-      // mobility problem (no fixed particles)
-      if (flag_poly != 0)
+      // continuation
+      if (check_file (out_file) == 0)
 	{
-	  stokes_nc_set_a (nc, sys->a);
+	  fprintf (stderr, "result file %s does not exist.\n", out_file);
+	  exit (1);
 	}
+      nc = stokes_nc_reopen (out_file);
 
-      if (version == 0)
+      if (stokes_nc_check_params (nc, sys,
+				  flag_Q,
+				  Ui, Oi, Ei, F, T, E,
+				  uf, of, ef, x + nm3, // xf
+				  lat,
+				  1.0e-16)
+	  != 0)
 	{
-	  // F version
-	  stokes_nc_set_f0 (nc, F);
-	}
-      else if (version == 1)
-	{
-	  // FT version
-	  stokes_nc_set_f0 (nc, F);
-	  stokes_nc_set_t0 (nc, T);
-	}
-      else
-	{
-	  // FTS version
-	  stokes_nc_set_f0 (nc, F);
-	  stokes_nc_set_t0 (nc, T);
-	  stokes_nc_set_e0 (nc, E);
+	  fprintf (stderr, "result file %s does not match to"
+		   " the init script %s\n",
+		   out_file, init_file);
+	  exit (1);
 	}
     }
   else
     {
-      // mix problem (with fixed particles)
-      if (flag_poly != 0)
-	{
-	  stokes_nc_set_a (nc, sys->a);
-	  stokes_nc_set_af (nc, sys->a + sys->nm);
-	}
-
-      if (version == 0)
-	{
-	  // F version
-	  stokes_nc_set_f0 (nc, F);
-	  stokes_nc_set_uf0 (nc, uf);
-	}
-      else if (version == 1)
-	{
-	  // FT version
-	  stokes_nc_set_f0 (nc, F);
-	  stokes_nc_set_t0 (nc, T);
-	  stokes_nc_set_uf0 (nc, uf);
-	  stokes_nc_set_of0 (nc, of);
-	}
-      else
-	{
-	  // FTS version
-	  stokes_nc_set_f0 (nc, F);
-	  stokes_nc_set_t0 (nc, T);
-	  stokes_nc_set_e0 (nc, E);
-	  stokes_nc_set_uf0 (nc, uf);
-	  stokes_nc_set_of0 (nc, of);
-	  stokes_nc_set_ef0 (nc, ef);
-	}
-      stokes_nc_set_xf0 (nc, x + nm*3);
+      // create new stokes_nc
+      nc = stokes_nc_set_by_params (out_file,
+				    sys,
+				    flag_Q,
+				    Ui, Oi, Ei, F, T, E,
+				    uf, of, ef, x + nm3, // xf
+				    lat);
     }
   free (out_file);
-
-  // non-periodic system
-  if (sys->periodic == 1)
-    {
-      stokes_nc_set_l (nc, lat);
-    }
-
 
 
   /* mail loop */
