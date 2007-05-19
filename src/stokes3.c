@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.11 2007/05/15 07:47:36 kichiki Exp $
+ * $Id: stokes3.c,v 1.12 2007/05/19 05:25:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,10 +34,11 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.11 2007/05/15 07:47:36 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.12 2007/05/19 05:25:07 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
+  fprintf (stderr, "\t-o or --output   : overwrite the file name for output\n");
   fprintf (stderr, "\t-c or --continue : give nloop for continuation\n");
   fprintf (stderr, "\tinit-file : SCM file (default: stokes3.scm)\n\n");
   fprintf (stderr, "Parameters in the init-file:\n");
@@ -134,6 +135,7 @@ main (int argc, char** argv)
 
   int i;
   int nloop_arg = 0;
+  char *out_file = NULL;
   for (i = 1; i < argc; i++)
     {
       if (strcmp (argv [i], "-h") == 0 ||
@@ -147,6 +149,14 @@ main (int argc, char** argv)
 	{
 	  nloop_arg = atoi (argv [++i]);
 	}
+      else if (strcmp (argv [i], "-o") == 0 ||
+	  strcmp (argv [i], "--output") == 0)
+	{
+	  i++;
+	  int len = strlen (argv [i]);
+	  out_file = (char *)malloc (sizeof (char) * (len + 1));
+	  strcpy (out_file, argv [i]);
+	}
       else
 	{
 	  strcpy (init_file, argv [i]);
@@ -158,9 +168,14 @@ main (int argc, char** argv)
   scm_c_primitive_load (init_file); // load initialize script
 
   // outfile
-  char * out_file;
-  out_file = guile_get_string ("outfile");
-
+  if (out_file == NULL)
+    {
+      out_file = guile_get_string ("outfile");
+    }
+  else
+    {
+      fprintf (stderr, "outfile is overwritten by %s\n", out_file);
+    }
 
   // flag-relax
   int flag_relax = 0;
@@ -259,8 +274,8 @@ main (int argc, char** argv)
     }
 
 
-  int np = guile_get_int ("np",         0);
-  int nm = guile_get_int ("nm",         0);
+  int np = guile_get_int ("np", 0);
+  int nm = guile_get_int ("nm", 0);
 
   int np3 = np * 3;
   int nm3 = nm * 3;
@@ -596,14 +611,17 @@ main (int argc, char** argv)
 
       // set the loop parameters
       l0 = nc->ntime;
+      /* l0 is the starting index because index starts from 0
+       * so that we need to access "l0-1" to get the last step infos
+       */
       nloop = l0 + nloop_arg;
-      t  = stokes_nc_get_time_step (nc, l0);
+      t  = stokes_nc_get_time_step (nc, l0-1);
 
       // set the configuration at the current time
-      stokes_nc_get_data (nc, "x", l0, y);
+      stokes_nc_get_data (nc, "x", l0-1, y);
       if (flag_Q != 0)
 	{
-	  stokes_nc_get_data (nc, "q", l0, y + nq);
+	  stokes_nc_get_data (nc, "q", l0-1, y + nq);
 	}
     }
   else
@@ -631,7 +649,7 @@ main (int argc, char** argv)
   double ptime0 = ptime_ms_d();
   for (l = l0; l < nloop; l++)
     {
-      fprintf (stdout, "%d steps\n", l);
+      fprintf (stdout, "%d steps\n", l + 1);
 
       // integrate from t to t_out
       double t_out = t + dt;
