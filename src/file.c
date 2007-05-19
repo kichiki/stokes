@@ -1,6 +1,6 @@
 /* some I/O utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: file.c,v 1.1 2007/05/15 07:19:06 kichiki Exp $
+ * $Id: file.c,v 1.2 2007/05/19 05:24:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -92,9 +92,10 @@ check_file (const char * name)
     }
   free (path);
 
-  struct dirent *dp = readdir (dirp);
-  while (dp != NULL)
+  struct dirent *dp;
+  while ((dp = readdir (dirp)) != NULL)
     {
+      //fprintf (stderr, "#24 %s ?= %s\n", dp->d_name, file);
       if (
 #ifdef _D_EXACT_NAMLEN
 	  /* for LINUX */
@@ -111,6 +112,7 @@ check_file (const char * name)
     }
   closedir (dirp);
   free (file);
+
   return 0; /* NOT_FOUND */
 }
 
