@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.12 2007/05/19 05:25:07 kichiki Exp $
+ * $Id: stokes3.c,v 1.13 2007/08/12 19:45:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.12 2007/05/19 05:25:07 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.13 2007/08/12 19:45:14 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -438,13 +438,29 @@ main (int argc, char** argv)
       i3 = i * 3;
       i5 = i * 5;
 
-      F [i3  ] = F0 [0];
-      F [i3+1] = F0 [1];
-      F [i3+2] = F0 [2];
+      if (sys->a == NULL)
+	{
+	  F [i3  ] = F0 [0];
+	  F [i3+1] = F0 [1];
+	  F [i3+2] = F0 [2];
 
-      T [i3  ] = T0 [0];
-      T [i3+1] = T0 [1];
-      T [i3+2] = T0 [2];
+	  T [i3  ] = T0 [0];
+	  T [i3+1] = T0 [1];
+	  T [i3+2] = T0 [2];
+	}
+      else
+	{
+	  double rad = sys->a[i];
+	  double a3 = rad*rad*rad;
+	  F [i3  ] = F0 [0] *a3;
+	  F [i3+1] = F0 [1] *a3;
+	  F [i3+2] = F0 [2] *a3;
+
+	  double a4 = a3 * rad;
+	  T [i3  ] = T0 [0] *a4;
+	  T [i3+1] = T0 [1] *a4;
+	  T [i3+2] = T0 [2] *a4;
+	}
 
       E [i5  ] = 0.0;
       E [i5+1] = 0.0;
