@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.rb,v 1.6 2007/04/20 02:21:20 kichiki Exp $
+# $Id: test-stokes.rb,v 1.7 2007/08/12 20:06:59 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -41,8 +41,8 @@ Stokes::stokes_set_xi(sys, xi, ewald_eps)
 
 print "xi = ", xi, "\n"
 
-sys.lubmin = 2.0000000001
-sys.lubmax = 4.0
+sys.lubmin2 = 4.0000000001
+sys.lubmax  = 4.0
 Stokes::stokes_set_iter(sys, "gmres", 2000, 20, 1.0e-6,
                         1, Stokes::get_stdout())
 
@@ -101,7 +101,14 @@ end
 Stokes::stokes_set_pos(sys, pos)
 Stokes::solve_res_3f(sys, u, f)
 
-nc_f = Stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", np)
+#nc_f = Stokes::stokes_nc_mob_f_init("test-stokes.res-3f.nc", np)
+nc_f = Stokes::stokes_nc_init("test-stokes.res-3f.nc",
+                              np,
+                              0, # nf
+                              0, # version
+                              0, # flag_poly
+                              0, # flag_Q
+                              0) # flag_it (time-dependent imposed flow)
 # f0, x, u are active
 Stokes::stokes_nc_set_f0(nc_f, f)
 Stokes::stokes_nc_set_time(nc_f, 0, 0.0)

@@ -1,6 +1,6 @@
 ; test code for libstokes
 ; Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.7 2007/04/20 02:17:23 kichiki Exp $
+; $Id: test-stokes.scm,v 1.8 2007/08/12 19:56:25 kichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -54,11 +54,11 @@
 (display xi)
 (newline)
 
-;(stokes-lubmin-set sys 2.0000000001)
-;(stokes-lubmin-get sys)
+;(stokes-lubmin2-set sys 4.0000000001)
+;(stokes-lubmin2-get sys)
 ; with '-emit-setter' on swig, you can write those as
-(set! (stokes-lubmin sys) 2.0000000001)
-;(stokes-lubmin sys)
+(set! (stokes-lubmin2 sys) 4.0000000001)
+;(stokes-lubmin2 sys)
 (set! (stokes-lubmax sys) 4.0)
 ;(stokes-lubmax sys)
 
@@ -117,7 +117,15 @@
 (stokes-set-pos sys pos)
 (solve-res-3f sys u f)
 
-(define nc-f (stokes-nc-mob-f-init "test-stokes.res-3f.nc" np))
+;(define nc-f (stokes-nc-mob-f-init "test-stokes.res-3f.nc" np))
+(define nc-f (stokes-nc-init "test-stokes.res-3f.nc"
+			     np
+			     0 ; nf
+			     0 ; version
+			     0 ; flag_poly
+			     0 ; flag_Q
+			     0 ; flag_it (time-dependent imposed flow)
+			     ))
 ;; f0, x, u are active
 
 (stokes-nc-set-f0 nc-f f)

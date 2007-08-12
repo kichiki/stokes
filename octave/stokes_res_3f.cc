@@ -1,6 +1,6 @@
 /* octave wrapper of calc_res_3f()
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes_res_3f.cc,v 1.2 2007/04/20 02:18:26 kichiki Exp $
+ * $Id: stokes_res_3f.cc,v 1.3 2007/08/12 19:59:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,8 +115,8 @@ f = stokes_res_3f (pos, u, l)\n\
   double ewald_eps = 1.0e-12;
   stokes_set_xi (sys, xi, ewald_eps);
 
-  sys->lubmin = 2.0000000001;
-  sys->lubmax = 4.0;
+  sys->lubmin2 = 4.0000000001;
+  sys->lubmax  = 4.0;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
