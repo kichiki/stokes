@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2007/05/15 07:55:44 kichiki Exp $
+# $Id: Makefile,v 1.9 2007/08/12 19:51:59 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
@@ -27,7 +27,7 @@ CFLAGS	     = -Wall\
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.1 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
 
 LDFLAGS      =
