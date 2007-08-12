@@ -1,3 +1,27 @@
+2007-08-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.5-RELEASE.
+
+2007-04-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.scm: 1.7 2007/04/20 02:17:23 kichiki Exp
+	update for the current libstokes.
+
+2007-03-07  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-stokes.scm: 1.6 2007/03/08 00:42:36 kichiki Exp
+	update for the new libstokes (coming version 0.5).
+
+	* Makefile: 1.2 2007/03/08 00:42:17 kichiki Exp
+	update for ATLAS in FreeBSD.
+
+2006-10-23  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.4-RELEASE
+
+	* test-stokes.scm: 1.5 2006/10/23 17:21:47 kichiki Exp
+	update for libstokes-0.4.
+
 2006-10-19  Kengo Ichiki  <ichiki@tpr60>
 
 	* test-stokes.scm: 1.4 2006/10/19 18:53:21 ichiki Exp
