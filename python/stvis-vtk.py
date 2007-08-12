@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.8 2007/05/15 07:52:56 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.9 2007/08/12 19:36:19 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,7 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 import vtk
-from vtk.util.colors import peacock, tomato
+#from vtk.util.colors import peacock, tomato
+from vtk.util.colors import *
 import sys
 import math
 #sys.path.append('/somewhere/ryuon/stokes/python')
@@ -133,9 +134,10 @@ def make_pData (np, x, a):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.8 2007/05/15 07:52:56 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.9 2007/08/12 19:36:19 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
+    print '\t-p or --pic  : generate PNG images'
     sys.exit ()
 
 
@@ -181,11 +183,15 @@ def bounding_box (np, x):
 
 def main():
     filename = ''
+    flag_pic = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
             i += 2
+        elif sys.argv[i] == '-p' or sys.argv[i] == '--pic':
+            flag_pic = 1
+            i += 1
         else:
             usage()
     if filename == '': usage()
@@ -207,17 +213,16 @@ def main():
     # a[] : radius of mobile particles
     if nc.flag_a != 0:
         a = stokes.darray(nc.np)
-        stokes.stokes_nc_get_data0 (nc, "a", a)
+        stokes.stokes_nc_get_array1d (nc, "a", a)
     else:
         a = []
     # af[] : radius of fixed particles
     if nc.flag_af != 0:
         af = stokes.darray(nc.npf)
-        stokes.stokes_nc_get_data0 (nc, "af", af)
+        stokes.stokes_nc_get_array1d (nc, "af", af)
     else:
         af = []
     
-
     # fixed particles
     if nc.npf > 0:
         xf0  = stokes.darray(nc.npf * nc.nvec)
@@ -294,6 +299,65 @@ def main():
     aCamera = vtk.vtkCamera()
     ren.SetActiveCamera (aCamera)
 
+    # periodic box
+    if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
+        CubeModel = vtk.vtkCubeSource()
+        CubeModel.SetXLength(lattice[0])
+        CubeModel.SetYLength(lattice[1])
+        CubeModel.SetZLength(lattice[2])
+        CubeModel.SetCenter(.5*lattice[0], .5*lattice[1], .5*lattice[2])
+        Edges = vtk.vtkExtractEdges()
+        Edges.SetInput(CubeModel.GetOutput())
+        Tubes = vtk.vtkTubeFilter()
+        Tubes.SetInput(Edges.GetOutput())
+        #Tubes.SetRadius(.01)
+        Tubes.SetRadius(.1)
+        Tubes.SetNumberOfSides(6)
+        Tubes.UseDefaultNormalOn()
+        Tubes.SetDefaultNormal(.577, .577, .577)
+        # Create the mapper and actor to display the cube edges.
+        TubeMapper = vtk.vtkPolyDataMapper()
+        TubeMapper.SetInput(Tubes.GetOutput())
+        CubeEdges = vtk.vtkActor()
+        CubeEdges.SetMapper(TubeMapper)
+        CubeEdges.GetProperty().SetDiffuseColor(khaki)
+        CubeEdges.GetProperty().SetSpecular(.4)
+        CubeEdges.GetProperty().SetSpecularPower(10)
+        ren.AddActor(CubeEdges)
+
+    # axes
+    #axes = vtk.vtkAxes()
+    #axes.SetOrigin(0,0,0)
+    #axes.SetScaleFactor(4)
+    #axesTubes = vtk.vtkTubeFilter()
+    #axesTubes.SetInput(axes.GetOutput())
+    #axesTubes.SetRadius(axes.GetScaleFactor()/25.0)
+    #axesTubes.SetNumberOfSides(6)
+    #axesMapper = vtk.vtkPolyDataMapper()
+    #axesMapper.SetInput(axesTubes.GetOutput())
+    #axesActor = vtk.vtkActor()
+    #axesActor.SetMapper(axesMapper)
+    #ren.AddActor(axesActor)
+
+    # text
+    textActor = vtk.vtkTextActor()
+    #textActor.SetInput (text)
+    textActor.ScaledTextOn()
+    textActor.SetDisplayPosition(5, 5)
+    # Set coordinates to match the old vtk.vtkScaledTextActor default value
+    textActor.GetPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
+    textActor.GetPosition2Coordinate().SetValue(0.6, 0.1)
+    tprop = textActor.GetTextProperty()
+    tprop.SetFontSize(18)
+    tprop.SetFontFamilyToArial()
+    tprop.SetJustificationToCentered()
+    tprop.BoldOn()
+    tprop.ItalicOn()
+    tprop.ShadowOn()
+    #tprop.SetColor(0, 0, 1)
+    ren.AddActor(textActor)
+
+
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
         # periodic boundary
         if lattice[0] > lattice[2]:
@@ -307,18 +371,19 @@ def main():
     # loop
     while 1:
         for i in range(nc.ntime):
+            t = stokes.stokes_nc_get_time_step (nc, i)
             stokes.stokes_nc_get_data (nc, "x", i, x)
             if nc.flag_q != 0:
                 # with quaternion
                 for j in range (nc.np):
                     stokes.stokes_nc_get_data (nc, "q", i, q)
                     m = Q2M (q[j*4+0],q[j*4+1],q[j*4+2],q[j*4+3])
-                    t = vtk.vtkTransform()
-                    t.SetMatrix((m[0],m[3],m[6], x[j*3+0],
-                                 m[1],m[4],m[7], x[j*3+1],
-                                 m[2],m[5],m[8], x[j*3+2],
-                                 0.0, 0.0, 0.0,  1.0));
-                    pActors[j].SetUserTransform(t)
+                    trans = vtk.vtkTransform()
+                    trans.SetMatrix((m[0],m[3],m[6], x[j*3+0],
+                                     m[1],m[4],m[7], x[j*3+1],
+                                     m[2],m[5],m[8], x[j*3+2],
+                                     0.0, 0.0, 0.0,  1.0));
+                    pActors[j].SetUserTransform(trans)
             else:
                 # no quaternion in the result
                 pData = make_pData(nc.np, x, a)
@@ -336,8 +401,17 @@ def main():
     
                 aCamera.SetFocalPoint (cx, cy,       cz)
                 aCamera.SetPosition   (cx, cy-3.0*l, cz+0.1*l)
-    
+            textActor.SetInput ('time: %.1f'%t)
             win.Render()
+
+            if flag_pic == 1:
+                w2if = vtk.vtkWindowToImageFilter()
+                w2if.SetInput(win)
+                wr = vtk.vtkPNGWriter()
+                wr.SetInput(w2if.GetOutput())
+                wr.SetFileName('%s-%05d.png'%(filename,i))
+                wr.Write()
+                
 
 
 if __name__ == "__main__":
