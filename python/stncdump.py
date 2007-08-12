@@ -1,6 +1,6 @@
 # dump stokes-netcdf
 # Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stncdump.py,v 1.5 2007/05/15 07:53:21 kichiki Exp $
+# $Id: stncdump.py,v 1.6 2007/08/12 19:38:43 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ import stokes
 
 
 def usage():
-    print '$Id: stncdump.py,v 1.5 2007/05/15 07:53:21 kichiki Exp $'
+    print '$Id: stncdump.py,v 1.6 2007/08/12 19:38:43 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-line        : all particles are in a single line for each time\n'\
@@ -54,8 +54,19 @@ def main():
     if filename == '': usage()
 
     nc = stokes.stokes_nc_open (filename)
+
+    # pos[] : center of particles
     pos = stokes.darray(nc.np  * nc.nvec)
 
+    # q[] : quaternion
+    if nc.flag_q != 0:
+        q  = stokes.darray(nc.np  * nc.nquat)
+    else:
+        q = []
+
+    # lattice
+    lattice = stokes.darray(3)
+    stokes.stokes_nc_get_array1d (nc, 'l', lattice)
 
     # extract the config at the step
     if step >= 0:
@@ -65,6 +76,8 @@ def main():
 
         # read the config at the step
         stokes.stokes_nc_get_data (nc, "x", step, pos)
+        if nc.flag_q != 0:
+            stokes.stokes_nc_get_data (nc, "q", step, q)
 
         # print the config
         # print arguments as a comment
@@ -78,50 +91,72 @@ def main():
             print '  %f %f %f ; %d'%(pos[i*3],pos[i*3+1],pos[i*3+2],i)
         print '))'
 
+        if nc.flag_q != 0:
+            stokes.stokes_nc_get_data (nc, "q", step, q)
+            print '(define q #('
+            for i in range(nc.np):
+                print '  %f %f %f %f ; %d'\
+                      %(q[i*4],q[i*4+1],q[i*4+2],q[i*4+3],i)
+            print '))'
         sys.exit(1)
         # done!
 
-    # print some general informations
-    stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
-    print ''
-    print 'ntime = %d'%(nc.ntime)
-    print ''
+    if flag_line == 0:
+        # print some general informations
+        stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
+        print ''
+        print 'ntime = %d'%(nc.ntime)
+        print ''
 
-    # imposed flows
-    if nc.flag_ui0 == 1:
-        ui0 = stokes.darray(3)
-        stokes.stokes_nc_get_array1d (nc, "Ui0", ui0)
-        print 'ui0 = %f %f %f'%(ui0[0], ui0[1], ui0[2])
-    if nc.flag_oi0 == 1:
-        oi0 = stokes.darray(3)
-        stokes.stokes_nc_get_array1d (nc, "Oi0", oi0)
-        print 'oi0 = %f %f %f'%(oi0[0], oi0[1], oi0[2])
-    if nc.flag_ei0 == 1:
-        ei0 = stokes.darray(5)
-        stokes.stokes_nc_get_array1d (nc, "Ei0", ei0)
-        print 'ei0 = %f %f %f %f %f'%(ei0[0], ei0[1], ei0[2], ei0[3], ei0[4])
-    print ''
+        # imposed flows
+        if nc.flag_ui0 == 1:
+            ui0 = stokes.darray(3)
+            stokes.stokes_nc_get_array1d (nc, "Ui0", ui0)
+            print 'ui0 = %f %f %f'%(ui0[0], ui0[1], ui0[2])
+        if nc.flag_oi0 == 1:
+            oi0 = stokes.darray(3)
+            stokes.stokes_nc_get_array1d (nc, "Oi0", oi0)
+            print 'oi0 = %f %f %f'%(oi0[0], oi0[1], oi0[2])
+        if nc.flag_ei0 == 1:
+            ei0 = stokes.darray(5)
+            stokes.stokes_nc_get_array1d (nc, "Ei0", ei0)
+            print 'ei0 = %f %f %f %f %f'\
+                  %(ei0[0], ei0[1], ei0[2], ei0[3], ei0[4])
+        print ''
 
-    lattice = stokes.darray(3)
-    stokes.stokes_nc_get_array1d (nc, 'l', lattice)
-    print 'lattice %f %f %f\n'%(lattice[0], lattice[3], lattice[2])
+        print 'lattice %f %f %f\n'%(lattice[0], lattice[3], lattice[2])
 
     # print the infos about the output format
     if flag_line == 0:
-        print '# t, i, x, y, z'
+        if nc.flag_q != 0:
+            print '# t, i, x, y, z, q1, q2, q3, q4'
+        else:
+            print '# t, i, x, y, z'
     else:
-        print '# t, x, y, z (for particle 0), x, y, z (for 1), ... upto particle %d'%(nc.np)
+        if nc.flag_q != 0:
+            print '# t, x, y, z, q1, q2, q3, q4 (for particle 0),'\
+                  ' ... upto particle %d'%(nc.np)
+        else:
+            print '# t, x, y, z (for particle 0), x, y, z (for 1),'\
+                  ' ... upto particle %d'%(nc.np)
 
     for i in range(nc.ntime):
         t = stokes.stokes_nc_get_time_step (nc, i)
 
         stokes.stokes_nc_get_data (nc, "x", i, pos)
+        if nc.flag_q != 0:
+            stokes.stokes_nc_get_data (nc, "q", i, q)
+
         if flag_line == 0:
             for j in range(nc.np):
                 x = pos[j*3]
                 y = pos[j*3+1]
                 z = pos[j*3+2]
-                print '%f %d %f %f %f'%(t, j, x, y, z)
+                if nc.flag_q != 0:
+                    print '%f %d %f %f %f %f %f %f %f'\
+                          %(t, j, x, y, z, q[0], q[1], q[2], q[3])
+                else:
+                    print '%f %d %f %f %f'%(t, j, x, y, z)
         else:
             print t,
             for j in range(nc.np):
@@ -129,6 +164,8 @@ def main():
                 y = pos[j*3+1]
                 z = pos[j*3+2]
                 print x, y, z,
+                if nc.flag_q != 0:
+                    print q[0], q[1], q[2], q[3],
             print ''
 
 
