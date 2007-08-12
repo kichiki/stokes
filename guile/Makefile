@@ -1,5 +1,5 @@
 # makefile for guile binding of libstokes
-# $Id: Makefile,v 1.2 2007/03/08 00:42:17 kichiki Exp $
+# $Id: Makefile,v 1.3 2007/08/12 19:57:15 kichiki Exp $
 SWIG		= /usr/local/bin/swig
 GUILE		= /usr/local/bin/guile
 CC		= /usr/bin/cc
@@ -8,7 +8,7 @@ CC		= /usr/bin/cc
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.1 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
 
 LIB_STOKES	= \

@@ -1,5 +1,5 @@
 # makefile for octave binding of libstokes
-# $Id: Makefile,v 1.2 2007/03/08 00:53:08 kichiki Exp $
+# $Id: Makefile,v 1.3 2007/08/12 19:59:54 kichiki Exp $
 MKOCTFILE	= /usr/local/bin/mkoctfile
 OCTAVE		= /usr/local/bin/octave
 
@@ -7,7 +7,7 @@ OCTAVE		= /usr/local/bin/octave
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.1 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
 
 LIB_STOKES	= \
