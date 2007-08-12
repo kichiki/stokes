@@ -1,6 +1,6 @@
 # stokes-netcdf to pov converter
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stnc2pov.py,v 1.6 2007/05/15 07:51:52 kichiki Exp $
+# $Id: stnc2pov.py,v 1.7 2007/08/12 19:37:34 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,6 +19,23 @@ import sys
 #sys.path.append('/somewhere/ryuon/stokes/python')
 import stokes
 
+
+def write_T_Balls(f, n):
+    f.write('#declare T_Ball_%d = texture {\n'%(n))
+    f.write('  pigment {\n'\
+            '    image_map {\n'\
+            '      jpeg \"textures/%d.jpg\"\n'\
+            '      map_type 1\n'\
+            '      interpolate 2\n'\
+            '    }\n'\
+            '    rotate <0, 270, 0>\n'\
+            '  }\n'%(n))
+    f.write('  finish {\n'\
+            '    phong 0.9\n'\
+            '    ambient 0.5\n'\
+            '    reflection 0.2\n'\
+            '  }\n'\
+            '}\n')
 
 def write_T_Particle(f):
     f.write('#declare T_Particle = texture {\n'\
@@ -115,8 +132,9 @@ def bounding_box (np, x):
 #  f : file
 #  lattice = (lx,ly,lz) in simulation coordinates
 #  camera = (cx,cy,cz)  
-#  lookat = (lax,lay,laz) 
-def write_pov_header (f, lattice, camera, lookat):
+#  lookat = (lax,lay,laz)
+#  flag_ball : 0 => checker, 1 => pool balls
+def write_pov_header (f, lattice, camera, lookat, flag_ball=0):
     # note that in POVRAY,
     # y is the vertical direction
     # z is the depth direction
@@ -184,8 +202,12 @@ def write_pov_header (f, lattice, camera, lookat):
     f.write('light_source { <2, 4.9, -3> color White}\n\n')
 
     write_T_Particle(f)
-    write_M_RYUON (f)
-    write_T_CHECKER(f)
+    if flag_ball == 0:
+        write_M_RYUON (f)
+        write_T_CHECKER(f)
+    else:
+        for i in range(16):
+            write_T_Balls(f,i)
 
 
 # INPUT
@@ -193,7 +215,8 @@ def write_pov_header (f, lattice, camera, lookat):
 #  lattice = (lx,ly,lz) in simulation coordinates
 #  camera = (cx,cy,cz)  
 #  lookat = (lax,lay,laz) 
-def write_pov_header_open (f, lattice, camera, lookat):
+#  flag_ball : 1 => pool balls
+def write_pov_header_open (f, lattice, camera, lookat, flag_ball=0):
     # note that in POVRAY,
     # y is the vertical direction
     # z is the depth direction
@@ -229,8 +252,12 @@ def write_pov_header_open (f, lattice, camera, lookat):
     f.write('light_source { <2, 4.9, -3> color White}\n\n')
 
     write_T_Particle(f)
-    write_M_RYUON (f)
-    write_T_CHECKER(f)
+    if flag_ball == 0:
+        write_M_RYUON (f)
+        write_T_CHECKER(f)
+    else:
+        for i in range(15):
+            write_T_Balls(f,i+1)
 
 
 def write_pov_particle (f, x, y, z, a):
@@ -303,8 +330,25 @@ def write_pov_particle_Q (f, x, y, z, a, q):
     f.write('    matrix <%f, %f, %f,\n'%(m[0], m[3], m[6]))
     f.write('            %f, %f, %f,\n'%(m[1], m[4], m[7]))
     f.write('            %f, %f, %f,\n'%(m[2], m[5], m[8]))
-    f.write('            %f, %f, %f> }\n}\n'%(x/100.0, z/100.0, y/100.0))
-    
+    f.write('            %f, %f, %f> }\n'%(x/100.0, z/100.0, y/100.0))
+    f.write('}\n')
+
+def write_pov_particle_Balls_Q (f, x, y, z, a, q, i):
+    n = i%15 + 1
+    # note that in POVRAY,
+    # y is the vertical direction
+    # z is the depth direction
+    # scale factor = 1/100 (0.01 radius = 1 in POV)
+    m = Q2M (q[0], q[1], q[2], q[3])
+    f.write('sphere {\n')
+    f.write('  <0, 0, 0>, %f\n'%(a/100.0))
+    f.write('  texture { T_Ball_%d }\n'%(n))
+    f.write('  transform {\n')
+    f.write('    matrix <%f, %f, %f,\n'%(m[0], m[3], m[6]))
+    f.write('            %f, %f, %f,\n'%(m[1], m[4], m[7]))
+    f.write('            %f, %f, %f,\n'%(m[2], m[5], m[8]))
+    f.write('            %f, %f, %f> }\n'%(x/100.0, z/100.0, y/100.0))
+    f.write('}\n')
 
 # now camera angle
 # init:   <0.17,  0.50, -1.10>  <0.17,  0.50, 0.0>
@@ -325,20 +369,25 @@ def move_camera (camera, lookat):
 
 
 def usage():
-    print '$Id: stnc2pov.py,v 1.6 2007/05/15 07:51:52 kichiki Exp $'
+    print '$Id: stnc2pov.py,v 1.7 2007/08/12 19:37:34 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
+    print '\t-b or --ball : use pool balls'
     sys.exit ()
 
 
 def main():
     filename = ''
+    flag_ball = 0
     nm = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
             i += 2
+        elif sys.argv[i] == '-b' or sys.argv[i] == '--ball':
+            flag_ball = 1
+            i += 1
         else:
             usage()
     if filename == '': usage()
@@ -359,13 +408,13 @@ def main():
     # a[] : radius of mobile particles
     if nc.flag_a != 0:
         a = stokes.darray(nc.np)
-        stokes.stokes_nc_get_data0 (nc, "a", a)
+        stokes.stokes_nc_get_array1d (nc, "a", a)
     else:
         a = []
     # af[] : radius of fixed particles
     if nc.flag_af != 0:
         af = stokes.darray(nc.npf)
-        stokes.stokes_nc_get_data0 (nc, "af", af)
+        stokes.stokes_nc_get_array1d (nc, "af", af)
     else:
         af = []
 
@@ -408,12 +457,12 @@ def main():
 
             camera = [cx, cy-2*l, cz]
             lookat = [cx, cy,   cz]
-            write_pov_header_open (f, lattice, camera, lookat)
+            write_pov_header_open (f, lattice, camera, lookat, flag_ball)
 
         else:
             # periodic boundary
             #move_camera (camera, lookat)
-            write_pov_header (f, lattice, camera, lookat)
+            write_pov_header (f, lattice, camera, lookat, flag_ball)
 
         if nc.flag_q != 0:
             # with quaternion
@@ -423,13 +472,19 @@ def main():
                 y = pos[j*3+1]
                 z = pos[j*3+2]
                 if a != []:
-                    write_pov_particle_Q (f, x, y, z, a[j],\
+                    rad = a[j]
+                else:
+                    rad = 1.0
+
+                if flag_ball == 0:
+                    write_pov_particle_Q (f, x, y, z, rad,\
                                           [q[j*4+0],q[j*4+1],\
                                            q[j*4+2],q[j*4+3]])
                 else:
-                    write_pov_particle_Q (f, x, y, z, 1.0,\
-                                          [q[j*4+0],q[j*4+1],\
-                                           q[j*4+2],q[j*4+3]])
+                    write_pov_particle_Balls_Q (f, x, y, z, rad,\
+                                                [q[j*4+0],q[j*4+1],\
+                                                 q[j*4+2],q[j*4+3]],\
+                                                j)
         else:
             # no quaternion
             for j in range(nc.np):
