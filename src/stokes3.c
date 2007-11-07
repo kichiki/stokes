@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.13 2007/08/12 19:45:14 kichiki Exp $
+ * $Id: stokes3.c,v 1.14 2007/11/07 03:48:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.13 2007/08/12 19:45:14 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.14 2007/11/07 03:48:34 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -81,42 +81,52 @@ usage (const char *argv0)
 	   "\t\t\"gear2\"  M=2 implicit Gear method.\n");
   fprintf (stderr, "\tode-eps    : GSL ODE control parameter eps\n");
   fprintf (stderr, "* system parameters\n");
-  fprintf (stderr, "\tnp         : number of ALL (mobile and fixed) particles\n");
-  fprintf (stderr, "\tnm         : number of mobile particles\n");
-  fprintf (stderr, "\tx          : particle configuration"
+  fprintf (stderr, "\tnp     : number of ALL (mobile and fixed) particles\n");
+  fprintf (stderr, "\tnm     : number of mobile particles\n");
+  fprintf (stderr, "\tx      : particle configuration"
 	   " (list or vector with length 3*np)\n");
-  fprintf (stderr, "\tUi         : imposed translational velocity"
+  fprintf (stderr, "\ta      : radius of particles"
+	   " (list or vector with length np)\n"
+	   "\t\tby default (if not given), monodisperse system\n");
+  fprintf (stderr, "\tslip   : slip length of particles"
+	   " (list or vector with length np)\n"
+	   "\t\tby default (if not given), no-slip particles\n");
+  fprintf (stderr, "\tUi     : imposed translational velocity"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tOi         : imposed angular velocity"
+  fprintf (stderr, "\tOi     : imposed angular velocity"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tEi         : imposed strain"
+  fprintf (stderr, "\tEi     : imposed strain"
 	   " (list or vector of length 5)\n");
-  fprintf (stderr, "\tF0         : applied force"
+  fprintf (stderr, "\tF0     : applied force"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tT0         : applied torque"
+  fprintf (stderr, "\tT0     : applied torque"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tstokes     : effective stokes number\n");
-  fprintf (stderr, "\tncol       : frequency of collision check in dt"
+  fprintf (stderr, "\tstokes : effective stokes number\n");
+  fprintf (stderr, "\tncol   : frequency of collision check in dt"
 	   " for stokes != 0\n");
   fprintf (stderr, "* bond parameters (for chains)\n");
   fprintf (stderr, "\tbonds      : bonds among particles,"
 	   " list in the following form\n"
-	   "\t\t(define bonds\n"
-	   "\t\t  '(\n"
-	   "\t\t    (; bond 1\n"
-	   "\t\t     1.0 ; spring const\n"
-	   "\t\t     2.1 ; natural distance\n"
-	   "\t\t     ((0 1) ; list of pairs\n"
-	   "\t\t      (1 2)\n"
-	   "\t\t      (2 3)))\n"
-	   "\t\t    (; bond 2\n"
-	   "\t\t     1.0 ; spring const\n"
-	   "\t\t     2.5 ; natural distance\n"
-	   "\t\t     ((4 5) ; list of pairs\n"
-	   "\t\t      (5 6)\n"
-	   "\t\t      (6 7)))\n"
-	   "\t\t    )\n"
-	   "\t\t  )\n"
+           "\t\t(define bonds '(\n"
+           "\t\t  (; bond 1\n"
+           "\t\t   0         ; 1) spring type\n"
+           "\t\t   (         ; 2) spring parameters (list with 3 elements)\n"
+           "\t\t    0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})\n"
+           "\t\t    1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)\n"
+           "\t\t    2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)\n"
+           "\t\t   ((0 1)    ; 3) list of pairs\n"
+           "\t\t    (1 2)\n"
+           "\t\t    (2 3)))\n"
+           "\t\t  (; bond 2\n"
+           "\t\t   2         ; 1) spring type\n"
+           "\t\t   (         ; 2) spring parameters (list with 3 elements)\n"
+           "\t\t    1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})\n"
+           "\t\t    19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)\n"
+           "\t\t    106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)\n"
+           "\t\t   ((4 5)    ; 3) list of pairs\n"
+           "\t\t    (5 6)\n"
+           "\t\t    (6 7)))\n"
+           "\t\t ))\n"
 	   );
   fprintf (stderr,
 	   "\tflag_relax : #f stokesian dynamics,\n"
@@ -335,6 +345,22 @@ main (int argc, char** argv)
       stokes_set_radius (sys, a);
     }
   free (a);
+
+
+  // slip length of ALL particles (BOTH mobile and fixed)
+  double *slip = (double *)malloc (sizeof (double) * np);
+  CHECK_MALLOC (slip, "main");
+  if (guile_get_doubles ("slip", np, slip) != 1) // FALSE
+    {
+      // "slip" is not given, so that system is no-slip
+      // sys->slip is NULL by default, so do nothing here
+    }
+  else
+    {
+      // set slip parameters
+      stokes_set_slip (sys, slip);
+    }
+  free (slip);
 
 
   // periodic
