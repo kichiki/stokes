@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.14 2007/11/07 03:48:34 kichiki Exp $
+ * $Id: stokes3.c,v 1.15 2007/11/07 04:57:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.14 2007/11/07 03:48:34 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.15 2007/11/07 04:57:44 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -57,6 +57,13 @@ usage (const char *argv0)
   fprintf (stderr,
 	   "\tflag-lub   : #t for with-lubrication,\n"
 	   "\t           : #f for no-lubrication.\n");
+  fprintf (stderr,
+	   "\trmin       : parameter for mininum distance in"
+	   " (ai+aj) * rmin.\n");
+  fprintf (stderr,
+	   "\tlub-min    : mininum cut-off distance for lubrication\n");
+  fprintf (stderr,
+	   "\tlub-max    : maximum cut-off distance for lubrication\n");
   fprintf (stderr,
 	   "\tperiodic   : #f for non-periodic systems,\n"
 	   "\t           : #t for periodic systems.\n"
@@ -107,31 +114,68 @@ usage (const char *argv0)
   fprintf (stderr, "* bond parameters (for chains)\n");
   fprintf (stderr, "\tbonds      : bonds among particles,"
 	   " list in the following form\n"
-           "\t\t(define bonds '(\n"
-           "\t\t  (; bond 1\n"
-           "\t\t   0         ; 1) spring type\n"
-           "\t\t   (         ; 2) spring parameters (list with 3 elements)\n"
-           "\t\t    0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})\n"
-           "\t\t    1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)\n"
-           "\t\t    2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)\n"
-           "\t\t   ((0 1)    ; 3) list of pairs\n"
-           "\t\t    (1 2)\n"
-           "\t\t    (2 3)))\n"
-           "\t\t  (; bond 2\n"
-           "\t\t   2         ; 1) spring type\n"
-           "\t\t   (         ; 2) spring parameters (list with 3 elements)\n"
-           "\t\t    1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})\n"
-           "\t\t    19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)\n"
-           "\t\t    106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)\n"
-           "\t\t   ((4 5)    ; 3) list of pairs\n"
-           "\t\t    (5 6)\n"
-           "\t\t    (6 7)))\n"
-           "\t\t ))\n"
+           "\t(define bonds '(\n"
+           "\t  (; bond 1\n"
+           "\t   0       ; 1) spring type\n"
+           "\t   (       ; 2) spring parameters (list with 3 elements)\n"
+           "\t    0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})\n"
+           "\t    1.0    ;"
+	   "    p1   = A^{sp}, scaled spring constant  (for fene == 0)\n"
+           "\t    2.1)   ;"
+	   "    p2   = L_{s} / a, scaled max extension (for fene == 0)\n"
+           "\t   ((0 1)  ; 3) list of pairs\n"
+           "\t    (1 2)\n"
+           "\t    (2 3)))\n"
+           "\t  (; bond 2\n"
+           "\t   2       ; 1) spring type\n"
+           "\t   (       ; 2) spring parameters (list with 3 elements)\n"
+           "\t    1      ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})\n"
+           "\t    19.8   ;"
+	   "    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)\n"
+           "\t    106.0) ;"
+	   "    p2 = b_{K} [micro m], the Kuhn length     (for fene = 1)\n"
+           "\t   ((4 5)  ; 3) list of pairs\n"
+           "\t    (5 6)\n"
+           "\t    (6 7)))\n"
+           "\t ))\n"
+           "\twhere spring types are\n"
+	   "\t  0 : Hookean spring (Asp * (r - Ls)\n"
+	   "\t  1 : wormlike chain (WLC)\n"
+	   "\t  2 : inverse Langevin chain (ILC)\n"
+	   "\t  3 : Cohen's Pade approximation\n"
+	   "\t  4 : Warner spring\n"
+	   "\t  5 : Hookean spring (Asp * r / Ls)\n"
 	   );
   fprintf (stderr,
 	   "\tflag_relax : #f stokesian dynamics,\n"
 	   "\t           : #t relaxation dynamics for bonds.\n");
-  fprintf (stderr, "\tgamma      : friction coefficient for the relaxation dynamics\n");
+  fprintf (stderr,
+	   "\tgamma      : friction coefficient for the relaxation dynamics\n");
+  fprintf (stderr, "* Excluded-Volume parameters\n");
+  fprintf (stderr,
+	   "\tev-v       : v [(micro m)^3] for each chain type\n"
+	   "\t             (list or vector with length of bonds' length)\n");
+  fprintf (stderr,
+	   "\tev-lim     : maximum distance for EV interaction [micro m]\n");
+  fprintf (stderr, "* Brownian dynamics' parameters\n");
+  fprintf (stderr,
+	   "\tpeclet     : peclet number (negative means no Brownian force)\n");
+  fprintf (stderr,
+	   "\tlength     : unit of the length scale [micro m]\n");
+  fprintf (stderr,
+	   "\tBD-seed    : seed for Brownian force random number generator\n");
+  fprintf (stderr,
+	   "\tn-cheb-minv: number of Chebyshev coefficients for M^{-1}\n");
+  fprintf (stderr,
+	   "\tn-cheb-lub : number of Chebyshev coefficients for L\n"
+	   "\t             (if zero is given, use Cholesky decomposition)\n");
+  fprintf (stderr, "\tBD-scheme : Brownian dynamics time integration scheme\n"
+	   "\t\t\"mid-point\"        The mid-point algorithm.\n"
+	   "\t\t\"BanchioBrady03\"   Banchio and Brady (2003).\n"
+	   "\t\t\"BallMelrose97\"    Ball and Melrose (1997).\n"
+	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n");
+  fprintf (stderr,
+	   "\tBB-n        : step parameter for Banchio-Brady03 algorithm.\n");
 }
 
 
@@ -139,7 +183,9 @@ usage (const char *argv0)
 int
 main (int argc, char** argv)
 {
-  /* option analysis */
+  /**
+   * option analysis
+   */
   char init_file [256];
   strcpy (init_file, "stokes3.scm"); // default
 
@@ -173,7 +219,9 @@ main (int argc, char** argv)
 	}
     }
   
-  /* parameter set */
+  /**
+   * parameter set
+   */
   scm_init_guile(); // start the Guile interpreter
   scm_c_primitive_load (init_file); // load initialize script
 
@@ -195,10 +243,8 @@ main (int argc, char** argv)
     }
 
   // version
-  int version;
-  version = 0;
-  char * str_version = NULL;
-  str_version = guile_get_string ("version");
+  int version = 0;
+  char *str_version = guile_get_string ("version");
   if (strcmp (str_version, "F") == 0)
     {
       version = 0; // F version
@@ -244,7 +290,9 @@ main (int argc, char** argv)
   double st = guile_get_double ("stokes", 0.0);
   int ncol  = guile_get_int    ("ncol",   10);
 
-  /* imposed flow */
+  /**
+   * imposed flow
+   */
   // Ui
   double Ui[3];
   if (guile_get_doubles ("Ui", 3, Ui) != 1) // FALSE
@@ -267,7 +315,9 @@ main (int argc, char** argv)
       exit (1);
     }
 
-  /* applied force */
+  /**
+   * applied force
+   */
   // F0
   double F0[3];
   if (guile_get_doubles ("F0", 3, F0) != 1) // FALSE
@@ -290,8 +340,10 @@ main (int argc, char** argv)
   int np3 = np * 3;
   int nm3 = nm * 3;
 
-  // position of ALL particles (BOTH mobile and fixed)
-  // this is used to write into the output file, too.
+  /**
+   * position of ALL particles (BOTH mobile and fixed)
+   * this is used to write into the output file, too.
+   */
   double *x = (double *)malloc (sizeof (double) * np3);
   CHECK_MALLOC (x, "main");
 
@@ -302,27 +354,103 @@ main (int argc, char** argv)
       exit (1);
     }
 
-  // bonds
+  /**
+   * Brownian dynamics parameters
+   */
+  // peclet number
+  double peclet = guile_get_double ("peclet", -1.0);
+  double length = guile_get_double ("length", 1.0);
+  int BD_seed = guile_get_int ("BD-seed", 0);
+
+  // chebyshev polynomials
+  int n_minv = guile_get_int ("n-cheb-minv", 0);
+  int n_lub  = guile_get_int ("n-cheb-lub", 0);
+  // time-integration scheme for Brownian dynamics
+  char *str_BD_scheme = guile_get_string ("BD-scheme");
+  int BD_scheme;
+  if (strcmp (str_BD_scheme, "mid-point") == 0)
+    {
+      BD_scheme = 0;
+    }
+  else if (strcmp (str_BD_scheme, "BanchioBrady03") == 0)
+    {
+      BD_scheme = 1;
+    }
+  else if (strcmp (str_BD_scheme, "BallMelrose97") == 0)
+    {
+      BD_scheme = 2;
+    }
+  else if (strcmp (str_BD_scheme, "JendrejackEtal00") == 0)
+    {
+      BD_scheme = 3;
+    }
+  else
+    {
+      fprintf (stderr, "invalid BD-scheme %s", str_BD_scheme);
+      exit (1);
+    }
+  free (str_BD_scheme);
+  // step parameter for BB03 algorithm
+  double BB_n = guile_get_double ("BB-n", 100.0);
+
+
+  /**
+   * bonds
+   */
   struct bonds *bonds = guile_get_bonds ("bonds");
   if (bonds == NULL) // FALSE
     {
       fprintf (stderr, "main: fail to parse bonds\n");
       exit (1);
     }
+  bonds_set_FENE (bonds, length, peclet);
+  /* check
+  for (i = 0; i < bonds->n; i ++)
+    {
+      fprintf (stdout, "# bonds [%d] %d %d %e %e\n",
+	       i, bonds->type[i], bonds->fene[i],
+	       bonds->p1[i],
+	       bonds->p2[i]);
+    }
+  */
 
   // relaxation dynamics only with bond interaction
   double gamma = guile_get_double ("gamma", 1.0);
 
+  /**
+   * excluded volume
+   */
+  struct EV *ev = NULL;
+  double ev_lim = guile_get_double ("ev-lim", 1.0);
+  ev_lim /= length; // scale by length
+  double ev_r2 = ev_lim * ev_lim;
+  if (bonds->n > 0)
+    {
+      double *ev_v = (double *)malloc (sizeof (double) * bonds->n);
+      CHECK_MALLOC (ev_v, "main");
+      if (guile_get_doubles ("ev-v", bonds->n, ev_v) != 1) // FALSE
+	{
+	  fprintf (stderr, "excluded-volume is not defined\n");
+	  exit (1);
+	}
+      ev = EV_init (bonds, length, peclet,
+		    ev_r2, ev_v, np);
+      free (ev_v);
+    }
 
   // initialize struct stokes *sys
   struct stokes *sys = stokes_init ();
   sys->version = version;
   stokes_set_np (sys, np, nm);
 
+  sys->rmin = guile_get_double ("rmin", 0.0);
   double lubmin = guile_get_double ("lub-min", 2.0000000001);
   sys->lubmin2 = lubmin * lubmin;
   sys->lubmax = guile_get_double ("lub-max", 4.0);
-  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 0, stderr);
+  //stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 0, stderr);
+  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
+  //stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 1, stderr);
+  //stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 0, stderr);
 
   stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
   stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
@@ -450,7 +578,9 @@ main (int argc, char** argv)
     }
 
 
-  // set constant parameters for ode_params
+  /**
+   * set constant parameters for ode_params
+   */
   int nm5 = nm * 5;
   double *F = (double *)malloc (sizeof (double) * nm3);
   double *T = (double *)malloc (sizeof (double) * nm3);
@@ -538,95 +668,122 @@ main (int argc, char** argv)
       pos_fixed = x + nm*3;
     }
 
-  struct ode_params *ode_params
-    = ode_params_init (sys, pos_fixed,
-		       F, T, E,
-		       uf, of, ef,
-		       flag_lub, flag_mat,
-		       st,
-		       bonds,
-		       gamma);
-  CHECK_MALLOC (ode_params, "main");
-
-
+  struct ode_params *ode_params = NULL;
   int (*f_dydt)(double, const double *, double *, void *) = NULL;
-  // note that dydt_hydro() and dydt_hydro_st() can handle bonds.
-  if (flag_Q == 0)
-    {
-      if (st > 0.0) f_dydt = dydt_hydro_st;
-      else          f_dydt = dydt_hydro;
-    }
-  else
-    {
-      if (st > 0.0) f_dydt = dydt_Q_hydro_st;
-      else          f_dydt = dydt_Q_hydro;
-    }
-
-  gsl_odeiv_system GSL_ODE_SYSTEM
-    = {f_dydt,                // function dy/dt
-       NULL,                // jacobian (optional for simpler solver)
-       n,                   // size_t dimension
-       (void *)ode_params}; // void * params
-
-  // GSL ODE integrator
   const gsl_odeiv_step_type *GSL_ODE_TYPE = NULL;
-  if (strcmp (str_ode_solver, "rk2") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rk2;
-    }
-  else if (strcmp (str_ode_solver, "rk4") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rk4;
-    }
-  else if (strcmp (str_ode_solver, "rkf45") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rkf45;
-    }
-  else if (strcmp (str_ode_solver, "rkck") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rkck;
-    }
-  else if (strcmp (str_ode_solver, "rk8pd") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rk8pd;
-    }
-  else if (strcmp (str_ode_solver, "rk2imp") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rk2imp;
-    }
-  else if (strcmp (str_ode_solver, "rk4imp") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_rk4imp;
-    }
-  else if (strcmp (str_ode_solver, "gear1") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_gear1;
-    }
-  else if (strcmp (str_ode_solver, "gear2") == 0)
-    {
-      GSL_ODE_TYPE = gsl_odeiv_step_gear2;
-    }
-  else
-    {
-      fprintf (stderr, "invalid ode-solver %s", str_ode_solver);
-      exit (1);
-    }
-  free (str_ode_solver);
+  gsl_odeiv_system GSL_ODE_SYSTEM;
+  gsl_odeiv_step    *GSL_ODE_STEP    = NULL;
+  gsl_odeiv_control *GSL_ODE_CONTROL = NULL;
+  gsl_odeiv_evolve  *GSL_ODE_EVOLVE  = NULL;
 
-  gsl_odeiv_step *GSL_ODE_STEP;
-  GSL_ODE_STEP = gsl_odeiv_step_alloc (GSL_ODE_TYPE, n);
-
-  gsl_odeiv_control *GSL_ODE_CONTROL;
-  GSL_ODE_CONTROL = gsl_odeiv_control_y_new (ode_eps, 0.0);
-
-  gsl_odeiv_evolve *GSL_ODE_EVOLVE;
-  GSL_ODE_EVOLVE = gsl_odeiv_evolve_alloc (n);
+  struct BD_params *BD_params = NULL;
+  if (peclet == -1) // no Brownian force
+    {
+      ode_params = ode_params_init (sys, pos_fixed,
+				    F, T, E,
+				    uf, of, ef,
+				    flag_lub, flag_mat,
+				    st,
+				    bonds,
+				    gamma);
+      CHECK_MALLOC (ode_params, "main");
 
 
+      // note that dydt_hydro() and dydt_hydro_st() can handle bonds.
+      if (flag_Q == 0)
+	{
+	  if (st > 0.0) f_dydt = dydt_hydro_st;
+	  else          f_dydt = dydt_hydro;
+	}
+      else
+	{
+	  if (st > 0.0) f_dydt = dydt_Q_hydro_st;
+	  else          f_dydt = dydt_Q_hydro;
+	}
+
+      // asign params for gsl_odeiv_system GSL_ODE_SYSTEM
+      GSL_ODE_SYSTEM.function  = f_dydt;
+      GSL_ODE_SYSTEM.jacobian  = NULL;
+      GSL_ODE_SYSTEM.dimension = n;
+      GSL_ODE_SYSTEM.params    = ode_params;
+
+      // GSL ODE integrator
+      if (strcmp (str_ode_solver, "rk2") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rk2;
+	}
+      else if (strcmp (str_ode_solver, "rk4") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rk4;
+	}
+      else if (strcmp (str_ode_solver, "rkf45") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rkf45;
+	}
+      else if (strcmp (str_ode_solver, "rkck") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rkck;
+	}
+      else if (strcmp (str_ode_solver, "rk8pd") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rk8pd;
+	}
+      else if (strcmp (str_ode_solver, "rk2imp") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rk2imp;
+	}
+      else if (strcmp (str_ode_solver, "rk4imp") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_rk4imp;
+	}
+      else if (strcmp (str_ode_solver, "gear1") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_gear1;
+	}
+      else if (strcmp (str_ode_solver, "gear2") == 0)
+	{
+	  GSL_ODE_TYPE = gsl_odeiv_step_gear2;
+	}
+      else
+	{
+	  fprintf (stderr, "invalid ode-solver %s", str_ode_solver);
+	  exit (1);
+	}
+      free (str_ode_solver);
+
+      GSL_ODE_STEP = gsl_odeiv_step_alloc (GSL_ODE_TYPE, n);
+      GSL_ODE_CONTROL = gsl_odeiv_control_y_new (ode_eps, 0.0);
+      GSL_ODE_EVOLVE = gsl_odeiv_evolve_alloc (n);
+    }
+  else // Brownian dynamics
+    {
+      BD_params = BD_params_init (sys,
+				  BD_seed,
+				  pos_fixed,
+				  F, T, E,
+				  uf, of, ef,
+				  flag_lub, flag_mat,
+				  st,
+				  bonds,
+				  gamma,
+				  ev,
+				  flag_Q,
+				  peclet,
+				  ode_eps,
+				  n_minv, // n of chebyshev for minv
+				  n_lub,  // n of chebyshev for lub
+				  BD_scheme,
+				  BB_n);
+      CHECK_MALLOC (BD_params, "main");
+    }
+
+
+  /**
+   * initialize NetCDF and set the constant parameters
+   */
   double t;
   int l0;
-  // initialize NetCDF and set the constant parameters
-  struct stokes_nc *nc;
+  struct stokes_nc *nc = NULL;
   if (nloop_arg > 0)
     {
       // continuation
@@ -636,6 +793,7 @@ main (int argc, char** argv)
 	  exit (1);
 	}
       nc = stokes_nc_reopen (out_file);
+      CHECK_MALLOC (nc, "main");
 
       if (stokes_nc_check_params (nc, sys,
 				  flag_Q,
@@ -675,6 +833,7 @@ main (int argc, char** argv)
 				    Ui, Oi, Ei, F, T, E,
 				    uf, of, ef, x + nm3, // xf
 				    lat);
+      CHECK_MALLOC (nc, "main");
 
       // set the loop parameters
       l0 = 0;
@@ -684,7 +843,9 @@ main (int argc, char** argv)
   free (out_file);
 
 
-  /* mail loop */
+  /**
+   * mail loop
+   */
   double h = dt / (double)ncol; // initial time step for ODE integrator
   double ddt = dt / (double)ncol; // time step for collision check for st != 0
   int l;
@@ -699,13 +860,31 @@ main (int argc, char** argv)
 	{
 	  if (st == 0.0)
 	    {
-	      // (st==0) no collision checks
-	      gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
-				      GSL_ODE_CONTROL,
-				      GSL_ODE_STEP,
-				      &GSL_ODE_SYSTEM,
-				      &t, t_out,
-				      &h, y);
+	      if (peclet == -1) // no Brownian force
+		{
+		  // (st==0) no collision checks
+		  gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
+					  GSL_ODE_CONTROL,
+					  GSL_ODE_STEP,
+					  &GSL_ODE_SYSTEM,
+					  &t, t_out,
+					  &h, y);
+		}
+	      else // Brownian dynamics
+		{
+		  if (BD_params->scheme == 3)
+		    {
+		      BD_imp_ode_evolve (BD_params,
+					 &t, t_out,
+					 &h, y);
+		    }
+		  else
+		    {
+		      BD_ode_evolve (BD_params,
+				     &t, t_out,
+				     &h, y);
+		    }
+		}
 
 	      // check periodicity
 	      if (sys->periodic == 1)
@@ -769,7 +948,8 @@ main (int argc, char** argv)
   printf ("CPU time : %.3f [m sec]\n", ptime1 - ptime0);
 
 
-  free (ode_params);
+  ode_params_free (ode_params);
+  BD_params_free (BD_params);
   stokes_nc_free (nc);
   free (x);
   free (y);
