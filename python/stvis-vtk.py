@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.9 2007/08/12 19:36:19 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.10 2007/11/11 23:41:11 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -133,10 +133,28 @@ def make_pData (np, x, a):
     return pData
 
 
+# make bData for bond
+def make_bData (np, x):
+    points = vtk.vtkPoints()
+    lines = vtk.vtkCellArray()
+    lines.InsertNextCell(np)
+    for i in range(np):
+        points.InsertNextPoint(x[i*3], x[i*3+1], x[i*3+2])
+        lines.InsertCellPoint(i)
+
+    # first make pData containing particle coordinates
+    bData = vtk.vtkPolyData()
+    bData.SetPoints(points)
+    bData.SetLines(lines)
+
+    return bData
+
+
 def usage():
-    print '$Id: stvis-vtk.py,v 1.9 2007/08/12 19:36:19 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.10 2007/11/11 23:41:11 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
+    print '\t-b or --bond : draw bond connecting particles'
     print '\t-p or --pic  : generate PNG images'
     sys.exit ()
 
@@ -183,12 +201,16 @@ def bounding_box (np, x):
 
 def main():
     filename = ''
+    flag_bond = 0
     flag_pic = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
             i += 2
+        elif sys.argv[i] == '-b' or sys.argv[i] == '--bond':
+            flag_bond = 1
+            i += 1
         elif sys.argv[i] == '-p' or sys.argv[i] == '--pic':
             flag_pic = 1
             i += 1
@@ -278,6 +300,22 @@ def main():
         pActor.GetProperty().SetColor(1,1,1)
         pActor.GetProperty().SetOpacity(1)
 
+    # bond Actor
+    if flag_bond != 0:
+        bond = vtk.vtkTubeFilter()
+        bond.SetNumberOfSides(8)
+        # bond.SetInput(bData)
+        bond.SetRadius(0.2)
+
+        bondMapper = vtk.vtkPolyDataMapper()
+        bondMapper.SetInput(bond.GetOutput())
+
+        bondActor = vtk.vtkActor()
+        bondActor.SetMapper(bondMapper)
+        bondActor.GetProperty().SetDiffuseColor(khaki)
+        bondActor.GetProperty().SetSpecular(.4)
+        bondActor.GetProperty().SetSpecularPower(10)
+
 
     ## prepare renderer
     ren = vtk.vtkRenderer()
@@ -295,6 +333,8 @@ def main():
     else:
         ren.AddActor(pActor)
     if nc.npf > 0: ren.AddActor(pfActor)
+    if flag_bond != 0:
+        ren.AddActor(bondActor)
 
     aCamera = vtk.vtkCamera()
     ren.SetActiveCamera (aCamera)
@@ -389,6 +429,11 @@ def main():
                 pData = make_pData(nc.np, x, a)
                 pGlyph.SetInput(pData)
     
+            # update bond Actor
+            if flag_bond != 0:
+                bData = make_bData(nc.np, x)
+                bond.SetInput(bData)
+
             if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
                 # non-periodic boundary
                 (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
