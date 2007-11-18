@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.15 2007/11/07 04:57:44 kichiki Exp $
+ * $Id: stokes3.c,v 1.16 2007/11/18 01:35:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.15 2007/11/07 04:57:44 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.16 2007/11/18 01:35:11 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -75,6 +75,20 @@ usage (const char *argv0)
 	   " for ewald-summation cut-off\n");
   fprintf (stderr, "\tlattice    : size of the periodic box"
 	   " (list or vector of length 3)\n");
+  fprintf (stderr, "* libiter parameters (used if \"flag-mat\" is #f)\n");
+  fprintf (stderr,
+	   "\tIT-solver  : solver for libiter\n"
+	   "\t\t\"cg\"       conjugate gradient method\n"
+	   "\t\t\"cgs\"      conjugate gradient squared (Weiss' Algorithm 11)\n"
+	   "\t\t\"bicgstab\" Bi-CG stabilized (Weiss' Algorithm 12)\n"
+	   "\t\t\"sta\"      Bi-CG stab method (another implementation)\n"
+	   "\t\t\"sta2\"     Bi-CG dtab2 method\n"
+	   "\t\t\"gpb\"      gpbi-cg method\n"
+	   "\t\t\"otmk\"     orthomin method\n"
+	   "\t\t\"gmres\"    generalized minimum residual method\n");
+  fprintf (stderr, "\tIT-max     : max number of iteraction\n");
+  fprintf (stderr, "\tIT-n       : restart number\n");
+  fprintf (stderr, "\tIT-eps     : accuracy of the solution\n");
   fprintf (stderr, "* ODE parameters\n");
   fprintf (stderr, "\tode-solver : GSL ODE solver\n"
 	   "\t\t\"rk2\"    Embedded Runge-Kutta (2, 3) method.\n"
@@ -176,6 +190,10 @@ usage (const char *argv0)
 	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n");
   fprintf (stderr,
 	   "\tBB-n        : step parameter for Banchio-Brady03 algorithm.\n");
+  fprintf (stderr,
+	   "\tdt-lim      : lower bound to shrink dt to prevent overlaps.\n"
+	   "\t\tset \"dt\" if you don't want to adjust \"dt\" "
+	   "but just reject it.\n");
 }
 
 
@@ -392,6 +410,8 @@ main (int argc, char** argv)
   free (str_BD_scheme);
   // step parameter for BB03 algorithm
   double BB_n = guile_get_double ("BB-n", 100.0);
+  // lower bound to shrink dt to prevent overlaps
+  double dt_lim = guile_get_double ("dt-lim", 1.0e-12);
 
 
   /**
@@ -447,10 +467,14 @@ main (int argc, char** argv)
   double lubmin = guile_get_double ("lub-min", 2.0000000001);
   sys->lubmin2 = lubmin * lubmin;
   sys->lubmax = guile_get_double ("lub-max", 4.0);
-  //stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 0, stderr);
-  stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
-  //stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 1, stderr);
-  //stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 0, stderr);
+
+  // iterative solver
+  char *str_it_solver = NULL;
+  str_it_solver = guile_get_string ("IT-solver");
+  int it_max = guile_get_int ("IT-max", 2000);
+  int it_n   = guile_get_int ("IT-n", 20);
+  int it_eps = guile_get_double ("IT-eps", 1.0e-6);
+  stokes_set_iter (sys, str_it_solver, it_max, it_n, it_eps, 0, stderr);
 
   stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
   stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
@@ -773,7 +797,8 @@ main (int argc, char** argv)
 				  n_minv, // n of chebyshev for minv
 				  n_lub,  // n of chebyshev for lub
 				  BD_scheme,
-				  BB_n);
+				  BB_n,
+				  dt_lim);
       CHECK_MALLOC (BD_params, "main");
     }
 

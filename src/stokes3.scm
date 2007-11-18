@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.6 2007/11/07 04:58:26 kichiki Exp $
+; $Id: stokes3.scm,v 1.7 2007/11/18 01:35:32 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -21,6 +21,21 @@
 (define ewald-tr   4.1)     ; time ratio Tr/Tk for Ewald summation
 (define ewald-eps  1.0e-12) ; cut-off limit for Ewald summation
 (define lattice    '(5.0  5.0  5.0)) ; size of the periodic box
+
+;; iterative solver (ignored if flag-mat is true)
+(define IT-solver "otmk") ; solver for libiter
+; the following solvers are available
+; "cg"       conjugate gradient method
+; "cgs"      conjugate gradient squared (Weiss' Algorithm 11)
+; "bicgstab" bi-conjugate gradient stabilized (Weiss' Algorithm 12)
+; "sta"      bi-cgstab method
+; "sta2"     bi-cgstab2 method
+; "gpb"      gpbi-cg method
+; "otmk"     orthomin method
+; "gmres"    generalized minimum residual method
+(define IT-max 2000)   ; max number of iterations
+(define IT-n   20)     ; restart number
+(define IT-eps 1.0e-6) ; accuracy of the solution
 
 ;; ODE parameters
 (define ode-solver "rkf45")
@@ -97,6 +112,7 @@
 (define length 1.0)     ; unit of the length scale [micro m].
                         ; the parameters above are recognized by this.
                         ; just ignored for non-Brownian case (peclet<0).
+(define BD-seed 0)      ; seed for random number generator for BD.
 
 (define n-cheb-minv 50)      ; number of chebyshev coefficients for minv
 (define n-cheb-lub  70)      ; number of chebyshev coefficients for lub
@@ -107,8 +123,10 @@
 ; "BanchioBrady03"   Banchio-Brady (2003)
 ; "BallMelrose97"    Ball-Melrose (1997)
 ; "JendrejackEtal00" Jendrejack et al (2000)
-(define BB-n   100) ; step parameter for Banchio-Brady-2003 algorithm
-
+(define BB-n   100)    ; step parameter for Banchio-Brady-2003 algorithm
+(define dt-lim 1.e-12) ; lower bound to shrink dt to prevent overlaps
+                       ; set "dt" (or larger value) if you don't want 
+                       ; to adjust "dt" but just reject it.
 
 ;; bond parameters
 (define bonds '())
