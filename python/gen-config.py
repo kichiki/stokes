@@ -1,6 +1,6 @@
 # configuration generating script
 # Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: gen-config.py,v 1.1 2007/05/12 04:34:29 kichiki Exp $
+# $Id: gen-config.py,v 1.2 2007/11/18 05:20:20 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -163,6 +163,62 @@ def blob2 (plxyz, n, phi, a, seed=0):
     return pos
 
 
+# INPUT
+#  n   : number of particles
+#  Rr  := R / r, where
+#        R is the radius of the torous center
+#        r is the radius of the torous circle
+#  phi : area fraction
+#  a   : radius of particles
+# OUTPUT
+#  x[n*3] : configuration
+def torous (n, Rr, phi, a, seed=0):
+    L2 = 1.0 / Rr / Rr; # = (r/R)^2
+    R = math.pow(2.0 * float(n) * math.pow(a, 3.0)
+                 / (3.0 * math.pi * phi * L2),
+                 1.0 / 3.0)
+    r = R / Rr;
+    print '; R = %f, r = %f, lambda = 1/%f'%(R,r, R/r)
+    pos = []
+
+    d2 = 4.0*a*a
+
+    random.seed(seed)
+    i = 0
+    while 1:
+        if i >= n: break
+
+        itry = 0
+        while 1:
+            itry += 1
+            if itry > 1000:
+                # withdraw everything and start again
+                pos = []
+                i = 0
+                break
+                
+            x = 2.0 * (R+r) * (random.random() - 0.5)
+            y = 2.0 * (R+r) * (random.random() - 0.5)
+            z = 2.0 * r     * (random.random() - 0.5)
+
+            rr = math.sqrt(x*x + y*y)
+            if rr > (R+r) or rr < (R-r): continue
+            rr2 = (rr-R)*(rr-R) + z*z
+            if rr2 > r*r: continue
+
+            # check overlap with other particles in x[]
+            if check_overlap (pos, x, y, z, d2) != 0: continue # overlap
+
+            # add (x,y,z) into pos[]
+            pos.append(x)
+            pos.append(y)
+            pos.append(z)
+            i += 1
+            break
+
+    return pos
+
+
 def rotate(direction, degree, x):
     theta = degree*math.pi/180.0 # radian
     s = math.sin(theta)
@@ -244,7 +300,7 @@ def print_config (x):
 
 
 def usage():
-    print '$Id: gen-config.py,v 1.1 2007/05/12 04:34:29 kichiki Exp $'
+    print '$Id: gen-config.py,v 1.2 2007/11/18 05:20:20 kichiki Exp $'
     print 'USAGE:'
     print '\t-n : number of particles'
     print 'CONFIGURATION OPTIONS'
@@ -259,6 +315,12 @@ def usage():
     '\t\t seed is for the random number generator'
     print '\t-blob2 [xyz] phi a seed : make a circular blob in y=0 plane.\n'\
     '\t\t [xyz] : the plane on which particles are\n'\
+    '\t\t phi is the volume fraction\n'\
+    '\t\t a is the radius of particles\n'\
+    '\t\t seed is for the random number generator'
+    print '\t-torous R/r phi a seed : make a horizontal torous blob.\n'\
+    '\t\t R is the radius of the torous center\n'\
+    '\t\t r is the radius of the torous circle\n'\
     '\t\t phi is the volume fraction\n'\
     '\t\t a is the radius of particles\n'\
     '\t\t seed is for the random number generator'
@@ -305,6 +367,13 @@ def main():
             a     = float(sys.argv[i+3])
             seed  = int(sys.argv[i+4])
             i += 5
+        elif sys.argv[i] == '-torous':
+            flag_conf = 4 # torous
+            Rr    = float(sys.argv[i+1])
+            phi   = float(sys.argv[i+2])
+            a     = float(sys.argv[i+3])
+            seed  = int(sys.argv[i+4])
+            i += 5
         elif sys.argv[i] == '-rotate':
             op_type.append(0) # rotate
             op_dir.append(sys.argv[i+1])
@@ -344,6 +413,9 @@ def main():
     elif flag_conf == 3:
         # blob2
         x = blob2 (plxyz, n, phi, a)
+    elif flag_conf == 4:
+        # torous
+        x = torous (n, Rr, phi, a)
     else:
         print 'invalid configuration frag'
         sys.exit(1)
