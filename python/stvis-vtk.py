@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.10 2007/11/11 23:41:11 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.11 2007/11/18 05:23:14 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -151,10 +151,15 @@ def make_bData (np, x):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.10 2007/11/11 23:41:11 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.11 2007/11/18 05:23:14 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-b or --bond : draw bond connecting particles'
+    print '\t-s or --step : print step instead of time'
+    print '\t-ts          : print time with step'
+    print '\t-bottom      : follow the camera at the bottom of the blob'
+    print '\t             : (default) follow the center of mass'
+    print '\t             : this option is valid only for non-periodic system'
     print '\t-p or --pic  : generate PNG images'
     sys.exit ()
 
@@ -192,16 +197,19 @@ def bounding_box (np, x):
     cy = cy / float(np)
     cz = cz / float(np)
 
-    lx = lx1 - lx0
-    ly = ly1 - ly0
-    lz = lz1 - lz0
+    #lx = lx1 - lx0
+    #ly = ly1 - ly0
+    #lz = lz1 - lz0
 
-    return (cx,cy,cz, lx,ly,lz)
+    #return (cx,cy,cz, lx,ly,lz)
+    return (cx,cy,cz, lx0,ly0,lz0, lx1,ly1,lz1)
 
 
 def main():
     filename = ''
     flag_bond = 0
+    flag_step = 0
+    flag_bottom = 0
     flag_pic = 0
     i = 1
     while i < len(sys.argv):
@@ -210,6 +218,15 @@ def main():
             i += 2
         elif sys.argv[i] == '-b' or sys.argv[i] == '--bond':
             flag_bond = 1
+            i += 1
+        elif sys.argv[i] == '-s' or sys.argv[i] == '--step':
+            flag_step = 1
+            i += 1
+        elif sys.argv[i] == '-ts':
+            flag_step = 2
+            i += 1
+        elif sys.argv[i] == '-bottom':
+            flag_bottom = 1
             i += 1
         elif sys.argv[i] == '-p' or sys.argv[i] == '--pic':
             flag_pic = 1
@@ -436,7 +453,12 @@ def main():
 
             if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
                 # non-periodic boundary
-                (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
+                #(cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
+                (cx,cy,cz, lx0,ly0,lz0, lx1, ly1, lz1) = bounding_box (nc.np, x)
+                lx = lx1 - lx0
+                ly = ly1 - ly0
+                lz = lz1 - lz0
+                # centered by COM
                 if lx > lz:
                     l = lx
                 else:                  
@@ -444,9 +466,20 @@ def main():
                 # prevent to go far away
                 if l > 50: l = 50
     
-                aCamera.SetFocalPoint (cx, cy,       cz)
-                aCamera.SetPosition   (cx, cy-3.0*l, cz+0.1*l)
-            textActor.SetInput ('time: %.1f'%t)
+                if flag_bottom == 0:
+                    aCamera.SetFocalPoint (cx, cy,       cz)
+                    aCamera.SetPosition   (cx, cy-3.0*l, cz+0.1*l)
+                else:
+                    # bottom align
+                    aCamera.SetFocalPoint (cx, cy,       lz0)
+                    aCamera.SetPosition   (cx, cy-3.0*l, lz0+0.1*l)
+
+            if flag_step == 0:
+                textActor.SetInput ('time: %f'%(t))
+            elif flag_step == 1:
+                textActor.SetInput ('step: %d'%(i))
+            else:
+                textActor.SetInput ('time: %f (%d step)'%(t,i))
             win.Render()
 
             if flag_pic == 1:
