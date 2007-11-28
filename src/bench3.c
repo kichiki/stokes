@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.5 2007/05/04 02:33:38 kichiki Exp $
+ * $Id: bench3.c,v 1.6 2007/11/28 03:50:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,202 +26,106 @@
 #include "configs.h"
 
 
-/*
- * INPUT
- *  n_sc : number of particles in one-direction for SC lattice.
- *         so that the total number of particles is (n_sc)^3.
- *  phi  : volume fraction for the configuration
+/* make label
  */
-void
-bench_SC (int n_sc, double phi,
-	  double ewald_tr,
-	  double ewald_eps,
-	  int flag_prob,
-	  int flag_fix,
-	  int flag_lub,
-	  int flag_mat,
-	  char * iter_solver,
-	  int version)
+static void
+make_label (int flag_prob,
+	    int flag_lub,
+	    int flag_mat,
+	    char *iter_solver,
+	    int version,
+	    int flag_periodic,
+	    char *label)
 {
-  struct stokes *sys = stokes_init ();
-  sys->version = version;
-
-  int np, nm, nf;
-  np = n_sc * n_sc * n_sc;
-  if (flag_fix != 0)
+  // version
+  char l_ver[4];
+  switch (version)
     {
-      nm = np - np/2;
-      nf = np - nm;
+    case 0:
+      strcpy (l_ver, "F");
+      break;
+    case 1:
+      strcpy (l_ver, "FT");
+      break;
+    case 2:
+      strcpy (l_ver, "FTS");
+      break;
+    default:
+      strcpy (l_ver, "unknown");
+      break;
+    }
+  // periodic
+  char l_per[3];
+  if (flag_periodic == 0)
+    {
+      strcpy (l_per, "NP");
     }
   else
     {
-      nm = np;
-      nf = 0;
+      strcpy (l_per, "P");
     }
-  int np3, nm3, nf3;
-  int np5, nm5, nf5;
-  np3 = np * 3;
-  nm3 = nm * 3;
-  nf3 = nf * 3;
-  np5 = np * 5;
-  nm5 = nm * 5;
-  nf5 = nf * 5;
-
-  stokes_set_np (sys, np, nm);
-
-  sys->periodic = 1; // periodic boundary condition
-  double lx, ly, lz;
-  init_config_SC (phi, n_sc, n_sc, n_sc,
-		  sys->pos, &lx, &ly, &lz);
-  stokes_set_l (sys, lx, ly, lz);
-
-  double xi = xi_by_tratio (sys, ewald_tr);
-  stokes_set_xi (sys, xi, ewald_eps);
-
-  //sys->lubmin = 2.0000000001;
-  sys->lubmin2 = 4.0000000001;
-  sys->lubmax = 4.0;
-  stokes_set_iter (sys, iter_solver, 2000, 20, 1.0e-6, 1, stderr);
-
-  double *f = NULL;
-  double *t = NULL;
-  double *e = NULL;
-  double *uf = NULL;
-  double *of = NULL;
-  double *ef = NULL;
-  double *u = NULL;
-  double *o = NULL;
-  double *s = NULL;
-  double *ff = NULL;
-  double *tf = NULL;
-  double *sf = NULL;
-  int i;
-
-  if (flag_prob == 0) // mobility problem
+  // problem
+  char l_prb[4];
+  if (flag_prob == 0)
     {
-      switch (version)
-	{
-	case 0: // F version
-	  f  = (double *)calloc (nm3, sizeof (double));
-	  u  = (double *)calloc (nm3, sizeof (double));
-	  uf = (double *)calloc (nf3, sizeof (double));
-	  ff = (double *)calloc (nf3, sizeof (double));
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      f[i] = 1.0;
-	    }
-	  for (i = 0; i < nf3; i ++)
-	    {
-	      uf[i] = 0.0;
-	    }
-	  break;
-	case 1: // FT version
-	  f  = (double *)calloc (nm3, sizeof (double));
-	  t  = (double *)calloc (nm3, sizeof (double));
-	  u  = (double *)calloc (nm3, sizeof (double));
-	  o  = (double *)calloc (nm3, sizeof (double));
-	  uf = (double *)calloc (nf3, sizeof (double));
-	  of = (double *)calloc (nf3, sizeof (double));
-	  ff = (double *)calloc (nf3, sizeof (double));
-	  tf = (double *)calloc (nf3, sizeof (double));
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      f[i] = 1.0;
-	      t[i] = 1.0;
-	    }
-	  for (i = 0; i < nf3; i ++)
-	    {
-	      uf[i] = 0.0;
-	      of[i] = 0.0;
-	    }
-	  break;
-	case 2: // FTS version
-	  f  = (double *)calloc (nm3, sizeof (double));
-	  t  = (double *)calloc (nm3, sizeof (double));
-	  s  = (double *)calloc (nm5, sizeof (double));
-	  u  = (double *)calloc (nm3, sizeof (double));
-	  o  = (double *)calloc (nm3, sizeof (double));
-	  e  = (double *)calloc (nm5, sizeof (double));
-	  uf = (double *)calloc (nf3, sizeof (double));
-	  of = (double *)calloc (nf3, sizeof (double));
-	  ef = (double *)calloc (nf5, sizeof (double));
-	  ff = (double *)calloc (nf3, sizeof (double));
-	  tf = (double *)calloc (nf3, sizeof (double));
-	  sf = (double *)calloc (nf5, sizeof (double));
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      f[i] = 1.0;
-	      t[i] = 1.0;
-	    }
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      e[i] = 1.0;
-	    }
-	  for (i = 0; i < nf3; i ++)
-	    {
-	      uf[i] = 0.0;
-	      of[i] = 0.0;
-	    }
-	  for (i = 0; i < nf5; i ++)
-	    {
-	      ef[i] = 1.0;
-	    }
-	  break;
-	default:
-	  fprintf (stderr, "invalid version %d\n", version);
-	  break;
-	}
+      strcpy (l_prb, "mob");
     }
-  else // resistance problem
+  else if (flag_prob == 1)
     {
-      switch (version)
-	{
-	case 0: // F version
-	  f  = (double *)calloc (np3, sizeof (double));
-	  u  = (double *)calloc (np3, sizeof (double));
-	  for (i = 0; i < np3; i ++)
-	    {
-	      u[i] = 1.0;
-	    }
-	  break;
-	case 1: // FT version
-	  f  = (double *)calloc (np3, sizeof (double));
-	  t  = (double *)calloc (np3, sizeof (double));
-	  u  = (double *)calloc (np3, sizeof (double));
-	  o  = (double *)calloc (np3, sizeof (double));
-	  for (i = 0; i < np3; i ++)
-	    {
-	      u[i] = 1.0;
-	      o[i] = 1.0;
-	    }
-	  break;
-	case 2: // FTS version
-	  f  = (double *)calloc (np3, sizeof (double));
-	  t  = (double *)calloc (np3, sizeof (double));
-	  s  = (double *)calloc (np5, sizeof (double));
-	  u  = (double *)calloc (np3, sizeof (double));
-	  o  = (double *)calloc (np3, sizeof (double));
-	  e  = (double *)calloc (np5, sizeof (double));
-	  for (i = 0; i < np3; i ++)
-	    {
-	      u[i] = 1.0;
-	      o[i] = 1.0;
-	    }
-	  for (i = 0; i < np5; i ++)
-	    {
-	      e[i] = 1.0;
-	    }
-	  break;
-	default:
-	  fprintf (stderr, "invalid version %d\n", version);
-	  break;
-	}
+      strcpy (l_prb, "mix");
     }
+  else
+    {
+      strcpy (l_prb, "res");
+    }
+  // lub
+  char l_lub[6];
+  if (flag_lub == 0)
+    {
+      strcpy (l_lub, "nolub");
+    }
+  else
+    {
+      strcpy (l_lub, "lub");
+    }
+  // mat
+  if (flag_mat == 0)
+    {
+      sprintf (label, "%s %s %s %s %s",
+	       l_ver, l_per, l_prb, l_lub, iter_solver);
+    }
+  else
+    {
+      sprintf (label, "%s %s %s %s %s",
+	       l_ver, l_per, l_prb, l_lub, "matrix");
+    }
+}
 
-  double t0 = 0.0;
+/* solve the problem
+ * OUTPUT
+ *  returned value : CPU time
+ */
+static double
+solve_problem (struct stokes *sys,
+	       int flag_prob, int flag_lub, int flag_mat, int version,
+	       double *f,
+	       double *t,
+	       double *e,
+	       double *uf,
+	       double *of,
+	       double *ef,
+	       double *u,
+	       double *o,
+	       double *s,
+	       double *ff,
+	       double *tf,
+	       double *sf)
+{
+  double t0 = 0.0; // for compiler warning
   double t1 = 0.0;
+
   /* call atimes routine */
-  if (flag_prob == 0) // mobility problem
+  if (flag_prob != 2) // mobility or mixed problem
     {
       if (flag_lub == 0) // no lubrication
 	{
@@ -480,6 +384,231 @@ bench_SC (int n_sc, double phi,
 	}
     }
 
+  return (t1 - t0);
+}
+
+/*
+ * INPUT
+ *  n_sc : number of particles in one-direction for SC lattice.
+ *         so that the total number of particles is (n_sc)^3.
+ *  phi  : volume fraction for the configuration
+ *  flag_prob : 0 == mobility problem
+ *              1 == mixed problem
+ *              2 == resistance problem
+ */
+void
+bench_SC (int n_sc, double phi,
+	  double ewald_tr,
+	  double ewald_eps,
+	  int flag_prob,
+	  int flag_lub,
+	  int flag_mat,
+	  char *iter_solver,
+	  int version,
+	  int flag_periodic)
+{
+  struct stokes *sys = stokes_init ();
+  sys->version = version;
+
+  int np, nm, nf;
+  np = n_sc * n_sc * n_sc;
+  if (flag_prob == 1)
+    {
+      // mixed problem
+      nm = np - np/2;
+      nf = np - nm;
+    }
+  else
+    {
+      // no fixed particles
+      nm = np;
+      nf = 0;
+    }
+  int np3, nm3, nf3;
+  int np5, nm5, nf5;
+  np3 = np * 3;
+  nm3 = nm * 3;
+  nf3 = nf * 3;
+  np5 = np * 5;
+  nm5 = nm * 5;
+  nf5 = nf * 5;
+
+  stokes_set_np (sys, np, nm);
+
+  double lx, ly, lz;
+  init_config_SC (phi, n_sc, n_sc, n_sc,
+		  sys->pos, &lx, &ly, &lz);
+  if (flag_periodic == 0)
+    {
+      // non-periodic boundary condition
+      sys->periodic = 0;
+    }
+  else
+    {
+      // periodic boundary condition
+      sys->periodic = 1;
+      stokes_set_l (sys, lx, ly, lz);
+
+      double xi = xi_by_tratio (sys, ewald_tr);
+      stokes_set_xi (sys, xi, ewald_eps);
+    }
+
+  sys->lubmin2 = 4.0000000001;
+  sys->lubmax = 4.0;
+  stokes_set_iter (sys, iter_solver, 2000, 20, 1.0e-6, 1, stderr);
+
+  double *f = NULL;
+  double *t = NULL;
+  double *e = NULL;
+  double *uf = NULL;
+  double *of = NULL;
+  double *ef = NULL;
+  double *u = NULL;
+  double *o = NULL;
+  double *s = NULL;
+  double *ff = NULL;
+  double *tf = NULL;
+  double *sf = NULL;
+  int i;
+
+  if (flag_prob != 2) // mobility or mixed problem
+    {
+      switch (version)
+	{
+	case 0: // F version
+	  f  = (double *)malloc (sizeof (double) * nm3);
+	  u  = (double *)malloc (sizeof (double) * nm3);
+	  uf = (double *)malloc (sizeof (double) * nf3);
+	  ff = (double *)malloc (sizeof (double) * nf3);
+	  for (i = 0; i < nm3; i ++)
+	    {
+	      f[i] = 1.0;
+	    }
+	  for (i = 0; i < nf3; i ++)
+	    {
+	      uf[i] = 0.0;
+	    }
+	  break;
+	case 1: // FT version
+	  f  = (double *)malloc (sizeof (double) * nm3);
+	  t  = (double *)malloc (sizeof (double) * nm3);
+	  u  = (double *)malloc (sizeof (double) * nm3);
+	  o  = (double *)malloc (sizeof (double) * nm3);
+	  uf = (double *)malloc (sizeof (double) * nf3);
+	  of = (double *)malloc (sizeof (double) * nf3);
+	  ff = (double *)malloc (sizeof (double) * nf3);
+	  tf = (double *)malloc (sizeof (double) * nf3);
+	  for (i = 0; i < nm3; i ++)
+	    {
+	      f[i] = 1.0;
+	      t[i] = 1.0;
+	    }
+	  for (i = 0; i < nf3; i ++)
+	    {
+	      uf[i] = 0.0;
+	      of[i] = 0.0;
+	    }
+	  break;
+	case 2: // FTS version
+	  f  = (double *)malloc (sizeof (double) * nm3);
+	  t  = (double *)malloc (sizeof (double) * nm3);
+	  s  = (double *)malloc (sizeof (double) * nm5);
+	  u  = (double *)malloc (sizeof (double) * nm3);
+	  o  = (double *)malloc (sizeof (double) * nm3);
+	  e  = (double *)malloc (sizeof (double) * nm5);
+	  uf = (double *)malloc (sizeof (double) * nf3);
+	  of = (double *)malloc (sizeof (double) * nf3);
+	  ef = (double *)malloc (sizeof (double) * nf5);
+	  ff = (double *)malloc (sizeof (double) * nf3);
+	  tf = (double *)malloc (sizeof (double) * nf3);
+	  sf = (double *)malloc (sizeof (double) * nf5);
+	  for (i = 0; i < nm3; i ++)
+	    {
+	      f[i] = 1.0;
+	      t[i] = 1.0;
+	    }
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      e[i] = 1.0;
+	    }
+	  for (i = 0; i < nf3; i ++)
+	    {
+	      uf[i] = 0.0;
+	      of[i] = 0.0;
+	    }
+	  for (i = 0; i < nf5; i ++)
+	    {
+	      ef[i] = 1.0;
+	    }
+	  break;
+	default:
+	  fprintf (stderr, "invalid version %d\n", version);
+	  break;
+	}
+    }
+  else // resistance problem
+    {
+      switch (version)
+	{
+	case 0: // F version
+	  f  = (double *)malloc (sizeof (double) * np3);
+	  u  = (double *)malloc (sizeof (double) * np3);
+	  for (i = 0; i < np3; i ++)
+	    {
+	      u[i] = 1.0;
+	    }
+	  break;
+	case 1: // FT version
+	  f  = (double *)malloc (sizeof (double) * np3);
+	  t  = (double *)malloc (sizeof (double) * np3);
+	  u  = (double *)malloc (sizeof (double) * np3);
+	  o  = (double *)malloc (sizeof (double) * np3);
+	  for (i = 0; i < np3; i ++)
+	    {
+	      u[i] = 1.0;
+	      o[i] = 1.0;
+	    }
+	  break;
+	case 2: // FTS version
+	  f  = (double *)malloc (sizeof (double) * np3);
+	  t  = (double *)malloc (sizeof (double) * np3);
+	  s  = (double *)malloc (sizeof (double) * np5);
+	  u  = (double *)malloc (sizeof (double) * np3);
+	  o  = (double *)malloc (sizeof (double) * np3);
+	  e  = (double *)malloc (sizeof (double) * np5);
+	  for (i = 0; i < np3; i ++)
+	    {
+	      u[i] = 1.0;
+	      o[i] = 1.0;
+	    }
+	  for (i = 0; i < np5; i ++)
+	    {
+	      e[i] = 1.0;
+	    }
+	  break;
+	default:
+	  fprintf (stderr, "invalid version %d\n", version);
+	  break;
+	}
+    }
+
+  double dt
+    = solve_problem (sys,
+		     flag_prob, flag_lub, flag_mat, version,
+		     f, t, e, uf, of, ef,
+		     u, o, s, ff, tf, sf);
+
+  /* make label */
+  char label[80];
+  make_label (flag_prob,
+	      flag_lub,
+	      flag_mat,
+	      iter_solver,
+	      version,
+	      flag_periodic,
+	      label);
+
+
   /* analysis */
   double av_u;
   double av_ff;
@@ -511,8 +640,9 @@ bench_SC (int n_sc, double phi,
 	    }
 	  if (nf > 0) av_ff /= (double) nf3;
 
-	  fprintf (stdout, "%d %d %f %e %e\n",
-		   np, nm, t1 - t0, av_u, av_ff);
+	  fprintf (stdout, "%s %d %d %.3f %e %e\n",
+		   label,
+		   np, nm, dt, av_u, av_ff);
 
 	  free (f);
 	  free (u);
@@ -543,8 +673,9 @@ bench_SC (int n_sc, double phi,
 	      av_tf /= (double) nf3;
 	    }
 
-	  fprintf (stdout, "%d %f %e %e %e %e\n",
-		   np, t1 - t0, av_u, av_ff, av_o, av_tf);
+	  fprintf (stdout, "%s %d %d %.3f %e %e %e %e\n",
+		   label,
+		   np, nm, dt, av_u, av_ff, av_o, av_tf);
 
 	  free (f);
 	  free (t);
@@ -593,8 +724,9 @@ bench_SC (int n_sc, double phi,
 	    }
 	  if (nf > 0) av_ef /= (double) nf5;
 
-	  fprintf (stdout, "%d %f %e %e %e %e %e %e\n",
-		   np, t1 - t0, av_u, av_ff, av_o, av_tf, av_e, av_ef);
+	  fprintf (stdout, "%s %d %d %.3f %e %e %e %e %e %e\n",
+		   label,
+		   np, nm, dt, av_u, av_ff, av_o, av_tf, av_e, av_ef);
 
 	  free (f);
 	  free (t);
@@ -626,8 +758,9 @@ bench_SC (int n_sc, double phi,
 	    }
 	  av_f  /= (double) np3;
 
-	  fprintf (stdout, "%d %f %e\n",
-		   np, t1 - t0, av_f);
+	  fprintf (stdout, "%s %d %d %.3f %e\n",
+		   label,
+		   np, nm, dt, av_f);
 
 	  free (f);
 	  free (u);
@@ -643,8 +776,9 @@ bench_SC (int n_sc, double phi,
 	  av_f  /= (double) np3;
 	  av_t  /= (double) np3;
 
-	  fprintf (stdout, "%d %f %e %e\n",
-		   np, t1 - t0, av_f, av_t);
+	  fprintf (stdout, "%s %d %d %.3f %e %e\n",
+		   label,
+		   np, nm, dt, av_f, av_t);
 
 	  free (f);
 	  free (t);
@@ -669,8 +803,9 @@ bench_SC (int n_sc, double phi,
 	    }
 	  av_s  /= (double) np5;
 
-	  fprintf (stdout, "%d %f %e %e %e\n",
-		   np, t1 - t0, av_f, av_t, av_s);
+	  fprintf (stdout, "%s %d %d %.3f %e %e %e\n",
+		   label,
+		   np, nm, dt, av_f, av_t, av_s);
 
 	  free (f);
 	  free (t);
@@ -694,20 +829,20 @@ void
 usage (char * argv0)
 {
   fprintf (stderr, "Benchmark Test for libstokes\n");
-  fprintf (stderr, "$Id: bench3.c,v 1.5 2007/05/04 02:33:38 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: bench3.c,v 1.6 2007/11/28 03:50:22 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [options]\n", argv0);
   fprintf (stderr, "OPTIONS\n");
   fprintf (stderr, "\t-f, -ft, -fts : specify version (default F)\n");
-  fprintf (stderr, "\t-res          : calc res problem"
-	   " (default: mob problem)\n");
-  fprintf (stderr, "\t-fix          : make half of particles fixed"
-	   " (default: no fixed)\n"
-	   "\t\tNOTE this is ignored for res problem.\n");
+  fprintf (stderr, "\t-prob         : 0 for mobility problem (default)\n"
+	   "\t              : 1 for mixed problem\n"
+	   "\t              : 2 for resistance problem\n");
   fprintf (stderr, "\t-lub          : calc with lub"
 	   " (default: no lub)\n");
   fprintf (stderr, "\t-mat          : use matrix scheme"
 	   " (default: atimes)\n");
+  fprintf (stderr, "\t-open         : calc under non-periodic B.C."
+	   " (default: periodic B.C.)\n");
   fprintf (stderr, "\t-tr           : ewald_tr (default: 10.0)\n");
   fprintf (stderr, "\t-eps          : cut-off limit for ewald-sum"
 	   " (default: 1.0e-12)\n");
@@ -720,6 +855,8 @@ usage (char * argv0)
   fprintf (stderr, "\t\t5 = gpb\n");
   fprintf (stderr, "\t\t6 = otmk\n");
   fprintf (stderr, "\t\t7 = gmres (default)\n");
+  fprintf (stderr, "\t-all : calc all possible options. "
+	   "(above options are just ignored.)\n");
 }
 
 
@@ -732,8 +869,9 @@ main (int argc, char** argv)
   int flag_mat  = 0;
   int flag_lub  = 0;
   int flag_prob = 0;
-  int flag_fix  = 0;
   int flag_iter = 7; // gmres
+  int flag_periodic = 1; // periodic B.C.
+  int flag_all = 0;
   double ewald_eps = 1.0e-12;
   double ewald_tr  = 10.0;
   int i;
@@ -747,13 +885,9 @@ main (int argc, char** argv)
 	{
 	  flag_lub = 1;
 	}
-      else if (strcmp (argv [i], "-res") == 0)
+      else if (strcmp (argv [i], "-prob") == 0)
 	{
-	  flag_prob = 1;
-	}
-      else if (strcmp (argv [i], "-fix") == 0)
-	{
-	  flag_fix = 1;
+	  flag_prob = atoi (argv [++i]);
 	}
       else if (strcmp (argv [i], "-f") == 0)
 	{
@@ -778,6 +912,14 @@ main (int argc, char** argv)
       else if (strcmp (argv [i], "-iter") == 0)
 	{
 	  flag_iter = atoi (argv [++i]);
+	}
+      else if (strcmp (argv [i], "-open") == 0)
+	{
+	  flag_periodic = 0;
+	}
+      else if (strcmp (argv [i], "-all") == 0)
+	{
+	  flag_all = 1;
 	}
       else
 	{
@@ -819,7 +961,7 @@ main (int argc, char** argv)
       exit (1);
     }
 
-  /* write header */
+  /* write header
   if (version == 0)
     {
       fprintf (stdout, "# F version");
@@ -863,20 +1005,142 @@ main (int argc, char** argv)
     {
       fprintf (stdout, " matrix\n");
     }
+  */
 
   /* main loop */
   double phi = 0.3;
   for (i = 2; i < 100; i ++)
     {
-      bench_SC (i, phi,
-		ewald_tr,
-		ewald_eps,
-		flag_prob,
-		flag_fix,
-		flag_lub,
-		flag_mat,
-		iter_solver,
-		version);
+      if (flag_all == 0)
+	{
+	  bench_SC (i, phi,
+		    ewald_tr,
+		    ewald_eps,
+		    flag_prob,
+		    flag_lub,
+		    flag_mat,
+		    iter_solver,
+		    version,
+		    flag_periodic);
+	}
+      else
+	{
+	  for (flag_periodic = 0; flag_periodic < 2; flag_periodic ++)
+	    {
+	      for (flag_prob = 0; flag_prob < 3; flag_prob ++)
+		{
+		  for (flag_lub = 0; flag_lub < 2; flag_lub ++)
+		    {
+		      for (version = 0; version < 3; version ++)
+			{
+			  char label[80];
+			  make_label (flag_prob,
+				      flag_lub,
+				      1,  //flag_mat,
+				      "", //iter_solver,
+				      version,
+				      flag_periodic,
+				      label);
+			  fprintf (stderr, "# %s\n", label);
+
+			  // matrix
+			  flag_mat = 1;
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    iter_solver,
+				    version,
+				    flag_periodic);
+			  // atimes
+			  flag_mat = 0;
+			  // cg
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "cg",
+				    version,
+				    flag_periodic);
+			  // cgs
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "cgs",
+				    version,
+				    flag_periodic);
+			  // bicgstab
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "bicgstab",
+				    version,
+				    flag_periodic);
+			  // sta
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "sta",
+				    version,
+				    flag_periodic);
+			  // sta2
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "sta2",
+				    version,
+				    flag_periodic);
+			  // gpb
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "gpb",
+				    version,
+				    flag_periodic);
+			  // otmk
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "otmk",
+				    version,
+				    flag_periodic);
+			  // gmres
+			  bench_SC (i, phi,
+				    ewald_tr,
+				    ewald_eps,
+				    flag_prob,
+				    flag_lub,
+				    flag_mat,
+				    "gmres",
+				    version,
+				    flag_periodic);
+			}
+		    }
+		}
+	    }
+	}
     }
 
   return 0;
