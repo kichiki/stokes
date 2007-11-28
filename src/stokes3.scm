@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.7 2007/11/18 01:35:32 kichiki Exp $
+; $Id: stokes3.scm,v 1.8 2007/11/28 03:47:26 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -36,6 +36,7 @@
 (define IT-max 2000)   ; max number of iterations
 (define IT-n   20)     ; restart number
 (define IT-eps 1.0e-6) ; accuracy of the solution
+(define IT-debug 0)    ; set 1 to print the debug info for solve_iter()
 
 ;; ODE parameters
 (define ode-solver "rkf45")
