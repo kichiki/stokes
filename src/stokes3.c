@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.16 2007/11/18 01:35:11 kichiki Exp $
+ * $Id: stokes3.c,v 1.17 2007/11/28 03:46:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.16 2007/11/18 01:35:11 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.17 2007/11/28 03:46:49 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -473,8 +473,10 @@ main (int argc, char** argv)
   str_it_solver = guile_get_string ("IT-solver");
   int it_max = guile_get_int ("IT-max", 2000);
   int it_n   = guile_get_int ("IT-n", 20);
-  int it_eps = guile_get_double ("IT-eps", 1.0e-6);
-  stokes_set_iter (sys, str_it_solver, it_max, it_n, it_eps, 0, stderr);
+  double it_eps = guile_get_double ("IT-eps", 1.0e-6);
+  int it_debug = guile_get_int ("IT-debug", 0);
+  stokes_set_iter (sys, str_it_solver, it_max, it_n, it_eps, it_debug, stderr);
+  free (str_it_solver);
 
   stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
   stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
