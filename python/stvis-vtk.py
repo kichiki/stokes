@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.11 2007/11/18 05:23:14 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.12 2007/11/29 04:49:10 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+import sys
+import math
+#sys.path.append('/home/ichiki/RYUON/lib64/python2.4/site-packages')
 import vtk
 #from vtk.util.colors import peacock, tomato
 from vtk.util.colors import *
-import sys
-import math
 #sys.path.append('/somewhere/ryuon/stokes/python')
 import stokes
 
@@ -151,11 +152,12 @@ def make_bData (np, x):
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.11 2007/11/18 05:23:14 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.12 2007/11/29 04:49:10 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
+    print '\t-step n      : draw every n steps (default: 1, all frames)'
     print '\t-b or --bond : draw bond connecting particles'
-    print '\t-s or --step : print step instead of time'
+    print '\t-s           : print step instead of time'
     print '\t-ts          : print time with step'
     print '\t-bottom      : follow the camera at the bottom of the blob'
     print '\t             : (default) follow the center of mass'
@@ -207,6 +209,7 @@ def bounding_box (np, x):
 
 def main():
     filename = ''
+    nstep = 1
     flag_bond = 0
     flag_step = 0
     flag_bottom = 0
@@ -216,10 +219,13 @@ def main():
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
             i += 2
+        elif sys.argv[i] == '-step':
+            nstep = int(sys.argv[i+1])
+            i += 2
         elif sys.argv[i] == '-b' or sys.argv[i] == '--bond':
             flag_bond = 1
             i += 1
-        elif sys.argv[i] == '-s' or sys.argv[i] == '--step':
+        elif sys.argv[i] == '-s':
             flag_step = 1
             i += 1
         elif sys.argv[i] == '-ts':
@@ -425,9 +431,10 @@ def main():
         aCamera.SetFocalPoint (0.5*lattice[0], 0,      0.4*lattice[2])
         aCamera.SetPosition   (0.5*lattice[0], -1.6*l, 0.5*lattice[2])
 
-    # loop
+    # loop 
     while 1:
-        for i in range(nc.ntime):
+        i = 0
+        while i < nc.ntime:
             t = stokes.stokes_nc_get_time_step (nc, i)
             stokes.stokes_nc_get_data (nc, "x", i, x)
             if nc.flag_q != 0:
@@ -489,7 +496,10 @@ def main():
                 wr.SetInput(w2if.GetOutput())
                 wr.SetFileName('%s-%05d.png'%(filename,i))
                 wr.Write()
-                
+
+            i += nstep
+        # end of while i < nc.ntime:
+    # end of while 1:
 
 
 if __name__ == "__main__":
