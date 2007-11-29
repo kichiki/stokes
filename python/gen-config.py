@@ -1,6 +1,6 @@
 # configuration generating script
 # Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: gen-config.py,v 1.2 2007/11/18 05:20:20 kichiki Exp $
+# $Id: gen-config.py,v 1.3 2007/11/29 04:35:04 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -219,6 +219,141 @@ def torous (n, Rr, phi, a, seed=0):
     return pos
 
 
+# INPUT
+#  r  : radius of the particle (in contact)
+#  nx : repetitions of x direction spacing with 2r
+#  ny : repetitions of y direction spacing with 2r sqrt(3)
+#  nz : repetitions of z direction spacing with 2r sqrt(6)/3
+# OUTPUT
+#  x[n*3] : configuration
+#           where the total number of particle is  n = 4 * nx * ny * nz.
+def hcp (nx, ny, nz, r):
+    l = 2.0 * r
+    lx = l
+    ly = l * math.sqrt(3.0)
+    lz = l * math.sqrt(6.0) * 2.0/ 3.0
+
+    pos = []
+    for iz in range(nz):
+        for iy in range(ny):
+            for ix in range(nx):
+                # lattice origin
+                x0 = float(ix) * lx
+                y0 = float(iy) * ly
+                z0 = float(iz) * lz
+                # the first particle at (0,0,0) + L
+                pos.append(x0)
+                pos.append(y0)
+                pos.append(z0)
+                # the second particle at (1/2,sqrt(3)/2,0) + L
+                pos.append(x0 + lx*0.5)
+                pos.append(y0 + ly*0.5)
+                pos.append(z0)
+                # the third particle at (1/2,sqrt(3)/6,sqrt(6)/3) + L
+                pos.append(x0 + lx*0.5)
+                pos.append(y0 + ly/6.0)
+                pos.append(z0 + lz*0.5)
+                # the fourth particle at (0,sqrt(3)2/3,sqrt(6)/3) + L
+                pos.append(x0)
+                pos.append(y0 + ly*2.0/3.0)
+                pos.append(z0 + lz*0.5)
+
+    # check for the distance
+    np = len(pos) / 3
+    if np != 4*nx*ny*nz:
+        print 'np %d != 4*nx*ny*nz = %d'%(np, 4*nx*ny*nz)
+        sys.exit(1)
+    # check for the distance
+    tiny = 2.0e-13
+    for ix in range(nx-1):
+        for iy in range(ny-1):
+            for iz in range(nz-1):
+                i0 = 4*(ix + nx*iy + nx*ny*iz)
+                # case 1
+                i = i0
+                j = 4*((ix+1) + nx*iy + nx*ny*iz)
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#1 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                # case 2
+                i = i0
+                j = i0 + 1
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#2 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                # case 3
+                i = i0
+                j = i0 + 2
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#3 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                # case 4
+                i = i0 + 2
+                j = i0 + 1
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#4 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                # case 5
+                i = i0 + 2
+                j = 4*((ix+1) + nx*iy + nx*ny*iz)
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#5 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                # case 6
+                i = i0 + 1
+                j = i0 + 3
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#6 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                # case 7
+                i = i0 + 1
+                j = 4*((ix+1) + nx*iy + nx*ny*iz) + 3
+                dx = pos[i*3+0] - pos[j*3+0]
+                dy = pos[i*3+1] - pos[j*3+1]
+                dz = pos[i*3+2] - pos[j*3+2]
+                r2 = dx*dx + dy*dy + dz*dz
+                if math.fabs(r2 - 4.0*r*r) > tiny:
+                    print '#7 (%d,%d) r2 = %e < r^2 for r = %e, diff = %e'\
+                          %(i,j,r2,r, math.fabs(r2 - 4.0*r*r))
+                    sys.exit(1)
+                
+    print '(set! lattice \'('
+    print '  %.16f ; nx lx = %d * %.16f'%(float(nx)*lx,nx,lx)
+    print '  %.16f ; ny ly = %d * %.16f'%(float(ny)*ly,ny,ly)
+    print '  %.16f ; nz lz = %d * %.16f'%(float(nz)*lz,nz,lz)
+    print '))'
+    return pos
+
+
 def rotate(direction, degree, x):
     theta = degree*math.pi/180.0 # radian
     s = math.sin(theta)
@@ -295,12 +430,12 @@ def print_config (x):
     print ''
     print '(define x #('
     for i in range(len(x)/3):
-        print '  %f %f %f ; %d'%(x[i*3],x[i*3+1],x[i*3+2],i)
+        print '  %.16f %.16f %.16f ; %d'%(x[i*3],x[i*3+1],x[i*3+2],i)
     print '))'
 
 
 def usage():
-    print '$Id: gen-config.py,v 1.2 2007/11/18 05:20:20 kichiki Exp $'
+    print '$Id: gen-config.py,v 1.3 2007/11/29 04:35:04 kichiki Exp $'
     print 'USAGE:'
     print '\t-n : number of particles'
     print 'CONFIGURATION OPTIONS'
@@ -324,6 +459,11 @@ def usage():
     '\t\t phi is the volume fraction\n'\
     '\t\t a is the radius of particles\n'\
     '\t\t seed is for the random number generator'
+    print '\t-hcp r nx ny nz : make hexagonal closed pack.\n'\
+    '\t\t r is the radius of the particle (in contact)\n'\
+    '\t\t nx : repetitions of x direction spacing with 2r\n'\
+    '\t\t ny : repetitions of y direction spacing with 2r sqrt(3)\n'\
+    '\t\t nz : repetitions of z direction spacing with 2r sqrt(6)/3\n'
     print 'OPERATION OPTIONS (you can give them as much as you want)'
     print '\t-rotate [xyz] D : rotate D degree in [xyz] direction'
     print '\t-translate [xyz] D : traslate D degree in [xyz] direction'
@@ -369,10 +509,17 @@ def main():
             i += 5
         elif sys.argv[i] == '-torous':
             flag_conf = 4 # torous
-            Rr    = float(sys.argv[i+1])
-            phi   = float(sys.argv[i+2])
-            a     = float(sys.argv[i+3])
-            seed  = int(sys.argv[i+4])
+            Rr   = float(sys.argv[i+1])
+            phi  = float(sys.argv[i+2])
+            a    = float(sys.argv[i+3])
+            seed = int(sys.argv[i+4])
+            i += 5
+        elif sys.argv[i] == '-hcp':
+            flag_conf = 5 # hcp
+            r  = float(sys.argv[i+1])
+            nx = int(sys.argv[i+2])
+            ny = int(sys.argv[i+3])
+            nz = int(sys.argv[i+4])
             i += 5
         elif sys.argv[i] == '-rotate':
             op_type.append(0) # rotate
@@ -416,6 +563,9 @@ def main():
     elif flag_conf == 4:
         # torous
         x = torous (n, Rr, phi, a)
+    elif flag_conf == 5:
+        # hcp
+        x = hcp (nx, ny, nz, r)
     else:
         print 'invalid configuration frag'
         sys.exit(1)
