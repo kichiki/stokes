@@ -1,6 +1,6 @@
 # dump stokes-netcdf
 # Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stncdump.py,v 1.7 2007/11/12 03:34:53 kichiki Exp $
+# $Id: stncdump.py,v 1.8 2007/11/29 04:35:31 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ import stokes
 
 
 def usage():
-    print '$Id: stncdump.py,v 1.7 2007/11/12 03:34:53 kichiki Exp $'
+    print '$Id: stncdump.py,v 1.8 2007/11/29 04:35:31 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-line        : all particles are in a single line for each time\n'\
@@ -29,7 +29,7 @@ def usage():
     print '\t-step n      : write the config at step n\n'\
           '\t\t step 1000 is the last step for 1000 run.\n'\
           '\t\t (step 0, the initial config, does not exist in the nc file.)\n'
-    print '\t-com0        : set COM to 0 with -step option.\n'
+    print '\t-com x y z   : shift the COM to (x,y,z) with -step option.\n'
     sys.exit ()
 
 
@@ -38,7 +38,10 @@ def main():
     filename = ''
     flag_line = 0
     step = -1
-    flag_com0 = 0
+    flag_com = 0
+    x0 = 0.0
+    y0 = 0.0
+    z0 = 0.0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
@@ -51,9 +54,12 @@ def main():
             step = int(sys.argv[i+1])
             step -= 1
             i += 2
-        elif sys.argv[i] == '-com0':
-            flag_com0 = 1
-            i += 1
+        elif sys.argv[i] == '-com':
+            flag_com = 1
+            x0 = float(sys.argv[i+1])
+            y0 = float(sys.argv[i+2])
+            z0 = float(sys.argv[i+3])
+            i += 4
         else:
             usage()
     if filename == '': usage()
@@ -87,7 +93,7 @@ def main():
         comx = 0.0
         comy = 0.0
         comz = 0.0
-        if flag_com0 != 0:
+        if flag_com != 0:
             for i in range(nc.np):
                 comx += pos[i*3]
                 comy += pos[i*3+1]
@@ -105,9 +111,9 @@ def main():
         print ''
         print '(define x #('
         for i in range(nc.np):
-            print '  %f %f %f ; %d'%(pos[i*3]   - comx,
-                                     pos[i*3+1] - comy,
-                                     pos[i*3+2] - comz,
+            print '  %f %f %f ; %d'%(pos[i*3]   - comx + x0,
+                                     pos[i*3+1] - comy + y0,
+                                     pos[i*3+2] - comz + z0,
                                      i)
         print '))'
 
