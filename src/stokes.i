@@ -1,6 +1,6 @@
 /* SWIG interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.i,v 1.2 2006/10/18 15:17:00 ichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.i,v 1.3 2007/11/30 06:36:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@
 
 %include "carrays.i"
 %array_class(double, darray);
+%array_class(int, iarray);
 
 %include <libiter.h>
 %include <libstokes.h>
