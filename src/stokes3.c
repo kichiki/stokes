@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.17 2007/11/28 03:46:49 kichiki Exp $
+ * $Id: stokes3.c,v 1.18 2007/11/30 06:38:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,6 @@
 
 #include <libstokes.h>
 #include <netcdf.h> // nc_sync()
-#include <libguile.h> // scm_init_guile()
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv.h>
@@ -34,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.17 2007/11/28 03:46:49 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.18 2007/11/30 06:38:16 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -240,8 +239,7 @@ main (int argc, char** argv)
   /**
    * parameter set
    */
-  scm_init_guile(); // start the Guile interpreter
-  scm_c_primitive_load (init_file); // load initialize script
+  guile_load (init_file);
 
   // outfile
   if (out_file == NULL)
