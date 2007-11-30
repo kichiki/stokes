@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.12 2007/11/29 04:49:10 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.13 2007/11/30 06:34:04 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,142 +17,20 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 import sys
 import math
-#sys.path.append('/home/ichiki/RYUON/lib64/python2.4/site-packages')
+
+#sys.path.append('/somewhere/vtk-python-binding/lib64/python2.4/site-packages')
 import vtk
 #from vtk.util.colors import peacock, tomato
 from vtk.util.colors import *
+
 #sys.path.append('/somewhere/ryuon/stokes/python')
 import stokes
 
-
-# make an Actor for mobile particles at (0,0,0) with radius 1
-# this is for the result with quaternion
-def make_pActor ():
-    pSource = vtk.vtkSphereSource()
-    pSource.SetPhiResolution(20)
-    pSource.SetThetaResolution(20)
-
-    pGlyph = vtk.vtkGlyph3D()
-    pGlyph.SetSource(pSource.GetOutput())
-
-    #pGlyph.ScalingOn()
-    #pGlyph.SetScaleModeToScaleByScalar()
-
-    pos = vtk.vtkPoints()
-    pos.InsertNextPoint(0, 0, 0)
-
-    pData = vtk.vtkPolyData()
-    pData.SetPoints(pos)
-
-    diameter = vtk.vtkDoubleArray()
-    diameter.SetNumberOfComponents(1)
-    diameter.InsertNextTuple1(2.0)
-
-    pData.GetPointData().SetScalars(diameter)
-    pGlyph.SetInput(pData)
-
-    pNormals = vtk.vtkPolyDataNormals()
-    pNormals.SetInput(pGlyph.GetOutput())
-
-    ###########################################################################
-    # clip plane
-    plane = vtk.vtkPlane()
-    plane.SetOrigin(0, 0, 0)
-    plane.SetNormal(0, 1, 0) # upper side
-
-    clipper = vtk.vtkClipPolyData()
-    clipper.SetInput(pNormals.GetOutput())
-    clipper.SetClipFunction(plane)
-    clipper.GenerateClipScalarsOn()
-    clipper.GenerateClippedOutputOn()
-    clipper.SetValue(0)
-
-    clipMapper = vtk.vtkPolyDataMapper()
-    clipMapper.SetInput(clipper.GetOutput())
-    clipMapper.ScalarVisibilityOff()
-
-    clipActor = vtk.vtkActor()
-    clipActor.SetMapper(clipMapper)
-    clipActor.GetProperty().SetColor(peacock)
-
-    ###########################################################################
-    # clipped part
-    restMapper = vtk.vtkPolyDataMapper()
-    restMapper.SetInput(clipper.GetClippedOutput())
-    restMapper.ScalarVisibilityOff()
-
-    restActor = vtk.vtkActor()
-    restActor.SetMapper(restMapper)
-    restActor.GetProperty().SetColor(tomato)
-
-    ###########################################################################
-    # assembly
-    assembly = vtk.vtkAssembly()
-    assembly.AddPart(clipActor)
-    assembly.AddPart(restActor)
-    assembly.RotateX(90)
-
-    return assembly
-
-
-# make transform matrix (3x3) by quaternion
-def Q2M (q1,q2,q3,q4):
-    m = []
-
-    m.append(2.0*(q1*q1 + q4*q4 - .5))
-    m.append(2.0*(q1*q2 + q3*q4))
-    m.append(2.0*(q1*q3 - q2*q4))
-
-    m.append(2.0*(q1*q2 - q3*q4))
-    m.append(2.0*(q2*q2 + q4*q4 - .5))
-    m.append(2.0*(q2*q3 + q1*q4))
-
-    m.append(2.0*(q1*q3 + q2*q4))
-    m.append(2.0*(q2*q3 - q1*q4))
-    m.append(2.0*(q3*q3 + q4*q4 - .5))
-
-    return m
-
-
-# make pData for np particles
-def make_pData (np, x, a):
-    pos = vtk.vtkPoints()
-    diameter = vtk.vtkDoubleArray()
-    diameter.SetNumberOfComponents(1)
-    for i in range(np):
-        pos.InsertNextPoint(x[i*3], x[i*3+1], x[i*3+2])
-        if a != []:
-            diameter.InsertNextTuple1(2.0*a[i])
-        else:
-            diameter.InsertNextTuple1(2.0)
-
-    # first make pData containing particle coordinates
-    pData = vtk.vtkPolyData()
-    pData.SetPoints(pos)
-    pData.GetPointData().SetScalars(diameter)
-
-    return pData
-
-
-# make bData for bond
-def make_bData (np, x):
-    points = vtk.vtkPoints()
-    lines = vtk.vtkCellArray()
-    lines.InsertNextCell(np)
-    for i in range(np):
-        points.InsertNextPoint(x[i*3], x[i*3+1], x[i*3+2])
-        lines.InsertCellPoint(i)
-
-    # first make pData containing particle coordinates
-    bData = vtk.vtkPolyData()
-    bData.SetPoints(points)
-    bData.SetLines(lines)
-
-    return bData
+import ryuon_vtk
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.12 2007/11/29 04:49:10 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.13 2007/11/30 06:34:04 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-step n      : draw every n steps (default: 1, all frames)'
@@ -164,47 +42,6 @@ def usage():
     print '\t             : this option is valid only for non-periodic system'
     print '\t-p or --pic  : generate PNG images'
     sys.exit ()
-
-
-def bounding_box (np, x):
-    (cx,cy,cz) = (0.0, 0.0, 0.0)
-    for i in range(np):
-        xx = x[i*3]
-        yy = x[i*3+1]
-        zz = x[i*3+2]
-
-        cx = cx + xx
-        cy = cy + yy
-        cz = cz + zz
-
-        if i == 0:
-            lx0 = lx1 = xx
-            ly0 = ly1 = yy
-            lz0 = lz1 = zz
-        else:
-            if lx0 > xx:
-                lx0 = xx
-            if lx1 < xx:
-                lx1 = xx
-            if ly0 > yy:
-                ly0 = yy
-            if ly1 < yy:
-                ly1 = yy
-            if lz0 > zz:
-                lz0 = zz
-            if lz1 < zz:
-                lz1 = zz
-        
-    cx = cx / float(np)
-    cy = cy / float(np)
-    cz = cz / float(np)
-
-    #lx = lx1 - lx0
-    #ly = ly1 - ly0
-    #lz = lz1 - lz0
-
-    #return (cx,cy,cz, lx,ly,lz)
-    return (cx,cy,cz, lx0,ly0,lz0, lx1,ly1,lz1)
 
 
 def main():
@@ -239,7 +76,7 @@ def main():
             i += 1
         else:
             usage()
-    if filename == '': usage()
+    if filename == '' : usage()
 
     nc = stokes.stokes_nc_open (filename)
     #stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
@@ -272,72 +109,24 @@ def main():
     if nc.npf > 0:
         xf0  = stokes.darray(nc.npf * nc.nvec)
         stokes.stokes_nc_get_data0 (nc, "xf0", xf0)
-        pfData = make_pData(nc.npf, xf0, af)
-
-        pfSource = vtk.vtkSphereSource()
-        pfSource.SetPhiResolution(20)
-        pfSource.SetThetaResolution(20)
-
-        pfGlyph = vtk.vtkGlyph3D()
-        pfGlyph.SetSource(pfSource.GetOutput())
+        (pfActor,pfGlyph) = ryuon_vtk.make_pActor ((1,0,0), 1, 20)
+        pfData = ryuon_vtk.make_pData(nc.npf, xf0, af)
         pfGlyph.SetInput(pfData)
-        pfGlyph.ScalingOn()
-        pfGlyph.SetScaleModeToScaleByScalar()
 
-        pfMapper = vtk.vtkPolyDataMapper()
-        pfMapper.ScalarVisibilityOff()
-        pfMapper.SetInput(pfGlyph.GetOutput())
-
-        pfActor = vtk.vtkActor()
-        pfActor.SetMapper(pfMapper)
-        # put Red color
-        pfActor.GetProperty().SetColor(1,0,0)
-        pfActor.GetProperty().SetOpacity(1)
-
-    
     # then, make Actor
     if nc.flag_q != 0:
         # with quaternion
         pActors = []
         for i in range (nc.np):
-            pActors.append(make_pActor())
+            pActors.append(ryuon_vtk.make_pActor_with_quaternion())
     else:
         # no quaternion in the result
-        pSource = vtk.vtkSphereSource()
-        #pSource.SetPhiResolution(20)
-        #pSource.SetThetaResolution(20)
-
-        pGlyph = vtk.vtkGlyph3D()
-        pGlyph.SetSource(pSource.GetOutput())
+        (pActor,pGlyph) = ryuon_vtk.make_pActor((1,1,1), 1, 8)
         # pGlyph.SetInput(pData)
-        pGlyph.ScalingOn()
-        pGlyph.SetScaleModeToScaleByScalar()
-
-        pMapper = vtk.vtkPolyDataMapper()
-        pMapper.ScalarVisibilityOff()
-        pMapper.SetInput(pGlyph.GetOutput())
-
-        pActor = vtk.vtkActor()
-        pActor.SetMapper(pMapper)
-
-        pActor.GetProperty().SetColor(1,1,1)
-        pActor.GetProperty().SetOpacity(1)
 
     # bond Actor
     if flag_bond != 0:
-        bond = vtk.vtkTubeFilter()
-        bond.SetNumberOfSides(8)
-        # bond.SetInput(bData)
-        bond.SetRadius(0.2)
-
-        bondMapper = vtk.vtkPolyDataMapper()
-        bondMapper.SetInput(bond.GetOutput())
-
-        bondActor = vtk.vtkActor()
-        bondActor.SetMapper(bondMapper)
-        bondActor.GetProperty().SetDiffuseColor(khaki)
-        bondActor.GetProperty().SetSpecular(.4)
-        bondActor.GetProperty().SetSpecularPower(10)
+        (bondActor,bond) = ryuon_vtk.make_bondActor (khaki)
 
 
     ## prepare renderer
@@ -355,71 +144,27 @@ def main():
             ren.AddActor(pActors[i])
     else:
         ren.AddActor(pActor)
-    if nc.npf > 0: ren.AddActor(pfActor)
+    if nc.npf > 0:
+        ren.AddActor(pfActor)
     if flag_bond != 0:
         ren.AddActor(bondActor)
 
-    aCamera = vtk.vtkCamera()
-    ren.SetActiveCamera (aCamera)
-
     # periodic box
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
-        CubeModel = vtk.vtkCubeSource()
-        CubeModel.SetXLength(lattice[0])
-        CubeModel.SetYLength(lattice[1])
-        CubeModel.SetZLength(lattice[2])
-        CubeModel.SetCenter(.5*lattice[0], .5*lattice[1], .5*lattice[2])
-        Edges = vtk.vtkExtractEdges()
-        Edges.SetInput(CubeModel.GetOutput())
-        Tubes = vtk.vtkTubeFilter()
-        Tubes.SetInput(Edges.GetOutput())
-        #Tubes.SetRadius(.01)
-        Tubes.SetRadius(.1)
-        Tubes.SetNumberOfSides(6)
-        Tubes.UseDefaultNormalOn()
-        Tubes.SetDefaultNormal(.577, .577, .577)
-        # Create the mapper and actor to display the cube edges.
-        TubeMapper = vtk.vtkPolyDataMapper()
-        TubeMapper.SetInput(Tubes.GetOutput())
-        CubeEdges = vtk.vtkActor()
-        CubeEdges.SetMapper(TubeMapper)
-        CubeEdges.GetProperty().SetDiffuseColor(khaki)
-        CubeEdges.GetProperty().SetSpecular(.4)
-        CubeEdges.GetProperty().SetSpecularPower(10)
+        CubeEdges = ryuon_vtk.make_cubeActor (lattice)
         ren.AddActor(CubeEdges)
 
     # axes
-    #axes = vtk.vtkAxes()
-    #axes.SetOrigin(0,0,0)
-    #axes.SetScaleFactor(4)
-    #axesTubes = vtk.vtkTubeFilter()
-    #axesTubes.SetInput(axes.GetOutput())
-    #axesTubes.SetRadius(axes.GetScaleFactor()/25.0)
-    #axesTubes.SetNumberOfSides(6)
-    #axesMapper = vtk.vtkPolyDataMapper()
-    #axesMapper.SetInput(axesTubes.GetOutput())
-    #axesActor = vtk.vtkActor()
-    #axesActor.SetMapper(axesMapper)
+    #axesActor = ryuon_vtk.make_axesActor()
     #ren.AddActor(axesActor)
 
     # text
-    textActor = vtk.vtkTextActor()
-    #textActor.SetInput (text)
-    textActor.ScaledTextOn()
-    textActor.SetDisplayPosition(5, 5)
-    # Set coordinates to match the old vtk.vtkScaledTextActor default value
-    textActor.GetPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
-    textActor.GetPosition2Coordinate().SetValue(0.6, 0.1)
-    tprop = textActor.GetTextProperty()
-    tprop.SetFontSize(18)
-    tprop.SetFontFamilyToArial()
-    tprop.SetJustificationToCentered()
-    tprop.BoldOn()
-    tprop.ItalicOn()
-    tprop.ShadowOn()
-    #tprop.SetColor(0, 0, 1)
+    textActor = ryuon_vtk.make_textActor()
     ren.AddActor(textActor)
 
+
+    aCamera = vtk.vtkCamera()
+    ren.SetActiveCamera (aCamera)
 
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
         # periodic boundary
@@ -441,7 +186,7 @@ def main():
                 # with quaternion
                 for j in range (nc.np):
                     stokes.stokes_nc_get_data (nc, "q", i, q)
-                    m = Q2M (q[j*4+0],q[j*4+1],q[j*4+2],q[j*4+3])
+                    m = ryuon_vtk.Q2M (q[j*4+0],q[j*4+1],q[j*4+2],q[j*4+3])
                     trans = vtk.vtkTransform()
                     trans.SetMatrix((m[0],m[3],m[6], x[j*3+0],
                                      m[1],m[4],m[7], x[j*3+1],
@@ -450,18 +195,19 @@ def main():
                     pActors[j].SetUserTransform(trans)
             else:
                 # no quaternion in the result
-                pData = make_pData(nc.np, x, a)
+                pData = ryuon_vtk.make_pData(nc.np, x, a)
                 pGlyph.SetInput(pData)
     
             # update bond Actor
             if flag_bond != 0:
-                bData = make_bData(nc.np, x)
+                bData = ryuon_vtk.make_bData(nc.np, x)
                 bond.SetInput(bData)
 
             if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
                 # non-periodic boundary
                 #(cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, x)
-                (cx,cy,cz, lx0,ly0,lz0, lx1, ly1, lz1) = bounding_box (nc.np, x)
+                (cx,cy,cz, lx0,ly0,lz0, lx1, ly1, lz1)\
+                           = ryuon_vtk.bounding_box_ (nc.np, x)
                 lx = lx1 - lx0
                 ly = ly1 - ly0
                 lz = lz1 - lz0
