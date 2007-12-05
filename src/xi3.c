@@ -1,6 +1,6 @@
 /* tuning program of xi for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: xi3.c,v 1.3 2007/03/08 00:20:14 kichiki Exp $
+ * $Id: xi3.c,v 1.4 2007/12/05 04:00:24 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 #include <stdio.h> /* printf() fprintf() */
 #include <stdlib.h> /* exit() */
 #include <string.h> /* strcmp() */
+#include "memory-check.h" // CHECK_MALLOC
 
 #include <libstokes.h> /* struct stokes */
 #include <libguile.h> // scm_init_guile()
@@ -28,40 +29,24 @@
 
 
 void
-do_xi (struct stokes * sys,
+do_xi (struct stokes *sys,
        double ewald_tr, double ewald_eps,
        int flag_notbl,
        int flag_mat,
        int version)
 {
-  int np;
-  int n;
-
-  double xi;
-
-  double * fts;
-  double * uoe;
-
-  double avu;
-  double avo;
-  double ave;
-
   int i, j;
 
-
-  np = sys->np;
   /* allocate memories */
+  int np = sys->np;
+  int n;
   if      (version == 0) n = np * 3;  // F version
   else if (version == 1) n = np * 6;  // FT version
   else                   n = np * 11; // FT version
-  fts = (double *) malloc (sizeof (double) * n);
-  uoe = (double *) malloc (sizeof (double) * n);
-  if (fts == NULL
-      || uoe == NULL)
-    {
-      fprintf (stderr, "allocation error in main().\n");
-      exit (1);
-    }
+  double *fts = (double *)malloc (sizeof (double) * n);
+  double *uoe = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (fts, "do_xi");
+  CHECK_MALLOC (uoe, "do_xi");
 
   /* set fts[] */
   for (i = 0; i < n; i ++)
@@ -70,22 +55,23 @@ do_xi (struct stokes * sys,
     }
 
   sys->periodic = 1; // periodic boundary condition
-  xi = xi_by_tratio (sys, ewald_tr);
+  double xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
   sys->version = version;
 
-  /* call atimes routine */
+  /**
+   * call atimes routine
+   */
   if (flag_notbl == 0)
     {
       if (flag_mat != 0)
 	{
-	  //atimes_ewald_3all_matrix (n, fts, uoe, (void *) sys);
-	  atimes_3all_matrix (n, fts, uoe, (void *) sys);
+	  atimes_3all_matrix (n, fts, uoe, (void *)sys);
 	  // this is a wrapper for both ewald and nonewald.
 	}
       else
 	{
-	  atimes_ewald_3all (n, fts, uoe, (void *) sys);
+	  atimes_ewald_3all (n, fts, uoe, (void *)sys);
 	  // this is direct call for ewald routine.
 	}
     }
@@ -93,17 +79,22 @@ do_xi (struct stokes * sys,
     {
       if (flag_mat != 0)
 	{
-	  atimes_ewald_3all_matrix_notbl (n, fts, uoe, (void *) sys);
+	  atimes_ewald_3all_matrix_notbl (n, fts, uoe, (void *)sys);
 	  // this is direct call for ewald routine.
 	}
       else
 	{
-	  atimes_ewald_3all_notbl (n, fts, uoe, (void *) sys);
+	  atimes_ewald_3all_notbl (n, fts, uoe, (void *)sys);
 	  // this is direct call for ewald routine.
 	}
     }
 
-  /* analysis part */
+  /**
+   * analysis part
+   */
+  double avu;
+  double avo;
+  double ave;
   if (version == 0) // F version
     {
       avu = 0.0;
@@ -262,25 +253,11 @@ usage (const char *argv0)
 int
 main (int argc, char** argv)
 {
-  struct stokes * sys = NULL;
-  double lat[3];
-
-  int version;
-  int flag_mat;
-  int flag_notbl;
-
-  int i;
-  int np;
-  int len;
-
-  double ewald_eps;
-  double ewald_tr;
-
   char init_file [256];
-
+  strcpy (init_file, "xi3.scm"); // default
 
   /* option analysis */
-  strcpy (init_file, "xi3.scm"); // default
+  int i;
   for (i = 1; i < argc; i++)
     {
       if (strcmp (argv [i], "-h") == 0 ||
@@ -295,12 +272,13 @@ main (int argc, char** argv)
 	}
     }
   
-  /* parameter set */
-  scm_init_guile(); // start the Guile interpreter
-  scm_c_primitive_load (init_file); // load initialize script
+  /**
+   * parameter set
+   */
+  guile_load (init_file);
 
   // version
-  version = 0;
+  int version = 0;
   char * str_version;
   str_version = guile_get_string ("version");
   if (strcmp (str_version, "F") == 0)
@@ -323,19 +301,20 @@ main (int argc, char** argv)
   free (str_version);
 
   // flag-mat
-  flag_mat = 0;
+  int flag_mat = 0;
   if (guile_get_bool ("flag-mat") != 0) // TRUE
     {
       flag_mat = 1;
     }
 
   // flag-notbl
-  flag_notbl = 0;
+  int flag_notbl = 0;
   if (guile_get_bool ("flag-notbl") != 0) // TRUE
     {
       flag_notbl = 1;
     }
 
+  double lat[3];
   if (guile_get_doubles ("lattice", 3, lat) != 1) // FALSE
     {
       fprintf (stderr, "lattice is not defined\n");
@@ -343,12 +322,13 @@ main (int argc, char** argv)
     }
 
   // parameters
-  np        = guile_get_int    ("np",        0);
-  ewald_eps = guile_get_double ("ewald-eps", 0.0);
+  int np = guile_get_int ("np", 0);
+  double ewald_eps = guile_get_double ("ewald-eps", 0.0);
 
 
   /* initialization */
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "main");
   stokes_set_np (sys, np, np);
   stokes_set_l (sys, lat[0], lat[1], lat[2]);
 
@@ -361,7 +341,7 @@ main (int argc, char** argv)
 
 
   /* write header */
-  if (version == 0)      fprintf (stdout, "# F version");
+  if      (version == 0) fprintf (stdout, "# F version");
   else if (version == 1) fprintf (stdout, "# FT version");
   else                   fprintf (stdout, "# FTS version");
 
@@ -379,7 +359,7 @@ main (int argc, char** argv)
   if (trs == NULL)
     {
       /*ewald_tr = 1.0;*/
-      ewald_tr = 0.1;
+      double ewald_tr = 0.1;
       for (i = 1; i < 100; i++)
 	{
 	  ewald_tr *= 1.1;
@@ -390,7 +370,7 @@ main (int argc, char** argv)
     }
   else
     {
-      len = guile_get_length ("ewald-trs");
+      int len = guile_get_length ("ewald-trs");
       for (i = 0; i < len; i ++)
 	{
 	  do_xi (sys, trs[i], ewald_eps,
