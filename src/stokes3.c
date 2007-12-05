@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.18 2007/11/30 06:38:16 kichiki Exp $
+ * $Id: stokes3.c,v 1.19 2007/12/05 03:59:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.18 2007/11/30 06:38:16 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.19 2007/12/05 03:59:31 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -138,7 +138,9 @@ usage (const char *argv0)
 	   "    p2   = L_{s} / a, scaled max extension (for fene == 0)\n"
            "\t   ((0 1)  ; 3) list of pairs\n"
            "\t    (1 2)\n"
-           "\t    (2 3)))\n"
+           "\t    (2 3))\n"
+           "\t    -1)    ; 4) number of exclusion for lubrication\n"
+           "\t           ;    negative means all particles in the chain is excluded.\n"
            "\t  (; bond 2\n"
            "\t   2       ; 1) spring type\n"
            "\t   (       ; 2) spring parameters (list with 3 elements)\n"
@@ -149,7 +151,8 @@ usage (const char *argv0)
 	   "    p2 = b_{K} [micro m], the Kuhn length     (for fene = 1)\n"
            "\t   ((4 5)  ; 3) list of pairs\n"
            "\t    (5 6)\n"
-           "\t    (6 7)))\n"
+           "\t    (6 7))\n"
+           "\t     1)    ; 4) number of exclusion for lubrication\n"
            "\t ))\n"
            "\twhere spring types are\n"
 	   "\t  0 : Hookean spring (Asp * (r - Ls)\n"
@@ -449,10 +452,13 @@ main (int argc, char** argv)
       if (guile_get_doubles ("ev-v", bonds->n, ev_v) != 1) // FALSE
 	{
 	  fprintf (stderr, "excluded-volume is not defined\n");
-	  exit (1);
+	  //exit (1);
 	}
-      ev = EV_init (bonds, length, peclet,
-		    ev_r2, ev_v, np);
+      else
+	{
+	  ev = EV_init (bonds, length, peclet,
+			ev_r2, ev_v, np);
+	}
       free (ev_v);
     }
 
@@ -465,6 +471,9 @@ main (int argc, char** argv)
   double lubmin = guile_get_double ("lub-min", 2.0000000001);
   sys->lubmin2 = lubmin * lubmin;
   sys->lubmax = guile_get_double ("lub-max", 4.0);
+
+  /* set exclusion list for lub by bonds */
+  list_ex_set_by_bonds (sys->ex_lub, bonds);
 
   // iterative solver
   char *str_it_solver = NULL;
@@ -685,13 +694,15 @@ main (int argc, char** argv)
       ef [i5 + 4] = 0.0;
     }
 
-  // set ode_params
-  double *pos_fixed = NULL;
+  /* set position for the fixed particles in sys */
   if (np > nm)
     {
-      pos_fixed = x + nm*3;
+      stokes_set_pos_fixed (sys, x + nm*3);
     }
 
+  /**
+   * set ode_params
+   */
   struct ode_params *ode_params = NULL;
   int (*f_dydt)(double, const double *, double *, void *) = NULL;
   const gsl_odeiv_step_type *GSL_ODE_TYPE = NULL;
@@ -703,7 +714,7 @@ main (int argc, char** argv)
   struct BD_params *BD_params = NULL;
   if (peclet == -1) // no Brownian force
     {
-      ode_params = ode_params_init (sys, pos_fixed,
+      ode_params = ode_params_init (sys,
 				    F, T, E,
 				    uf, of, ef,
 				    flag_lub, flag_mat,
@@ -783,7 +794,6 @@ main (int argc, char** argv)
     {
       BD_params = BD_params_init (sys,
 				  BD_seed,
-				  pos_fixed,
 				  F, T, E,
 				  uf, of, ef,
 				  flag_lub, flag_mat,
