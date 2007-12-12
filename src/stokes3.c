@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.19 2007/12/05 03:59:31 kichiki Exp $
+ * $Id: stokes3.c,v 1.20 2007/12/12 06:36:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.19 2007/12/05 03:59:31 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.20 2007/12/12 06:36:25 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -712,7 +712,8 @@ main (int argc, char** argv)
   gsl_odeiv_evolve  *GSL_ODE_EVOLVE  = NULL;
 
   struct BD_params *BD_params = NULL;
-  if (peclet == -1) // no Brownian force
+  struct BD_imp *BDimp = NULL;
+  if (peclet < 0.0) // no Brownian force
     {
       ode_params = ode_params_init (sys,
 				    F, T, E,
@@ -810,6 +811,16 @@ main (int argc, char** argv)
 				  BB_n,
 				  dt_lim);
       CHECK_MALLOC (BD_params, "main");
+
+      // implicit scheme
+      if (BD_scheme == 3)
+	{
+	  BDimp = BD_imp_init (BD_params,
+			       1000,  // itmax
+			       ode_eps
+			       );
+	  CHECK_MALLOC (BDimp, "main");
+	}
     }
 
 
@@ -895,7 +906,7 @@ main (int argc, char** argv)
 	{
 	  if (st == 0.0)
 	    {
-	      if (peclet == -1) // no Brownian force
+	      if (peclet < 0.0) // no Brownian force
 		{
 		  // (st==0) no collision checks
 		  gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
@@ -909,7 +920,7 @@ main (int argc, char** argv)
 		{
 		  if (BD_params->scheme == 3)
 		    {
-		      BD_imp_ode_evolve (BD_params,
+		      BD_imp_ode_evolve (BDimp,
 					 &t, t_out,
 					 &h, y);
 		    }
@@ -985,6 +996,7 @@ main (int argc, char** argv)
 
   ode_params_free (ode_params);
   BD_params_free (BD_params);
+  BD_imp_free (BDimp);
   stokes_nc_free (nc);
   free (x);
   free (y);
