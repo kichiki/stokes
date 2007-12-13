@@ -1,6 +1,6 @@
 /* tuning program of xi for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: xi3.c,v 1.4 2007/12/05 04:00:24 kichiki Exp $
+ * $Id: xi3.c,v 1.5 2007/12/13 06:10:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -244,6 +244,12 @@ usage (const char *argv0)
   fprintf (stderr, "\tnp         : number of particles\n");
   fprintf (stderr, "\tx          : particle configuration"
 	   " (list or vector with length 3*np)\n");
+  fprintf (stderr, "\ta      : radius of particles"
+	   " (list or vector with length np)\n"
+	   "\t\tby default (if not given), monodisperse system\n");
+  fprintf (stderr, "\tslip   : slip length of particles"
+	   " (list or vector with length np)\n"
+	   "\t\tby default (if not given), no-slip particles\n");
   fprintf (stderr,
 	   "\tewald-trs  : (optional) list of ewald_tr parameters\n "
 	   "\t           : (list or vector with any length)\n");
@@ -314,13 +320,6 @@ main (int argc, char** argv)
       flag_notbl = 1;
     }
 
-  double lat[3];
-  if (guile_get_doubles ("lattice", 3, lat) != 1) // FALSE
-    {
-      fprintf (stderr, "lattice is not defined\n");
-      exit (1);
-    }
-
   // parameters
   int np = guile_get_int ("np", 0);
   double ewald_eps = guile_get_double ("ewald-eps", 0.0);
@@ -330,6 +329,47 @@ main (int argc, char** argv)
   struct stokes *sys = stokes_init ();
   CHECK_MALLOC (sys, "main");
   stokes_set_np (sys, np, np);
+
+  // radius of ALL particles (BOTH mobile and fixed)
+  //int flag_poly = 0; // for stokes_nc_init()
+  double *a = (double *)malloc (sizeof (double) * np);
+  CHECK_MALLOC (a, "main");
+  if (guile_get_doubles ("a", np, a) != 1) // FALSE
+    {
+      // "a" is not given, so that system is monodisperse
+      // sys->a is NULL by default, so do nothing here
+    }
+  else
+    {
+      // the system is polydisperse
+      //flag_poly = 1;
+      stokes_set_radius (sys, a);
+    }
+  free (a);
+
+
+  // slip length of ALL particles (BOTH mobile and fixed)
+  double *slip = (double *)malloc (sizeof (double) * np);
+  CHECK_MALLOC (slip, "main");
+  if (guile_get_doubles ("slip", np, slip) != 1) // FALSE
+    {
+      // "slip" is not given, so that system is no-slip
+      // sys->slip is NULL by default, so do nothing here
+    }
+  else
+    {
+      // set slip parameters
+      stokes_set_slip (sys, slip);
+    }
+  free (slip);
+
+  // periodic
+  double lat[3];
+  if (guile_get_doubles ("lattice", 3, lat) != 1) // FALSE
+    {
+      fprintf (stderr, "lattice is not defined\n");
+      exit (1);
+    }
   stokes_set_l (sys, lat[0], lat[1], lat[2]);
 
   // x -- configuration of particles
@@ -344,6 +384,12 @@ main (int argc, char** argv)
   if      (version == 0) fprintf (stdout, "# F version");
   else if (version == 1) fprintf (stdout, "# FT version");
   else                   fprintf (stdout, "# FTS version");
+
+  if (sys->a == NULL)    fprintf (stdout, " mono");
+  else                   fprintf (stdout, " poly");
+
+  if (sys->slip == NULL) fprintf (stdout, " no-slip");
+  else                   fprintf (stdout, " slip");
 
   if (flag_notbl == 0)   fprintf (stdout, " table");
   else                   fprintf (stdout, " no-table");

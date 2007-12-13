@@ -1,6 +1,6 @@
 ; sample set file for xi3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: xi3.scm,v 1.2 2006/10/23 17:18:11 kichiki Exp $
+; $Id: xi3.scm,v 1.3 2007/12/13 06:11:28 kichiki Exp $
 (define version    "F")     ; version. "F", "FT", or "FTS"
 (define flag-mat   #t)      ; #t => matrix scheme, #f => atimes scheme
 (define flag-notbl #f)      ; #t => no-table,      #f => with table
@@ -22,6 +22,12 @@
 2.5  2.5  0.0
 2.5  2.5  2.5
 ))
+
+; particle radius
+(define a '())
+
+; slip length
+(define slip '())
 
 ; list of time ratio Tr/Tk for Ewald summation (optional)
 ;(define ewald-trs
