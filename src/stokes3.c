@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.20 2007/12/12 06:36:25 kichiki Exp $
+ * $Id: stokes3.c,v 1.21 2007/12/13 06:13:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.20 2007/12/12 06:36:25 kichiki Exp $\n\n");
+  fprintf (stderr, "$Id: stokes3.c,v 1.21 2007/12/13 06:13:34 kichiki Exp $\n\n");
   fprintf (stderr, "USAGE\n");
   fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stderr, "\t-h or --help     : this message.\n");
@@ -464,6 +464,7 @@ main (int argc, char** argv)
 
   // initialize struct stokes *sys
   struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "main");
   sys->version = version;
   stokes_set_np (sys, np, nm);
 
