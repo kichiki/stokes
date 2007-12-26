@@ -1,6 +1,6 @@
 /* tuning program of xi for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: xi3.c,v 1.5 2007/12/13 06:10:37 kichiki Exp $
+ * $Id: xi3.c,v 1.6 2007/12/26 06:46:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -224,33 +224,33 @@ do_xi (struct stokes *sys,
 void
 usage (const char *argv0)
 {
-  fprintf (stderr, "USAGE\n");
-  fprintf (stderr, "%s init-file\n", argv0);
-  fprintf (stderr, "\twhere init-file is a SCM file"
+  fprintf (stdout, "USAGE\n");
+  fprintf (stdout, "%s init-file\n", argv0);
+  fprintf (stdout, "\twhere init-file is a SCM file"
 	   " (default: xi3.scm)\n\n");
-  fprintf (stderr, "Parameters in the init-file:\n");
-  fprintf (stderr, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
-  fprintf (stderr,
+  fprintf (stdout, "Parameters in the init-file:\n");
+  fprintf (stdout, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
+  fprintf (stdout,
 	   "\tflag-mat   : #t for matrix-scheme\n"
 	   "\t           : #f for atimes-scheme\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tflag-notbl : calculation scheme for the ewald-summation\n"
 	   "\t           : #t for no-table\n"
 	   "\t           : #f for with table\n");
-  fprintf (stderr, "\tlattice    : dimensions of the periodic box"
+  fprintf (stdout, "\tlattice    : dimensions of the periodic box"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tewald-eps  : tolerance value"
+  fprintf (stdout, "\tewald-eps  : tolerance value"
 	   " for ewald-summation cut-off\n");
-  fprintf (stderr, "\tnp         : number of particles\n");
-  fprintf (stderr, "\tx          : particle configuration"
+  fprintf (stdout, "\tnp         : number of particles\n");
+  fprintf (stdout, "\tx          : particle configuration"
 	   " (list or vector with length 3*np)\n");
-  fprintf (stderr, "\ta      : radius of particles"
+  fprintf (stdout, "\ta      : radius of particles"
 	   " (list or vector with length np)\n"
 	   "\t\tby default (if not given), monodisperse system\n");
-  fprintf (stderr, "\tslip   : slip length of particles"
+  fprintf (stdout, "\tslip   : slip length of particles"
 	   " (list or vector with length np)\n"
 	   "\t\tby default (if not given), no-slip particles\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tewald-trs  : (optional) list of ewald_tr parameters\n "
 	   "\t           : (list or vector with any length)\n");
 }

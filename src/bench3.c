@@ -1,6 +1,6 @@
 /* benchmark code for stokes simulator in 3D for F/FT/FTS versions
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench3.c,v 1.6 2007/11/28 03:50:22 kichiki Exp $
+ * $Id: bench3.c,v 1.7 2007/12/26 06:47:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -828,34 +828,34 @@ bench_SC (int n_sc, double phi,
 void
 usage (char * argv0)
 {
-  fprintf (stderr, "Benchmark Test for libstokes\n");
-  fprintf (stderr, "$Id: bench3.c,v 1.6 2007/11/28 03:50:22 kichiki Exp $\n\n");
-  fprintf (stderr, "USAGE\n");
-  fprintf (stderr, "%s [options]\n", argv0);
-  fprintf (stderr, "OPTIONS\n");
-  fprintf (stderr, "\t-f, -ft, -fts : specify version (default F)\n");
-  fprintf (stderr, "\t-prob         : 0 for mobility problem (default)\n"
+  fprintf (stdout, "Benchmark Test for libstokes\n");
+  fprintf (stdout, "$Id: bench3.c,v 1.7 2007/12/26 06:47:19 kichiki Exp $\n\n");
+  fprintf (stdout, "USAGE\n");
+  fprintf (stdout, "%s [options]\n", argv0);
+  fprintf (stdout, "OPTIONS\n");
+  fprintf (stdout, "\t-f, -ft, -fts : specify version (default F)\n");
+  fprintf (stdout, "\t-prob         : 0 for mobility problem (default)\n"
 	   "\t              : 1 for mixed problem\n"
 	   "\t              : 2 for resistance problem\n");
-  fprintf (stderr, "\t-lub          : calc with lub"
+  fprintf (stdout, "\t-lub          : calc with lub"
 	   " (default: no lub)\n");
-  fprintf (stderr, "\t-mat          : use matrix scheme"
+  fprintf (stdout, "\t-mat          : use matrix scheme"
 	   " (default: atimes)\n");
-  fprintf (stderr, "\t-open         : calc under non-periodic B.C."
+  fprintf (stdout, "\t-open         : calc under non-periodic B.C."
 	   " (default: periodic B.C.)\n");
-  fprintf (stderr, "\t-tr           : ewald_tr (default: 10.0)\n");
-  fprintf (stderr, "\t-eps          : cut-off limit for ewald-sum"
+  fprintf (stdout, "\t-tr           : ewald_tr (default: 10.0)\n");
+  fprintf (stdout, "\t-eps          : cut-off limit for ewald-sum"
 	   " (default: 1.0e-12)\n");
-  fprintf (stderr, "\t-iter         : iterative scheme. ignored for -mat.\n");
-  fprintf (stderr, "\t\t0 = cg\n");
-  fprintf (stderr, "\t\t1 = cgs\n");
-  fprintf (stderr, "\t\t2 = bicgstab\n");
-  fprintf (stderr, "\t\t3 = sta (another bicgstab)\n");
-  fprintf (stderr, "\t\t4 = sta2\n");
-  fprintf (stderr, "\t\t5 = gpb\n");
-  fprintf (stderr, "\t\t6 = otmk\n");
-  fprintf (stderr, "\t\t7 = gmres (default)\n");
-  fprintf (stderr, "\t-all : calc all possible options. "
+  fprintf (stdout, "\t-iter         : iterative scheme. ignored for -mat.\n");
+  fprintf (stdout, "\t\t0 = cg\n");
+  fprintf (stdout, "\t\t1 = cgs\n");
+  fprintf (stdout, "\t\t2 = bicgstab\n");
+  fprintf (stdout, "\t\t3 = sta (another bicgstab)\n");
+  fprintf (stdout, "\t\t4 = sta2\n");
+  fprintf (stdout, "\t\t5 = gpb\n");
+  fprintf (stdout, "\t\t6 = otmk\n");
+  fprintf (stdout, "\t\t7 = gmres (default)\n");
+  fprintf (stdout, "\t-all : calc all possible options. "
 	   "(above options are just ignored.)\n");
 }
 
