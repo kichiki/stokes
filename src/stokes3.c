@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.21 2007/12/13 06:13:34 kichiki Exp $
+ * $Id: stokes3.c,v 1.22 2007/12/26 06:46:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,50 +32,50 @@
 void
 usage (const char *argv0)
 {
-  fprintf (stderr, "Stokesian dynamics simulator\n");
-  fprintf (stderr, "$Id: stokes3.c,v 1.21 2007/12/13 06:13:34 kichiki Exp $\n\n");
-  fprintf (stderr, "USAGE\n");
-  fprintf (stderr, "%s [OPTIONS] init-file\n", argv0);
-  fprintf (stderr, "\t-h or --help     : this message.\n");
-  fprintf (stderr, "\t-o or --output   : overwrite the file name for output\n");
-  fprintf (stderr, "\t-c or --continue : give nloop for continuation\n");
-  fprintf (stderr, "\tinit-file : SCM file (default: stokes3.scm)\n\n");
-  fprintf (stderr, "Parameters in the init-file:\n");
-  fprintf (stderr, "* output parameters\n");
-  fprintf (stderr, "\toutfile    : filename for NetCDF output\n");
-  fprintf (stderr, "\tdt         : time interval for outputs\n");
-  fprintf (stderr, "\tnloop      : number of loops for dt\n");
-  fprintf (stderr,
+  fprintf (stdout, "Stokesian dynamics simulator\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.22 2007/12/26 06:46:15 kichiki Exp $\n\n");
+  fprintf (stdout, "USAGE\n");
+  fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
+  fprintf (stdout, "\t-h or --help     : this message.\n");
+  fprintf (stdout, "\t-o or --output   : overwrite the file name for output\n");
+  fprintf (stdout, "\t-c or --continue : give nloop for continuation\n");
+  fprintf (stdout, "\tinit-file : SCM file (default: stokes3.scm)\n\n");
+  fprintf (stdout, "Parameters in the init-file:\n");
+  fprintf (stdout, "* output parameters\n");
+  fprintf (stdout, "\toutfile    : filename for NetCDF output\n");
+  fprintf (stdout, "\tdt         : time interval for outputs\n");
+  fprintf (stdout, "\tnloop      : number of loops for dt\n");
+  fprintf (stdout,
 	   "\tflag-Q     : #t output quaternion,\n"
 	   "\t           : #f no quaternion in the output.\n");
-  fprintf (stderr, "* core libstokes parameters\n");
-  fprintf (stderr, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
-  fprintf (stderr,
+  fprintf (stdout, "* core libstokes parameters\n");
+  fprintf (stdout, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
+  fprintf (stdout,
 	   "\tflag-mat   : #t for matrix-scheme,\n"
 	   "\t           : #f for atimes-scheme.\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tflag-lub   : #t for with-lubrication,\n"
 	   "\t           : #f for no-lubrication.\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\trmin       : parameter for mininum distance in"
 	   " (ai+aj) * rmin.\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tlub-min    : mininum cut-off distance for lubrication\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tlub-max    : maximum cut-off distance for lubrication\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tperiodic   : #f for non-periodic systems,\n"
 	   "\t           : #t for periodic systems.\n"
 	   "\t             set the next three parameters"
 	   " for the periodic case.\n");
-  fprintf (stderr, "\tewald-tr   : time ratio Tr/Tk for ewald summation"
+  fprintf (stdout, "\tewald-tr   : time ratio Tr/Tk for ewald summation"
 	   " (see xi3 in details.)\n");
-  fprintf (stderr, "\tewald-eps  : tolerance value"
+  fprintf (stdout, "\tewald-eps  : tolerance value"
 	   " for ewald-summation cut-off\n");
-  fprintf (stderr, "\tlattice    : size of the periodic box"
+  fprintf (stdout, "\tlattice    : size of the periodic box"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "* libiter parameters (used if \"flag-mat\" is #f)\n");
-  fprintf (stderr,
+  fprintf (stdout, "* libiter parameters (used if \"flag-mat\" is #f)\n");
+  fprintf (stdout,
 	   "\tIT-solver  : solver for libiter\n"
 	   "\t\t\"cg\"       conjugate gradient method\n"
 	   "\t\t\"cgs\"      conjugate gradient squared (Weiss' Algorithm 11)\n"
@@ -85,11 +85,11 @@ usage (const char *argv0)
 	   "\t\t\"gpb\"      gpbi-cg method\n"
 	   "\t\t\"otmk\"     orthomin method\n"
 	   "\t\t\"gmres\"    generalized minimum residual method\n");
-  fprintf (stderr, "\tIT-max     : max number of iteraction\n");
-  fprintf (stderr, "\tIT-n       : restart number\n");
-  fprintf (stderr, "\tIT-eps     : accuracy of the solution\n");
-  fprintf (stderr, "* ODE parameters\n");
-  fprintf (stderr, "\tode-solver : GSL ODE solver\n"
+  fprintf (stdout, "\tIT-max     : max number of iteraction\n");
+  fprintf (stdout, "\tIT-n       : restart number\n");
+  fprintf (stdout, "\tIT-eps     : accuracy of the solution\n");
+  fprintf (stdout, "* ODE parameters\n");
+  fprintf (stdout, "\tode-solver : GSL ODE solver\n"
 	   "\t\t\"rk2\"    Embedded Runge-Kutta (2, 3) method.\n"
 	   "\t\t\"rk4\"    4th order (classical) Runge-Kutta.\n"
 	   "\t\t\"rkf45\"  Embedded Runge-Kutta-Fehlberg (4, 5) method.\n"
@@ -99,33 +99,40 @@ usage (const char *argv0)
 	   "\t\t\"rk4imp\" Implicit 4th order Runge-Kutta at Gaussian points.\n"
 	   "\t\t\"gear1\"  M=1 implicit Gear method.\n"
 	   "\t\t\"gear2\"  M=2 implicit Gear method.\n");
-  fprintf (stderr, "\tode-eps    : GSL ODE control parameter eps\n");
-  fprintf (stderr, "* system parameters\n");
-  fprintf (stderr, "\tnp     : number of ALL (mobile and fixed) particles\n");
-  fprintf (stderr, "\tnm     : number of mobile particles\n");
-  fprintf (stderr, "\tx      : particle configuration"
+  fprintf (stdout, "\tode-eps    : GSL ODE control parameter eps\n");
+  fprintf (stdout, "* system parameters\n");
+  fprintf (stdout, "\tnp     : number of ALL (mobile and fixed) particles\n");
+  fprintf (stdout, "\tnm     : number of mobile particles\n");
+  fprintf (stdout, "\tx      : particle configuration"
 	   " (list or vector with length 3*np)\n");
-  fprintf (stderr, "\ta      : radius of particles"
+  fprintf (stdout, "\ta      : radius of particles"
 	   " (list or vector with length np)\n"
 	   "\t\tby default (if not given), monodisperse system\n");
-  fprintf (stderr, "\tslip   : slip length of particles"
+  fprintf (stdout, "\tslip   : slip length of particles"
 	   " (list or vector with length np)\n"
 	   "\t\tby default (if not given), no-slip particles\n");
-  fprintf (stderr, "\tUi     : imposed translational velocity"
+  fprintf (stdout, "\tUi     : imposed translational velocity"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tOi     : imposed angular velocity"
+  fprintf (stdout, "\tOi     : imposed angular velocity"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tEi     : imposed strain"
+  fprintf (stdout, "\tEi     : imposed strain"
 	   " (list or vector of length 5)\n");
-  fprintf (stderr, "\tF0     : applied force"
+  fprintf (stdout,
+	   "\tshear-mode : 0 imposed flow is given by Ui, Oi, Ei (default)\n"
+	   "\t             1 for simple shear (x = flow dir, y = grad dir)\n"
+	   "\t             2 for simple shear (x = flow dir, z = grad dir)\n"
+	   "\t             NOTE: (Ui,Oi,Ei) is overwritten for shear-mode != 0\n");
+  fprintf (stdout, "\tshear-rate : for the shear-mode != 0\n");
+  fprintf (stdout, "\tshear-shift: the initial cell-shift for the shear-mode != 0\n");
+  fprintf (stdout, "\tF0     : applied force"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tT0     : applied torque"
+  fprintf (stdout, "\tT0     : applied torque"
 	   " (list or vector of length 3)\n");
-  fprintf (stderr, "\tstokes : effective stokes number\n");
-  fprintf (stderr, "\tncol   : frequency of collision check in dt"
+  fprintf (stdout, "\tstokes : effective stokes number\n");
+  fprintf (stdout, "\tncol   : frequency of collision check in dt"
 	   " for stokes != 0\n");
-  fprintf (stderr, "* bond parameters (for chains)\n");
-  fprintf (stderr, "\tbonds      : bonds among particles,"
+  fprintf (stdout, "* bond parameters (for chains)\n");
+  fprintf (stdout, "\tbonds      : bonds among particles,"
 	   " list in the following form\n"
            "\t(define bonds '(\n"
            "\t  (; bond 1\n"
@@ -162,40 +169,46 @@ usage (const char *argv0)
 	   "\t  4 : Warner spring\n"
 	   "\t  5 : Hookean spring (Asp * r / Ls)\n"
 	   );
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tflag_relax : #f stokesian dynamics,\n"
 	   "\t           : #t relaxation dynamics for bonds.\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tgamma      : friction coefficient for the relaxation dynamics\n");
-  fprintf (stderr, "* Excluded-Volume parameters\n");
-  fprintf (stderr,
+  fprintf (stdout, "* Excluded-Volume parameters\n");
+  fprintf (stdout,
 	   "\tev-v       : v [(micro m)^3] for each chain type\n"
 	   "\t             (list or vector with length of bonds' length)\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tev-lim     : maximum distance for EV interaction [micro m]\n");
-  fprintf (stderr, "* Brownian dynamics' parameters\n");
-  fprintf (stderr,
+  fprintf (stdout, "* Brownian dynamics' parameters\n");
+  fprintf (stdout,
 	   "\tpeclet     : peclet number (negative means no Brownian force)\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tlength     : unit of the length scale [micro m]\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tBD-seed    : seed for Brownian force random number generator\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tn-cheb-minv: number of Chebyshev coefficients for M^{-1}\n");
-  fprintf (stderr,
+  fprintf (stdout,
 	   "\tn-cheb-lub : number of Chebyshev coefficients for L\n"
 	   "\t             (if zero is given, use Cholesky decomposition)\n");
-  fprintf (stderr, "\tBD-scheme : Brownian dynamics time integration scheme\n"
+  fprintf (stdout, "\tBD-scheme : Brownian dynamics time integration scheme\n"
 	   "\t\t\"mid-point\"        The mid-point algorithm.\n"
 	   "\t\t\"BanchioBrady03\"   Banchio and Brady (2003).\n"
 	   "\t\t\"BallMelrose97\"    Ball and Melrose (1997).\n"
-	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n");
-  fprintf (stderr,
+	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n"
+	   "\t\t\"semi-implicit-PC\" semi-implicit predictor-corrector.\n");
+  fprintf (stdout,
 	   "\tBB-n        : step parameter for Banchio-Brady03 algorithm.\n");
-  fprintf (stderr,
-	   "\tdt-lim      : lower bound to shrink dt to prevent overlaps.\n"
-	   "\t\tset \"dt\" if you don't want to adjust \"dt\" "
-	   "but just reject it.\n");
+  fprintf (stdout, "* dt-ajustment parameters for Brownian dynamics\n"
+	   "\tNOTE: if rmin is defined by non-zero, the process is skipped.\n");
+  fprintf (stdout,
+	   "\tBD-rmin : overlap-param for dt-adjustment process in BD.\n"
+	   "\t          the condition is (r2 < rmin * a2).\n");
+  fprintf (stdout,
+	   "\tdt-lim  : lower bound to shrink dt to prevent overlaps.\n"
+	   "\t          set equal to \"dt\" if you don't want to adjust \"dt\"\n"
+	   "\t          but just reject it.\n");
 }
 
 
@@ -310,28 +323,32 @@ main (int argc, char** argv)
   int ncol  = guile_get_int    ("ncol",   10);
 
   /**
-   * imposed flow
+   * imposed flow Ui, Oi, Ei
    */
-  // Ui
   double Ui[3];
-  if (guile_get_doubles ("Ui", 3, Ui) != 1) // FALSE
-    {
-      fprintf (stderr, "Ui is not defined\n");
-      exit (1);
-    }
-  // Oi
   double Oi[3];
-  if (guile_get_doubles ("Oi", 3, Oi) != 1) // FALSE
-    {
-      fprintf (stderr, "Oi is not defined\n");
-      exit (1);
-    }
-  // Ei
   double Ei[5];
-  if (guile_get_doubles ("Ei", 5, Ei) != 1) // FALSE
+
+  int shear_mode = guile_get_int ("shear-mode", 0);
+  double shear_rate = guile_get_double ("shear-rate", 0.0);
+  double shear_shift = guile_get_double ("shear-shift", 0.0);
+  if (shear_mode == 0)
     {
-      fprintf (stderr, "Ei is not defined\n");
-      exit (1);
+      if (guile_get_doubles ("Ui", 3, Ui) != 1) // FALSE
+	{
+	  fprintf (stderr, "Ui is not defined\n");
+	  exit (1);
+	}
+      if (guile_get_doubles ("Oi", 3, Oi) != 1) // FALSE
+	{
+	  fprintf (stderr, "Oi is not defined\n");
+	  exit (1);
+	}
+      if (guile_get_doubles ("Ei", 5, Ei) != 1) // FALSE
+	{
+	  fprintf (stderr, "Ei is not defined\n");
+	  exit (1);
+	}
     }
 
   /**
@@ -403,6 +420,10 @@ main (int argc, char** argv)
     {
       BD_scheme = 3;
     }
+  else if (strcmp (str_BD_scheme, "semi-implicit-PC") == 0)
+    {
+      BD_scheme = 4;
+    }
   else
     {
       fprintf (stderr, "invalid BD-scheme %s", str_BD_scheme);
@@ -411,6 +432,8 @@ main (int argc, char** argv)
   free (str_BD_scheme);
   // step parameter for BB03 algorithm
   double BB_n = guile_get_double ("BB-n", 100.0);
+  // factor for overlap check for dt-adjustment process in BD
+  double BD_rmin = guile_get_double ("BD-rmin", 1.0);
   // lower bound to shrink dt to prevent overlaps
   double dt_lim = guile_get_double ("dt-lim", 1.0e-12);
 
@@ -486,10 +509,6 @@ main (int argc, char** argv)
   stokes_set_iter (sys, str_it_solver, it_max, it_n, it_eps, it_debug, stderr);
   free (str_it_solver);
 
-  stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
-  stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
-  stokes_set_Ei (sys, Ei[0], Ei[1], Ei[2], Ei[3], Ei[4]);
-
 
   // radius of ALL particles (BOTH mobile and fixed)
   //int flag_poly = 0; // for stokes_nc_init()
@@ -548,6 +567,18 @@ main (int argc, char** argv)
     {
       // non-periodic
       sys->periodic = 0;
+    }
+
+  // imposed flow
+  if (shear_mode == 0)
+    {
+      stokes_set_Ui (sys, Ui[0], Ui[1], Ui[2]);
+      stokes_set_Oi (sys, Oi[0], Oi[1], Oi[2]);
+      stokes_set_Ei (sys, Ei[0], Ei[1], Ei[2], Ei[3], Ei[4]);
+    }
+  else
+    {
+      stokes_set_shear (sys, shear_mode, shear_rate);
     }
 
   // quaternion
@@ -810,11 +841,12 @@ main (int argc, char** argv)
 				  n_lub,  // n of chebyshev for lub
 				  BD_scheme,
 				  BB_n,
+				  BD_rmin,
 				  dt_lim);
       CHECK_MALLOC (BD_params, "main");
 
       // implicit scheme
-      if (BD_scheme == 3)
+      if (BD_scheme > 2) // either JendrejackEtal00 or semi-implicit-PC
 	{
 	  BDimp = BD_imp_init (BD_params,
 			       1000,  // itmax
@@ -857,18 +889,28 @@ main (int argc, char** argv)
 	}
 
       // set the loop parameters
-      l0 = nc->ntime;
+      l0 = nc->ntime - 1;
       /* l0 is the starting index because index starts from 0
        * so that we need to access "l0-1" to get the last step infos
        */
-      nloop = l0 + nloop_arg;
-      t  = stokes_nc_get_time_step (nc, l0-1);
+      nloop = l0 + nloop_arg + 1;
+      t  = stokes_nc_get_time_step (nc, l0);
 
       // set the configuration at the current time
-      stokes_nc_get_data (nc, "x", l0-1, y);
+      stokes_nc_get_data (nc, "x", l0, y);
       if (flag_Q != 0)
 	{
-	  stokes_nc_get_data (nc, "q", l0-1, y + nq);
+	  stokes_nc_get_data (nc, "q", l0, y + nq);
+	}
+      if (sys->shear_mode != 0)
+	{
+	  int status = nc_get_var1_double
+	    (nc->id, nc->shear_shift_id, NULL, &shear_shift);
+	  if (status != NC_NOERR)
+	    {
+	      fprintf (stderr,
+		       "at nc_get_var1_double() for shear_shift in main\n");
+	    }
 	}
     }
   else
@@ -879,13 +921,31 @@ main (int argc, char** argv)
 				    flag_Q,
 				    Ui, Oi, Ei, F, T, E,
 				    uf, of, ef, x + nm3, // xf
-				    lat);
+				    lat,
+				    shear_mode, shear_rate);
       CHECK_MALLOC (nc, "main");
 
       // set the loop parameters
       l0 = 0;
       // nloop is given by the script
       t = 0.0;
+
+      // output the configuration at t = 0.0 (l0 = 0)
+      // NOTE: for continuation, the last configuration at l0 step
+      stokes_nc_set_time (nc, l0, t);
+      stokes_nc_set_x (nc, l0, y);
+      if (flag_Q != 0)
+	{
+	  stokes_nc_set_q (nc, l0, y + nq);
+	}
+      if (sys->shear_mode != 0)
+	{
+	  stokes_nc_set_shear_shift (nc, l0, shear_shift);
+	}
+
+      // flush the data
+      nc_sync(nc->id);
+
     }
   free (out_file);
 
@@ -903,6 +963,17 @@ main (int argc, char** argv)
 
       // integrate from t to t_out
       double t_out = t + dt;
+
+      // set reference for the shear_shift at t = t (not t_out)
+      if (peclet < 0.0) // non Brownian
+	{
+	  ode_set_shear_shift_ref (ode_params, t, shear_shift);
+	}
+      else // Brownian
+	{
+	  BD_set_shear_shift_ref (BD_params, t, shear_shift);
+	}
+
       while (t < t_out)
 	{
 	  if (st == 0.0)
@@ -919,14 +990,16 @@ main (int argc, char** argv)
 		}
 	      else // Brownian dynamics
 		{
-		  if (BD_params->scheme == 3)
+		  if (BD_params->scheme > 2)
 		    {
+		      // either JendrejackEtal00 or semi-implicit-PC
 		      BD_imp_ode_evolve (BDimp,
 					 &t, t_out,
 					 &h, y);
 		    }
 		  else
 		    {
+		      // explicit schemes
 		      BD_ode_evolve (BD_params,
 				     &t, t_out,
 				     &h, y);
@@ -978,12 +1051,28 @@ main (int argc, char** argv)
 	    }
 	}
 
-      // output the results
-      stokes_nc_set_time (nc, l, t);
-      stokes_nc_set_x (nc, l, y);
+      // output the results at t (should be t_out) with (l+1) step
+      stokes_nc_set_time (nc, l+1, t);
+      stokes_nc_set_x (nc, l+1, y);
       if (flag_Q != 0)
 	{
-	  stokes_nc_set_q (nc, l, y + nq);
+	  stokes_nc_set_q (nc, l+1, y + nq);
+	}
+      if (sys->shear_mode != 0)
+	{
+	  if (peclet < 0.0) // non Brownian
+	    {
+	      shear_shift
+		= stokes_get_shear_shift (sys, t,
+					  ode_params->t0, ode_params->s0);
+	    }
+	  else // Brownian
+	    {
+	      shear_shift
+		= stokes_get_shear_shift (sys, t,
+					  BD_params->t0, BD_params->s0);
+	    }
+	  stokes_nc_set_shear_shift (nc, l+1, shear_shift);
 	}
 
       // flush the data
