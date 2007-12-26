@@ -1,22 +1,48 @@
 # makefile for ruby binding of libstokes
-# $Id: Makefile,v 1.3 2007/08/12 20:05:32 kichiki Exp $
+# $Id: Makefile,v 1.4 2007/12/26 06:51:40 kichiki Exp $
+
+SWIG		= /usr/local/bin/swig
+RUBY		= /usr/local/bin/ruby
 INC_RUBY	= -I/usr/local/lib/ruby/1.8/i386-freebsd6
+# for openSUSE
+#SWIG		= /usr/bin/swig
+#RUBY		= /usr/bin/ruby
+#INC_RUBY	= -I/usr/lib/ruby/1.8/i586-linux
+
+CC		= /usr/bin/cc
+
+RYUON_INC = -I/usr/local/include
+RYUON_LIB = -L/usr/local/lib -liter -lstokes
+# for openSUSE
+#RYUON_INC = 
+#RYUON_LIB = -liter -lstokes
+
+GSL_LIB = `pkg-config --libs gsl`
+GUILE_LIB = `guile-config link`
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.1 -lgfortran \
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
+	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
+	-larpack
+# for SUSE-Linux
+# for openSUSE
+#ATLAS_LIBS	= \
+#	-lgfortran -lblas -llapack\
+#	-larpack
 
 LIB_STOKES	= \
-		-lm -L/usr/local/lib -liter -lstokes	\
-		$(ATLAS_LIBS)\
-		-lnetcdf
+	-lm $(RYUON_LIB)	\
+	$(ATLAS_LIBS)		\
+	-lnetcdf		\
+	$(GUILE_LIB)		\
+	$(GSL_LIB)
 
 CFLAGS		= -Wall -I/usr/local/include
 
-LIBS      = $(LIB_STOKES)
+LIBS		= $(LIB_STOKES)
 
 
 all:		stokes.so
@@ -29,7 +55,7 @@ stokes_wrap.c:	../src/stokes.i
 	../src/stokes.i
 
 stokes_wrap.o:	stokes_wrap.c
-	cc $(CFLAGS)	\
+	$(CC) $(CFLAGS)	\
 	$(INC_RUBY)	\
 	-c stokes_wrap.c
 
@@ -46,4 +72,4 @@ clean:
 	test-stokes.res-3f.nc
 
 test:	stokes.so
-	ruby test-stokes.rb
+	$(RUBY) test-stokes.rb

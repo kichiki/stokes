@@ -1,9 +1,21 @@
 # makefile for python binding of libstokes
-# $Id: Makefile,v 1.5 2007/11/07 05:05:40 kichiki Exp $
+# $Id: Makefile,v 1.6 2007/12/26 06:54:29 kichiki Exp $
+
 SWIG		= /usr/local/bin/swig
 PYTHON		= /usr/local/bin/python
 INC_PYTHON	= -I/usr/local/include/python2.5
+# for openSUSE
+#SWIG		= /usr/bin/swig
+#PYTHON		= /usr/bin/python
+#INC_PYTHON	= -I/usr/include/python2.5
+
 CC		= /usr/bin/cc
+
+RYUON_INC = -I/usr/local/include
+RYUON_LIB = -L/usr/local/lib -liter -lstokes
+# for openSUSE
+#RYUON_INC = 
+#RYUON_LIB = -liter -lstokes
 
 GSL_LIB = `pkg-config --libs gsl`
 GUILE_LIB = `guile-config link`
@@ -15,13 +27,18 @@ ATLAS_LIBS	= \
 	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
 	-larpack
+# for SUSE-Linux
+# for openSUSE
+#ATLAS_LIBS	= \
+#	-lgfortran -lblas -llapack\
+#	-larpack
 
 LIB_STOKES	= \
-		-lm -L/usr/local/lib -liter -lstokes	\
-		$(ATLAS_LIBS)	\
-		-lnetcdf	\
-		$(GUILE_LIB)	\
-		$(GSL_LIB)
+	-lm $(RYUON_LIB)	\
+	$(ATLAS_LIBS)		\
+	-lnetcdf		\
+	$(GUILE_LIB)		\
+	$(GSL_LIB)
 
 CFLAGS		= -Wall -I/usr/local/include
 
@@ -32,9 +49,9 @@ all:		_stokes.so
 
 
 stokes_wrap.c:	../src/stokes.i
-	$(SWIG) -python	\
-	$(CFLAGS)	\
-	-o stokes_wrap.c\
+	$(SWIG) -python		\
+	$(CFLAGS)		\
+	-o stokes_wrap.c	\
 	../src/stokes.i
 
 stokes_wrap.o:	stokes_wrap.c
@@ -51,7 +68,9 @@ _stokes.so:	stokes_wrap.o
 clean:
 	rm -f		\
 	_stokes.so	\
+	*~		\
 	*.o		\
+	*.pyc		\
 	stokes.py*	\
 	stokes_wrap.*	\
 	test-stokes.res-3f.nc
