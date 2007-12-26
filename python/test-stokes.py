@@ -1,6 +1,6 @@
 # test code for libstokes
 # Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: test-stokes.py,v 1.9 2007/08/12 19:13:37 kichiki Exp $
+# $Id: test-stokes.py,v 1.10 2007/12/26 06:48:18 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -98,7 +98,8 @@ nc_f = stokes.stokes_nc_init("test-stokes.res-3f.nc",
                              0, # version
                              0, # flag_poly
                              0, # flag_Q
-                             0) # flag_it (time-dependent imposed flow)
+                             0, # flag_it (time-dependent imposed flow)
+                             0) # shear_mode
 # f0, x, u are active
 stokes.stokes_nc_set_f0(nc_f, f)
 stokes.stokes_nc_set_time(nc_f, 0, 0.0)
