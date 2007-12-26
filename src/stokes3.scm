@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.8 2007/11/28 03:47:26 kichiki Exp $
+; $Id: stokes3.scm,v 1.9 2007/12/26 06:45:49 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -98,9 +98,18 @@
 2.5  2.5  2.5
 ))
 
+; imposed-flow parameters
 (define Ui '(0.0  0.0  0.0)) ; imposed translational velocity
 (define Oi '(0.0  0.0  0.0)) ; imposed angular velocity relative to O
 (define Ei '(0.0  0.0  0.0  0.0  0.0)) ; imposed strain relative to O
+
+; auxiliary imposed-flow parameters for simple shear
+(define shear-mode 0); 0 == imposed flow is given by Ui, Oi, Ei
+                     ; 1 == simple shear (x = flow dir, y = grad dir)
+                     ; 2 == simple shear (x = flow dir, z = grad dir)
+(define shear-rate 0.0); the shear rate for shear-mode = 1 or 2
+(define shear-shift 0.0); the initial condition of cell-shift
+                        ; for shear-mode = 1 or 2
 
 (define F0 '(0.0  0.0 -0.1)) ; applied force
 (define T0 '(0.0  0.0  0.0)) ; applied torque
@@ -117,6 +126,7 @@
 
 (define n-cheb-minv 50)      ; number of chebyshev coefficients for minv
 (define n-cheb-lub  70)      ; number of chebyshev coefficients for lub
+
 ; time-integration scheme
 (define BD-scheme "mid-point")
 ; the following algorithms are available
@@ -124,7 +134,13 @@
 ; "BanchioBrady03"   Banchio-Brady (2003)
 ; "BallMelrose97"    Ball-Melrose (1997)
 ; "JendrejackEtal00" Jendrejack et al (2000)
+; "semi-implicit-PC" semi-implicit predictor-corrector
 (define BB-n   100)    ; step parameter for Banchio-Brady-2003 algorithm
+
+; dt-adjustment parameters
+; NOTE: if 'rmin' above is defined by non-zero, dt-adjustment is just skipped.
+(define BD-rmin 1.0)   ; overlap-param for dt-adjustment process in BD.
+                       ; the condition is (r2 <= rmin * a2).
 (define dt-lim 1.e-12) ; lower bound to shrink dt to prevent overlaps
                        ; set "dt" (or larger value) if you don't want 
                        ; to adjust "dt" but just reject it.
