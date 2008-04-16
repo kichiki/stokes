@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.9 2007/12/26 06:45:49 kichiki Exp $
+; $Id: stokes3.scm,v 1.10 2008/04/16 00:36:21 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -154,3 +154,6 @@
 ;; excluded volume parameters
 (define ev-v   '())    ; v [(micro m)^3] for each chain type
 (define ev-lim 5.0)    ; max distance for F^{EV} [micro m]
+
+;; angle parameters
+(define angles '())

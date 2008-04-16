@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
- * Copyright (C) 1997-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.22 2007/12/26 06:46:15 kichiki Exp $
+ * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes3.c,v 1.23 2008/04/16 00:35:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.22 2007/12/26 06:46:15 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.23 2008/04/16 00:35:55 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -180,6 +180,27 @@ usage (const char *argv0)
 	   "\t             (list or vector with length of bonds' length)\n");
   fprintf (stdout,
 	   "\tev-lim     : maximum distance for EV interaction [micro m]\n");
+  fprintf (stdout, "* angle parameters (for chains)\n");
+  fprintf (stdout, "\tangles      : angles among particles,"
+	   " list in the following form\n"
+           "\t(define angles '(\n"
+           "\t  (; angle type 1\n"
+           "\t   10.0    ; 1) constant (k^{angle})\n"
+           "\t   0.0     ; 2) angle in degree (theta_0)\n"
+           "\t   ((0 1 2); 3) list of triplets\n"
+           "\t    (1 2 3)\n"
+           "\t    (2 3 4)\n"
+           "\t   )\n"
+           "\t  )\n"
+           "\t  (; angle type 2\n"
+           "\t   20.0    ; 1) constant (k^{angle})\n"
+           "\t   90.0    ; 2) angle in degree (theta_0)\n"
+           "\t   ((3 4 5); 3) list of triplets\n"
+           "\t    (4 5 6)\n"
+           "\t   )\n"
+           "\t  )\n"
+           "\t))\n"
+	   );
   fprintf (stdout, "* Brownian dynamics' parameters\n");
   fprintf (stdout,
 	   "\tpeclet     : peclet number (negative means no Brownian force)\n");
@@ -448,15 +469,6 @@ main (int argc, char** argv)
       exit (1);
     }
   bonds_set_FENE (bonds, length, peclet);
-  /* check
-  for (i = 0; i < bonds->n; i ++)
-    {
-      fprintf (stdout, "# bonds [%d] %d %d %e %e\n",
-	       i, bonds->type[i], bonds->fene[i],
-	       bonds->p1[i],
-	       bonds->p2[i]);
-    }
-  */
 
   // relaxation dynamics only with bond interaction
   double gamma = guile_get_double ("gamma", 1.0);
@@ -484,6 +496,17 @@ main (int argc, char** argv)
 	}
       free (ev_v);
     }
+
+  /**
+   * angles
+   */
+  struct angles *ang = guile_get_angles ("angles");
+  if (ang == NULL) // FALSE
+    {
+      fprintf (stderr, "main: fail to parse angles\n");
+      exit (1);
+    }
+
 
   // initialize struct stokes *sys
   struct stokes *sys = stokes_init ();
@@ -834,6 +857,7 @@ main (int argc, char** argv)
 				  bonds,
 				  gamma,
 				  ev,
+				  ang,
 				  flag_Q,
 				  peclet,
 				  ode_eps,
@@ -1093,6 +1117,7 @@ main (int argc, char** argv)
 
   stokes_free (sys);
   bonds_free (bonds);
+  angles_free (ang);
 
   free (F);
   free (T);
