@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.23 2008/04/16 00:35:55 kichiki Exp $
+ * $Id: stokes3.c,v 1.24 2008/04/17 04:23:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.23 2008/04/16 00:35:55 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.24 2008/04/17 04:23:28 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -187,7 +187,9 @@ usage (const char *argv0)
            "\t  (; angle type 1\n"
            "\t   10.0    ; 1) constant (k^{angle})\n"
            "\t   0.0     ; 2) angle in degree (theta_0)\n"
-           "\t   ((0 1 2); 3) list of triplets\n"
+           "\t   0       ; 3) scale flag (0 == scaled)\n"
+           "\t           ;    in this case, the above value for k is just used.\n"
+           "\t   ((0 1 2); 4) list of triplets\n"
            "\t    (1 2 3)\n"
            "\t    (2 3 4)\n"
            "\t   )\n"
@@ -195,7 +197,10 @@ usage (const char *argv0)
            "\t  (; angle type 2\n"
            "\t   20.0    ; 1) constant (k^{angle})\n"
            "\t   90.0    ; 2) angle in degree (theta_0)\n"
-           "\t   ((3 4 5); 3) list of triplets\n"
+           "\t   1       ; 3) scale flag (1 == not scaled yet)\n"
+           "\t           ;    in this case, the potential is given by\n"
+           "\t           ;    (k/2) * kT * (theta - theta_0)^2\n"
+           "\t   ((3 4 5); 4) list of triplets\n"
            "\t    (4 5 6)\n"
            "\t   )\n"
            "\t  )\n"
@@ -506,6 +511,7 @@ main (int argc, char** argv)
       fprintf (stderr, "main: fail to parse angles\n");
       exit (1);
     }
+  angles_scale_k (ang, length, peclet);
 
 
   // initialize struct stokes *sys
