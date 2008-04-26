@@ -1,7 +1,21 @@
-# $Id: Makefile,v 1.11 2007/12/26 06:56:18 kichiki Exp $
+# $Id: Makefile,v 1.12 2008/04/26 18:54:33 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
+#LD           = $(CC) -Wl,-R/home/ichiki/RYUON/lib
+
+OPTS = \
+	-march=prescott -mfpmath=sse \
+	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for bue9 (SUSE-Linux)
+#OPTS = \
+#	-mtune=opteron -m64 \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for i1200 (openSUSE)
+#OPTS = \
+#	-march=pentium3m \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
+
 
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
@@ -12,8 +26,8 @@ GUILE_LIB = `guile-config link`
 RYUON_INC = -I/usr/local/include
 RYUON_LIB = -L/usr/local/lib -liter -lstokes
 # for openSUSE
-#RYUON_INC = 
-#RYUON_LIB = -liter -lstokes
+#RYUON_INC = -I/home/ichiki/RYUON/include
+#RYUON_LIB = -I/home/ichiki/RYUON/lib -liter -lstokes
 
 # for header file besides libstokes.h
 RYUON_SRC = -I../../libstokes/src
@@ -21,28 +35,22 @@ RYUON_SRC = -I../../libstokes/src
 ## for OpenGL, GLUT
 GL_CFLAGS	= -I/usr/X11R6/include
 GL_LIBS		= -L/usr/X11R6/lib -lglut
+# for SUSE-Linux
 # for openSUSE
 #GL_CFLAGS	=
 #GL_LIBS		= -lglut
 
-#CFLAGS	     = -Wall -I/usr/local/include -O3 -mtune=pentium
-CFLAGS	     = -Wall -I/usr/local/include \
-	-pipe -O3 -march=prescott -fomit-frame-pointer \
-	-mfpmath=sse -ffast-math \
+CFLAGS = -Wall		\
+	$(OPTS)		\
+	$(RYUON_INC)	\
 	$(GUILE_INC)	\
 	$(GSL_INC)
-# for i1200
-#CFLAGS	     = -Wall\
-#	-march=pentium3m \
-#	-pipe -O3 -fomit-frame-pointer -ffast-math \
-#	$(GUILE_INC)	\
-#	$(GSL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
 	-larpack
 # for SUSE-Linux
