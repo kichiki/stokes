@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.24 2008/04/17 04:23:28 kichiki Exp $
+ * $Id: stokes3.c,v 1.25 2008/04/26 18:54:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.24 2008/04/17 04:23:28 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.25 2008/04/26 18:54:53 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -168,6 +168,7 @@ usage (const char *argv0)
 	   "\t  3 : Cohen's Pade approximation\n"
 	   "\t  4 : Warner spring\n"
 	   "\t  5 : Hookean spring (Asp * r / Ls)\n"
+	   "\t  6 : Hookean spring for dWLC\n"
 	   );
   fprintf (stdout,
 	   "\tflag_relax : #f stokesian dynamics,\n"
@@ -512,6 +513,13 @@ main (int argc, char** argv)
       exit (1);
     }
   angles_scale_k (ang, length, peclet);
+
+  /**
+   * EV_DH
+   */
+  struct EV_DH *ev_dh = EV_DH_guile_get ("ev-dh",
+					 length, peclet, np);
+  // ev_dh == NULL means no ev_dh interaction
 
 
   // initialize struct stokes *sys
@@ -864,6 +872,7 @@ main (int argc, char** argv)
 				  gamma,
 				  ev,
 				  ang,
+				  ev_dh,
 				  flag_Q,
 				  peclet,
 				  ode_eps,
