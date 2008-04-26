@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.25 2008/04/26 18:54:53 kichiki Exp $
+ * $Id: stokes3.c,v 1.26 2008/04/26 19:58:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.25 2008/04/26 18:54:53 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.26 2008/04/26 19:58:34 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -139,10 +139,8 @@ usage (const char *argv0)
            "\t   0       ; 1) spring type\n"
            "\t   (       ; 2) spring parameters (list with 3 elements)\n"
            "\t    0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})\n"
-           "\t    1.0    ;"
-	   "    p1   = A^{sp}, scaled spring constant  (for fene == 0)\n"
-           "\t    2.1)   ;"
-	   "    p2   = L_{s} / a, scaled max extension (for fene == 0)\n"
+           "\t    1.0    ;    p1   = A^{sp}, scaled spring constant\n"
+           "\t    2.1)   ;    p2   = L_{s} / a, scaled max extension\n"
            "\t   ((0 1)  ; 3) list of pairs\n"
            "\t    (1 2)\n"
            "\t    (2 3))\n"
@@ -152,23 +150,24 @@ usage (const char *argv0)
            "\t   2       ; 1) spring type\n"
            "\t   (       ; 2) spring parameters (list with 3 elements)\n"
            "\t    1      ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})\n"
-           "\t    19.8   ;"
-	   "    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)\n"
-           "\t    106.0) ;"
-	   "    p2 = b_{K} [micro m], the Kuhn length     (for fene = 1)\n"
+           "\t    19.8   ;    p1 = N_{K,s}, the Kuhn steps for a spring\n"
+           "      106.0) ;    p2 = b_{K} [nm], the Kuhn length\n"
+           "\t           ;    note that, for dWLC (type == 6),\n"
+           "             ;    (p1, p2) = (k, r0 [nm]), where the potential is\n"
+           "\t           ;    (k/2) * (kT / r0^2) * (r-r0)^2\n"
            "\t   ((4 5)  ; 3) list of pairs\n"
            "\t    (5 6)\n"
            "\t    (6 7))\n"
            "\t     1)    ; 4) number of exclusion for lubrication\n"
            "\t ))\n"
            "\twhere spring types are\n"
-	   "\t  0 : Hookean spring (Asp * (r - Ls)\n"
-	   "\t  1 : wormlike chain (WLC)\n"
-	   "\t  2 : inverse Langevin chain (ILC)\n"
-	   "\t  3 : Cohen's Pade approximation\n"
-	   "\t  4 : Warner spring\n"
-	   "\t  5 : Hookean spring (Asp * r / Ls)\n"
-	   "\t  6 : Hookean spring for dWLC\n"
+           "\t  0 : Hookean spring (Asp * (r - Ls)\n"
+           "\t  1 : wormlike chain (WLC)\n"
+           "\t  2 : inverse Langevin chain (ILC)\n"
+           "\t  3 : Cohen's Pade approximation\n"
+           "\t  4 : Warner spring\n"
+           "\t  5 : Hookean spring (Asp * r / Ls)\n"
+           "\t  6 : Hookean spring for dWLC\n"
 	   );
   fprintf (stdout,
 	   "\tflag_relax : #f stokesian dynamics,\n"
@@ -177,10 +176,10 @@ usage (const char *argv0)
 	   "\tgamma      : friction coefficient for the relaxation dynamics\n");
   fprintf (stdout, "* Excluded-Volume parameters\n");
   fprintf (stdout,
-	   "\tev-v       : v [(micro m)^3] for each chain type\n"
+	   "\tev-v       : v [nm^3] for each chain type\n"
 	   "\t             (list or vector with length of bonds' length)\n");
   fprintf (stdout,
-	   "\tev-lim     : maximum distance for EV interaction [micro m]\n");
+	   "\tev-lim     : maximum distance for EV interaction [nm]\n");
   fprintf (stdout, "* angle parameters (for chains)\n");
   fprintf (stdout, "\tangles      : angles among particles,"
 	   " list in the following form\n"
@@ -207,11 +206,33 @@ usage (const char *argv0)
            "\t  )\n"
            "\t))\n"
 	   );
+  fprintf (stdout, "* Excluded-Volume Debye-Huckel parameters\n");
+  fprintf (stdout, "\tev-dh       : list in the following form\n"
+           "\t(define ev-dh '(\n"
+           "\t  ; system parameters\n"
+           "\t  4.0      ; 1) max distance for EV_DH interaction [nm]\n"
+           "\t  298.0    ; 2) temperature [K]\n"
+           "\t  80.0     ; 3) dielectric constant of the solution\n"
+           "\t  3.07     ; 4) Debye length [nm]\n"
+           "\t  (        ; 5) list of chain types\n"
+           "\t   (; chain type 1\n"
+           "\t    2.43    ; 1) nu [e/nm]\n"
+           "\t    5.00    ; 2) l0 [nm]\n"
+           "\t    (0 1 2) ; 3) list of particles\n"
+           "\t   )\n"
+           "\t   (; chain type 2\n"
+           "\t    2.00    ; 1) nu [e/nm]\n"
+           "\t    4.00    ; 2) l0 [nm]\n"
+           "\t    (3 4)   ; 3) list of particles\n"
+           "\t   )\n"
+           "\t  )\n"
+           "\t))\n"
+	   );
   fprintf (stdout, "* Brownian dynamics' parameters\n");
   fprintf (stdout,
 	   "\tpeclet     : peclet number (negative means no Brownian force)\n");
   fprintf (stdout,
-	   "\tlength     : unit of the length scale [micro m]\n");
+	   "\tlength     : unit of the length scale [nm]\n");
   fprintf (stdout,
 	   "\tBD-seed    : seed for Brownian force random number generator\n");
   fprintf (stdout,
@@ -236,6 +257,15 @@ usage (const char *argv0)
 	   "\tdt-lim  : lower bound to shrink dt to prevent overlaps.\n"
 	   "\t          set equal to \"dt\" if you don't want to adjust \"dt\"\n"
 	   "\t          but just reject it.\n");
+  fprintf (stdout, "NOTE on the unit of length:\n"
+	   "\tin the above, we take [nm] for the unit of length.\n"
+	   "\thowever, we can use [micro m] if we replace everything, that is,\n"
+	   "\t\t\"length\"\n"
+	   "\t\tp2 for \"bonds\" with fene=1\n"
+	   "\t\t\"ev-v\"\n"
+	   "\t\t\"ev-lim\"\n"
+	   "\t\tmax. distance, Debye length, nu, and l0 in \"ev-dh\"\n"
+	   );
 }
 
 
