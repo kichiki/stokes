@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.11 2008/04/26 19:06:25 kichiki Exp $
+; $Id: stokes3.scm,v 1.12 2008/04/26 19:59:20 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -155,26 +155,29 @@
 ; note that the length unit should be the same for "length" above.
 ;(define bonds '(
 ;  (; bond 1
-;   0         ; 1) spring type
-;   (         ; 2) spring parameters (list with 3 elements)
-;    0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
-;    1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)
-;    2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
-;   ((0 1)    ; 3) list of pairs
+;   0       ; 1) spring type
+;   (       ; 2) spring parameters (list with 3 elements)
+;    0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
+;    1.0    ;    p1   = A^{sp}, scaled spring constant
+;    2.1)   ;    p2   = L_{s} / a, scaled max extension
+;   ((0 1)  ; 3) list of pairs
 ;    (1 2)
 ;    (2 3))
-;    -1)      ; 4) number of exclusion for lubrication
-;             ;    negative means all particles in the chain is excluded.
+;    -1)    ; 4) number of exclusion for lubrication
+;           ;    negative means all particles in the chain is excluded.
 ;  (; bond 2
-;   2         ; 1) spring type
-;   (         ; 2) spring parameters (list with 3 elements)
-;    1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})
-;    19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)
-;    106.0)   ;    p2 = b_{K} [nm](or[micro m]), the Kuhn length (for fene = 1)
-;   ((4 5)    ; 3) list of pairs
+;   2       ; 1) spring type
+;   (       ; 2) spring parameters (list with 3 elements)
+;    1      ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})
+;    19.8   ;    p1 = N_{K,s}, the Kuhn steps for a spring
+;    106.0) ;    p2 = b_{K} [nm], the Kuhn length
+;           ;    note that, for dWLC (type == 6),
+;           ;    (p1, p2) = (k, r0 [nm]), where the potential is
+;           ;    (k/2) * (kT / r0^2) * (r-r0)^2
+;   ((4 5)  ; 3) list of pairs
 ;    (5 6)
 ;    (6 7))
-;     1)      ; 4) number of exclusion for lubrication
+;     1)    ; 4) number of exclusion for lubrication
 ; ))
 ; where spring types are
 ;   0 : Hookean spring (Asp * (r - Ls)
