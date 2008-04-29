@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.26 2008/04/26 19:58:34 kichiki Exp $
+ * $Id: stokes3.c,v 1.27 2008/04/29 03:47:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.26 2008/04/26 19:58:34 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.27 2008/04/29 03:47:42 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -50,6 +50,9 @@ usage (const char *argv0)
 	   "\t           : #f no quaternion in the output.\n");
   fprintf (stdout, "* core libstokes parameters\n");
   fprintf (stdout, "\tversion    : \"F\", \"FT\", or \"FTS\"\n");
+  fprintf (stdout,
+	   "\tflag-noHI  : #t no hydrodynamic interaction (only self term),\n"
+	   "\t           : #f with hydrodynamic interactions.\n");
   fprintf (stdout,
 	   "\tflag-mat   : #t for matrix-scheme,\n"
 	   "\t           : #f for atimes-scheme.\n");
@@ -352,6 +355,13 @@ main (int argc, char** argv)
       exit (1);
     }
   free (str_version);
+
+  // flag-noHI
+  int flag_noHI = 0;
+  if (guile_get_bool ("flag-noHI") != 0) // TRUE
+    {
+      flag_noHI = 1;
+    }
 
   // flag-mat
   int flag_mat = 0;
@@ -817,6 +827,7 @@ main (int argc, char** argv)
       ode_params = ode_params_init (sys,
 				    F, T, E,
 				    uf, of, ef,
+				    flag_noHI,
 				    flag_lub, flag_mat,
 				    st,
 				    bonds,
@@ -896,6 +907,7 @@ main (int argc, char** argv)
 				  BD_seed,
 				  F, T, E,
 				  uf, of, ef,
+				  flag_noHI,
 				  flag_lub, flag_mat,
 				  st,
 				  bonds,
