@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.12 2008/04/26 19:59:20 kichiki Exp $
+; $Id: stokes3.scm,v 1.13 2008/04/29 03:48:05 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -10,6 +10,7 @@
 
 ;; core libstokes parameters
 (define version    "F")     ; version. "F", "FT", or "FTS"
+(define flag-noHI  #f)      ; #t => no HI, #f => with HI
 (define flag-mat   #t)      ; #t => matrix scheme, #f => atimes scheme
 (define flag-lub   #t)      ; #t => with lub,      #f => without lub
 (define rmin       0.0)     ; param for min distance (ai+aj) * rmin
