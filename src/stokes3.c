@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.27 2008/04/29 03:47:42 kichiki Exp $
+ * $Id: stokes3.c,v 1.28 2008/05/08 03:04:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.27 2008/04/29 03:47:42 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.28 2008/05/08 03:04:44 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -43,8 +43,15 @@ usage (const char *argv0)
   fprintf (stdout, "Parameters in the init-file:\n");
   fprintf (stdout, "* output parameters\n");
   fprintf (stdout, "\toutfile    : filename for NetCDF output\n");
-  fprintf (stdout, "\tdt         : time interval for outputs\n");
-  fprintf (stdout, "\tnloop      : number of loops for dt\n");
+  //fprintf (stdout, "\tdt         : time interval for outputs\n");
+  fprintf (stdout, "\tdt         : time interval for the integrator\n");
+  fprintf (stdout, "\tnout       : frequency of data outputs\n");
+  fprintf (stdout,
+	   "\t   NOTE for GSL integrator (non-Brownian), this is just an initial one,\n"
+	   "\t\tfor non-zero Stokes, \"dt\" is the upper limit,\n"
+	   "\t\tfor zero Stokes, \"dt * nout\" is the upper limit,\n"
+	   "\t\tfor Brownian, \"dt\" is fixed by this value.\n");
+  fprintf (stdout, "\tnloop      : number of output steps (time duration is \"dt*nout*nloop\")\n");
   fprintf (stdout,
 	   "\tflag-Q     : #t output quaternion,\n"
 	   "\t           : #f no quaternion in the output.\n");
@@ -132,8 +139,6 @@ usage (const char *argv0)
   fprintf (stdout, "\tT0     : applied torque"
 	   " (list or vector of length 3)\n");
   fprintf (stdout, "\tstokes : effective stokes number\n");
-  fprintf (stdout, "\tncol   : frequency of collision check in dt"
-	   " for stokes != 0\n");
   fprintf (stdout, "* bond parameters (for chains)\n");
   fprintf (stdout, "\tbonds      : bonds among particles,"
 	   " list in the following form\n"
@@ -387,7 +392,7 @@ main (int argc, char** argv)
   int nloop = guile_get_int    ("nloop",  0);
   double dt = guile_get_double ("dt",     0.0);
   double st = guile_get_double ("stokes", 0.0);
-  int ncol  = guile_get_int    ("ncol",   10);
+  int nout  = guile_get_int    ("nout",   10);
 
   /**
    * imposed flow Ui, Oi, Ei
@@ -574,7 +579,11 @@ main (int argc, char** argv)
   sys->lubmax = guile_get_double ("lub-max", 4.0);
 
   /* set exclusion list for lub by bonds */
-  list_ex_set_by_bonds (sys->ex_lub, bonds);
+  if (flag_noHI == 0 || flag_lub != 0)
+    {
+      /* currently, it is only used in the lubrication calculation */
+      list_ex_set_by_bonds (sys->ex_lub, bonds);
+    }
 
   // iterative solver
   char *str_it_solver = NULL;
@@ -974,7 +983,8 @@ main (int argc, char** argv)
       /* l0 is the starting index because index starts from 0
        * so that we need to access "l0-1" to get the last step infos
        */
-      nloop = l0 + nloop_arg + 1;
+      //nloop = l0 + nloop_arg + 1;
+      nloop = l0 + nloop_arg; // I guess we don't need "+1" here.
       t  = stokes_nc_get_time_step (nc, l0);
 
       // set the configuration at the current time
@@ -1034,16 +1044,15 @@ main (int argc, char** argv)
   /**
    * mail loop
    */
-  double h = dt / (double)ncol; // initial time step for ODE integrator
-  double ddt = dt / (double)ncol; // time step for collision check for st != 0
+  double h = dt; // initial time step for ODE integrator
+  double dt_out = dt * (double)nout;
   int l;
   double ptime0 = ptime_ms_d();
   for (l = l0; l < nloop; l++)
     {
       fprintf (stdout, "%d steps\n", l + 1);
 
-      // integrate from t to t_out
-      double t_out = t + dt;
+      double t_out = t + dt_out;
 
       // set reference for the shear_shift at t = t (not t_out)
       if (peclet < 0.0) // non Brownian
@@ -1055,82 +1064,95 @@ main (int argc, char** argv)
 	  BD_set_shear_shift_ref (BD_params, t, shear_shift);
 	}
 
-      while (t < t_out)
+      // loop for dt_out
+      if (peclet < 0.0) // non Brownian
 	{
-	  if (st == 0.0)
+	  // GSL integrator is adaptive scheme
+	  while (t < t_out)
 	    {
-	      if (peclet < 0.0) // no Brownian force
+	      if (st == 0.0)
 		{
-		  // (st==0) no collision checks
+		  // no collision checks
 		  gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
 					  GSL_ODE_CONTROL,
 					  GSL_ODE_STEP,
 					  &GSL_ODE_SYSTEM,
 					  &t, t_out,
 					  &h, y);
-		}
-	      else // Brownian dynamics
-		{
-		  if (BD_params->scheme > 2)
-		    {
-		      // either JendrejackEtal00 or semi-implicit-PC
-		      BD_imp_ode_evolve (BDimp,
-					 &t, t_out,
-					 &h, y);
-		    }
-		  else
-		    {
-		      // explicit schemes
-		      BD_ode_evolve (BD_params,
-				     &t, t_out,
-				     &h, y);
-		    }
-		}
-
-	      // check periodicity
-	      if (sys->periodic == 1)
-		{
-		  check_periodic (sys, y);
-		}
-	    }
-	  else
-	    {
-	      // (st!=0) ncol times collision checks in dt step
-	      for (i = 0; i < ncol; i ++)
-		{
-		  double tt_out = t + ddt;
-		  gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
-					  GSL_ODE_CONTROL,
-					  GSL_ODE_STEP,
-					  &GSL_ODE_SYSTEM,
-					  &t, tt_out,
-					  &h, y);
-
-		  // set pos for mobile particles
-		  // note that x[np3] has both mobile and fixed particles
-		  // and collide_* and check_periodic need that
-		  int j;
-		  for (j = 0; j < nm3; j ++)
-		    {
-		      x [j] = y [j];
-		    }
-
-		  // check the collision
-		  collide_particles (sys,
-				     x, y + nm3,
-				     1.0);
-		  collide_wall_z (sys,
-				  x, y + nm3,
-				  1.0, 0.0, 0.0);
-
 		  // check periodicity
 		  if (sys->periodic == 1)
 		    {
 		      check_periodic (sys, y);
 		    }
 		}
+	      else // st != 0.0
+		{
+		  // collision checks for nout times in dt_out (every dt step)
+		  for (i = 0; i < nout; i ++)
+		    {
+		      double t_end = t + dt;
+		      gsl_odeiv_evolve_apply (GSL_ODE_EVOLVE,
+					      GSL_ODE_CONTROL,
+					      GSL_ODE_STEP,
+					      &GSL_ODE_SYSTEM,
+					      &t, t_end,
+					      &h, y);
+
+		      // set pos for mobile particles
+		      // note that x[np3] has both mobile and fixed particles
+		      // and collide_* and check_periodic need that
+		      int j;
+		      for (j = 0; j < nm3; j ++)
+			{
+			  x [j] = y [j];
+			}
+
+		      // check the collision
+		      collide_particles (sys,
+					 x, y + nm3,
+					 1.0);
+		      collide_wall_z (sys,
+				      x, y + nm3,
+				      1.0, 0.0, 0.0);
+
+		      // check periodicity
+		      if (sys->periodic == 1)
+			{
+			  check_periodic (sys, y);
+			}
+		    } // end of nout loop
+		} // end if st == 0
 	    }
 	}
+      else // Brownian dynamics (peclet >= 0)
+	{
+	  // discretize dt_out by nout
+	  for (i = 0; i < nout; i ++)
+	    {
+	      double t_end = t + dt;
+
+	      if (BD_params->scheme > 2)
+		{
+		  // either JendrejackEtal00 or semi-implicit-PC
+		  BD_imp_ode_evolve (BDimp,
+				     &t, t_end,
+				     &h, y);
+		}
+	      else
+		{
+		  // explicit schemes
+		  BD_ode_evolve (BD_params,
+				 &t, t_end,
+				 &h, y);
+		}
+	      // check periodicity
+	      if (sys->periodic == 1)
+		{
+		  check_periodic (sys, y);
+		}
+	    }
+	}
+      // end of the loop for dt_out
 
       // output the results at t (should be t_out) with (l+1) step
       stokes_nc_set_time (nc, l+1, t);
