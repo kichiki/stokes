@@ -1,6 +1,6 @@
 # utility routines of VTK
-# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: ryuon_vtk.py,v 1.1 2007/11/30 06:33:06 kichiki Exp $
+# Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: ryuon_vtk.py,v 1.2 2008/05/08 03:08:43 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+#import sys
 #sys.path.append('/somewhere/vtk-python-binding/lib64/python2.4/site-packages')
 import vtk
 #from vtk.util.colors import peacock, tomato
@@ -92,7 +93,7 @@ def make_pActor_with_quaternion():
     return assembly
 
 
-def make_cubeActor (lattice):
+def make_cubeActor (lattice, radius=0.1):
     CubeModel = vtk.vtkCubeSource()
     CubeModel.SetXLength(lattice[0])
     CubeModel.SetYLength(lattice[1])
@@ -102,8 +103,7 @@ def make_cubeActor (lattice):
     Edges.SetInput(CubeModel.GetOutput())
     Tubes = vtk.vtkTubeFilter()
     Tubes.SetInput(Edges.GetOutput())
-    #Tubes.SetRadius(.01)
-    Tubes.SetRadius(.1)
+    Tubes.SetRadius(radius)
     Tubes.SetNumberOfSides(6)
     Tubes.UseDefaultNormalOn()
     Tubes.SetDefaultNormal(.577, .577, .577)
