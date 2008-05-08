@@ -1,6 +1,6 @@
 # dump stokes-netcdf
-# Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stncdump.py,v 1.8 2007/11/29 04:35:31 kichiki Exp $
+# Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: stncdump.py,v 1.9 2008/05/08 03:10:05 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ import stokes
 
 
 def usage():
-    print '$Id: stncdump.py,v 1.8 2007/11/29 04:35:31 kichiki Exp $'
+    print '$Id: stncdump.py,v 1.9 2008/05/08 03:10:05 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-line        : all particles are in a single line for each time\n'\
@@ -150,7 +150,7 @@ def main():
                   %(ei0[0], ei0[1], ei0[2], ei0[3], ei0[4])
         print ''
 
-        print 'lattice %f %f %f\n'%(lattice[0], lattice[3], lattice[2])
+        print 'lattice %f %f %f\n'%(lattice[0], lattice[1], lattice[2])
 
     # print the infos about the output format
     if flag_line == 0:
