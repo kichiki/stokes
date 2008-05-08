@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
-# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.13 2007/11/30 06:34:04 kichiki Exp $
+# Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: stvis-vtk.py,v 1.14 2008/05/08 03:11:41 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ import ryuon_vtk
 
 
 def usage():
-    print '$Id: stvis-vtk.py,v 1.13 2007/11/30 06:34:04 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.14 2008/05/08 03:11:41 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-step n      : draw every n steps (default: 1, all frames)'
@@ -109,8 +109,18 @@ def main():
     if nc.npf > 0:
         xf0  = stokes.darray(nc.npf * nc.nvec)
         stokes.stokes_nc_get_data0 (nc, "xf0", xf0)
-        (pfActor,pfGlyph) = ryuon_vtk.make_pActor ((1,0,0), 1, 20)
-        pfData = ryuon_vtk.make_pData(nc.npf, xf0, af)
+
+        if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
+            # non-periodic boundary
+            pfData = ryuon_vtk.make_pData(nc.npf, xf0, af)
+            (pfActor,pfGlyph) = ryuon_vtk.make_pActor ((1,0,0), 1, 20)
+        else:
+            # periodic boundary
+            pfData = ryuon_vtk.make_pData_periodic(nc.npf, xf0, af,
+                                               lattice)
+            (pfActor,pfGlyph) = ryuon_vtk.make_pActor_periodic ((1,0,0),
+                                                                1, 20,
+                                                                lattice)
         pfGlyph.SetInput(pfData)
 
     # then, make Actor
