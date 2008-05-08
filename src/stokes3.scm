@@ -1,10 +1,11 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.13 2008/04/29 03:48:05 kichiki Exp $
+; $Id: stokes3.scm,v 1.14 2008/05/08 03:05:09 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
-(define dt         1.0)     ; time interval
+(define dt         0.1)     ; time step for the integrator
+(define nout       10)      ; frequency of data output
 (define nloop      1000)    ; main loop
 (define flag-Q     #f)      ; #t => output quaternion, #f => no quaternion.
 
@@ -116,7 +117,6 @@
 (define T0 '(0.0  0.0  0.0)) ; applied torque
 
 (define stokes 0.0)     ; effective stokes number
-(define ncol   10)      ; frequency of collision check in dt for st != 0
 
 ;; Brownian dynamics parameters
 (define peclet -1)      ; peclet number (negative means no Brownian force)
