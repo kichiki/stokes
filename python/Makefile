@@ -1,5 +1,5 @@
 # makefile for python binding of libstokes
-# $Id: Makefile,v 1.6 2007/12/26 06:54:29 kichiki Exp $
+# $Id: Makefile,v 1.7 2008/05/08 03:12:32 kichiki Exp $
 
 SWIG		= /usr/local/bin/swig
 PYTHON		= /usr/local/bin/python
@@ -7,15 +7,15 @@ INC_PYTHON	= -I/usr/local/include/python2.5
 # for openSUSE
 #SWIG		= /usr/bin/swig
 #PYTHON		= /usr/bin/python
-#INC_PYTHON	= -I/usr/include/python2.5
+#INC_PYTHON	= -I/usr/include/python2.4
 
 CC		= /usr/bin/cc
 
 RYUON_INC = -I/usr/local/include
 RYUON_LIB = -L/usr/local/lib -liter -lstokes
 # for openSUSE
-#RYUON_INC = 
-#RYUON_LIB = -liter -lstokes
+#RYUON_INC = -I/home/ichiki/RYUON/include
+#RYUON_LIB = -L/home/ichiki/RYUON/lib -liter -lstokes
 
 GSL_LIB = `pkg-config --libs gsl`
 GUILE_LIB = `guile-config link`
@@ -24,13 +24,16 @@ GUILE_LIB = `guile-config link`
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
 	-larpack
 # for SUSE-Linux
 # for openSUSE
 #ATLAS_LIBS	= \
 #	-lgfortran -lblas -llapack\
+#	-larpack
+#ATLAS_LIBS	= \
+#	-llapack -lptcblas -lptf77blas -latlas\
 #	-larpack
 
 LIB_STOKES	= \
@@ -40,7 +43,8 @@ LIB_STOKES	= \
 	$(GUILE_LIB)		\
 	$(GSL_LIB)
 
-CFLAGS		= -Wall -I/usr/local/include
+CFLAGS = -Wall		\
+	$(RYUON_INC)
 
 LIBS		= $(LIB_STOKES)
 
@@ -55,7 +59,8 @@ stokes_wrap.c:	../src/stokes.i
 	../src/stokes.i
 
 stokes_wrap.o:	stokes_wrap.c
-	$(CC) $(CFLAGS)	\
+	$(CC) -fPIC	\
+	$(CFLAGS)	\
 	$(INC_PYTHON)	\
 	-c stokes_wrap.c
 
