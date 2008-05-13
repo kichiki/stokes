@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.28 2008/05/08 03:04:44 kichiki Exp $
+ * $Id: stokes3.c,v 1.29 2008/05/13 01:21:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.28 2008/05/08 03:04:44 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.29 2008/05/13 01:21:05 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -527,26 +527,12 @@ main (int argc, char** argv)
   /**
    * excluded volume
    */
-  struct EV *ev = NULL;
   double ev_lim = guile_get_double ("ev-lim", 1.0);
   ev_lim /= length; // scale by length
   double ev_r2 = ev_lim * ev_lim;
-  if (bonds->n > 0)
-    {
-      double *ev_v = (double *)malloc (sizeof (double) * bonds->n);
-      CHECK_MALLOC (ev_v, "main");
-      if (guile_get_doubles ("ev-v", bonds->n, ev_v) != 1) // FALSE
-	{
-	  fprintf (stderr, "excluded-volume is not defined\n");
-	  //exit (1);
-	}
-      else
-	{
-	  ev = EV_init (bonds, length, peclet,
-			ev_r2, ev_v, np);
-	}
-      free (ev_v);
-    }
+  struct EV *ev = 
+    guile_get_ev_v ("ev-v",
+		    bonds, length, peclet, ev_r2, np);
 
   /**
    * angles
