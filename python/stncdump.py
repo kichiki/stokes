@@ -1,6 +1,6 @@
 # dump stokes-netcdf
 # Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stncdump.py,v 1.9 2008/05/08 03:10:05 kichiki Exp $
+# $Id: stncdump.py,v 1.10 2008/05/14 03:47:52 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ import stokes
 
 
 def usage():
-    print '$Id: stncdump.py,v 1.9 2008/05/08 03:10:05 kichiki Exp $'
+    print '$Id: stncdump.py,v 1.10 2008/05/14 03:47:52 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-line        : all particles are in a single line for each time\n'\
@@ -86,6 +86,7 @@ def main():
             sys.exit(1)
 
         # read the config at the step
+        t = stokes.stokes_nc_get_time_step (nc, step)
         stokes.stokes_nc_get_data (nc, "x", step, pos)
         if nc.flag_q != 0:
             stokes.stokes_nc_get_data (nc, "q", step, q)
@@ -109,6 +110,7 @@ def main():
         for i in range(len(sys.argv)):
             print '%s'%(sys.argv[i]),
         print ''
+        print '; at time %f'%(t)
         print '(define x #('
         for i in range(nc.np):
             print '  %f %f %f ; %d'%(pos[i*3]   - comx + x0,
