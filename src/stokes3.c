@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.29 2008/05/13 01:21:05 kichiki Exp $
+ * $Id: stokes3.c,v 1.30 2008/05/24 06:17:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.29 2008/05/13 01:21:05 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.30 2008/05/24 06:17:25 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -218,7 +218,7 @@ usage (const char *argv0)
   fprintf (stdout, "\tev-dh       : list in the following form\n"
            "\t(define ev-dh '(\n"
            "\t  ; system parameters\n"
-           "\t  4.0      ; 1) max distance for EV_DH interaction [nm]\n"
+	   "\t  1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction\n"
            "\t  298.0    ; 2) temperature [K]\n"
            "\t  80.0     ; 3) dielectric constant of the solution\n"
            "\t  3.07     ; 4) Debye length [nm]\n"
@@ -235,6 +235,78 @@ usage (const char *argv0)
            "\t   )\n"
            "\t  )\n"
            "\t))\n"
+	   );
+  fprintf (stdout, "* Excluded-Volume Lennard-Jones parameters\n");
+  fprintf (stdout, "\tev-LJ       : list in the following form\n"
+           "\t(define ev-LJ '(\n"
+           "\t (; LJ type 1\n"
+           "\t  10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ; 2) LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  (    ; 3) list of particles\n"
+           "\t   0 1 2\n"
+           "\t  )\n"
+           "\t )\n"
+           "\t (; LJ type 2\n"
+           "\t  8.0  ; 1) LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  2.0  ; 2) LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  (    ; 3) list of particles\n"
+           "\t   3 4\n"
+           "\t  )\n"
+           "\t )\n"
+           "\t))\n"
+	   );
+  fprintf (stdout, "* Confinement force parameters\n");
+  fprintf (stdout, "\tconfinement : list in the following form\n"
+           "\tfor spherical confinement,\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"sphere\"\n"
+           "\t   10.0 ;; radius of the cavity at (0, 0, 0)\n"
+           "\t ))\n"
+           "\tfor spherical confinement with a hole,\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"sphere+hole\"\n"
+           "\t   10.0 ;; radius of the cavity at (0, 0, 0)\n"
+           "\t   1.0  ;; radius of the hole at (0, 0, 1) direction\n"
+           "\t ))\n"
+           "\tfor cylindrical confinement,\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"cylinder\" ;; the cylinder center goes through (0,0,0) and (x,y,z)\n"
+           "\t   10.0       ;; radius of the cylinder\n"
+           "\t   1.0  0.0  0.0 ;; direction vector (x, y, z) of the cylinder\n"
+           "\t ))\n"
+           "\tfor dumbbell confinement,\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"dumbbell\" ;; the origin is at the center of the cylinder\n"
+           "\t   10.0       ;; left cavity radius centered at (center1, 0, 0)\n"
+           "\t   10.0       ;; right cavity radius centered at (center2, 0, 0)\n"
+           "\t   2.0        ;; length of the cylinder\n"
+           "\t   1.0        ;; cylinder radius\n"
+           "\t ))\n"
+           "\tfor 2D hexagonal confinement with cylinder pipe,\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"hex2d\"\n"
+           "\t   10.0    ;; cavity radius\n"
+           "\t   1.0     ;; cylinder radius\n"
+           "\t   12.0    ;; lattice spacing\n"
+           "\t ))\n"
+           "\tfor porous media (outside of the 3D hexagonal particle array)\n"
+           "\t (define confinement '(\n"
+           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t   \"porous\"\n"
+           "\t   10.0    ;; particle radius\n"
+           "\t   20.0    ;; lattice spacing in x (2R for touching case)\n"
+           "\t ))\n"
 	   );
   fprintf (stdout, "* Brownian dynamics' parameters\n");
   fprintf (stdout,
@@ -513,13 +585,16 @@ main (int argc, char** argv)
   /**
    * bonds
    */
-  struct bonds *bonds = guile_get_bonds ("bonds");
-  if (bonds == NULL) // FALSE
+  struct bonds *bonds = bonds_guile_get ("bonds");
+  if (bonds != NULL)
     {
-      fprintf (stderr, "main: fail to parse bonds\n");
-      exit (1);
+      bonds_set_FENE (bonds, length, peclet);
     }
-  bonds_set_FENE (bonds, length, peclet);
+  else
+    {
+      bonds = bonds_init ();
+    }
+  // bonds == NULL means no bond interaction
 
   // relaxation dynamics only with bond interaction
   double gamma = guile_get_double ("gamma", 1.0);
@@ -530,27 +605,45 @@ main (int argc, char** argv)
   double ev_lim = guile_get_double ("ev-lim", 1.0);
   ev_lim /= length; // scale by length
   double ev_r2 = ev_lim * ev_lim;
-  struct EV *ev = 
-    guile_get_ev_v ("ev-v",
-		    bonds, length, peclet, ev_r2, np);
+  struct EV *ev = EV_guile_get ("ev-v", bonds, length, peclet, ev_r2, np);
+  // ev == NULL means no EV interaction
 
   /**
    * angles
    */
-  struct angles *ang = guile_get_angles ("angles");
-  if (ang == NULL) // FALSE
+  struct angles *ang = angles_guile_get ("angles");
+  // ang == NULL means no angle interaction
+  if (ang != NULL)
     {
-      fprintf (stderr, "main: fail to parse angles\n");
-      exit (1);
+      angles_scale_k (ang, length, peclet);
     }
-  angles_scale_k (ang, length, peclet);
 
   /**
    * EV_DH
    */
   struct EV_DH *ev_dh = EV_DH_guile_get ("ev-dh",
 					 length, peclet, np);
-  // ev_dh == NULL means no ev_dh interaction
+  // ev_dh == NULL means no EV-DH interaction
+
+  /**
+   * EV_LJ
+   */
+  struct EV_LJ *ev_LJ = EV_LJ_guile_get ("ev-LJ", np);
+  if (ev_LJ != NULL)
+    {
+      EV_LJ_scale (ev_LJ, peclet);
+    }
+  // ev_LJ == NULL means no EV-LJ interaction
+
+  /**
+   * confinement
+   */
+  struct confinement *cf = CF_guile_get ("confinement");
+  if (cf != NULL)
+    {
+      CF_set (cf, peclet);
+    }
+  // cf == NULL means no confinement force
 
 
   // initialize struct stokes *sys
@@ -731,6 +824,7 @@ main (int argc, char** argv)
       i3 = i * 3;
       i5 = i * 5;
 
+      /*
       if (sys->a == NULL)
 	{
 	  F [i3  ] = F0 [0];
@@ -754,6 +848,14 @@ main (int argc, char** argv)
 	  T [i3+1] = T0 [1] *a4;
 	  T [i3+2] = T0 [2] *a4;
 	}
+      */
+      F [i3  ] = F0 [0];
+      F [i3+1] = F0 [1];
+      F [i3+2] = F0 [2];
+
+      T [i3  ] = T0 [0];
+      T [i3+1] = T0 [1];
+      T [i3+2] = T0 [2];
 
       E [i5  ] = 0.0;
       E [i5+1] = 0.0;
@@ -910,6 +1012,8 @@ main (int argc, char** argv)
 				  ev,
 				  ang,
 				  ev_dh,
+				  ev_LJ,
+				  cf,
 				  flag_Q,
 				  peclet,
 				  ode_eps,

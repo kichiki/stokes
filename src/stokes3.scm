@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.14 2008/05/08 03:05:09 kichiki Exp $
+; $Id: stokes3.scm,v 1.15 2008/05/24 06:17:47 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -226,7 +226,7 @@
 ; note that the length unit should be the same for "length" above.
 ;(define ev-dh '(
 ;  ; system parameters
-;  4.0      ; 1) max distance for EV_DH interaction [nm] (or [micro m])
+;  1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
 ;  298.0    ; 2) temperature [K]
 ;  80.0     ; 3) dielectric constant of the solution
 ;  3.07     ; 4) Debye length [nm] (or [micro m])
@@ -243,3 +243,68 @@
 ;   )
 ;  )
 ;))
+
+;; excluded volume in Debye-Huckel type
+(define ev-LJ   '())
+; an example
+; note that the length unit should be the same for "length" above.
+;(define ev-LJ '(
+; (; LJ type 1
+;  10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)
+;  1.0  ; 2) LJ parameter r0 in "length" (so this is dimensionless value)
+;  (    ; 3) list of particles
+;   0 1 2
+;  )
+; )
+; (; LJ type 2
+;  8.0  ; 1) LJ parameter epsilon in kT (so this is dimensionless value)
+;  2.0  ; 2) LJ parameter r0 in "length" (so this is dimensionless value)
+;  (    ; 3) list of particles
+;   3 4
+;  )
+; )
+;))
+
+;; confinement force parameters
+(define confinement '())
+; examples:
+; for spherical confinement,
+;  (define confinement '(
+;    "sphere"
+;    10.0 ;; radius of the cavity at (0, 0, 0)
+;  ))
+; for spherical confinement with a hole,
+;  (define confinement '(
+;    "sphere+hole"
+;    10.0 ;; radius of the cavity at (0, 0, 0)
+;    1.0  ;; radius of the hole at (0, 0, 1) direction
+;  ))
+; for cylindrical confinement,
+;  (define confinement '(
+;    "cylinder" ;; the cylinder center goes through (0,0,0) and (x,y,z)
+;    10.0       ;; radius of the cylinder
+;    1.0  0.0  0.0 ;; direction vector (x, y, z) of the cylinder
+;  ))
+; for dumbbell confinement,
+;  (define confinement '(
+;    "dumbbell" ;; the origin is at the center of the cylinder
+;    10.0       ;; left cavity radius centered at (center1, 0, 0)
+;    10.0       ;; right cavity radius centered at (center2, 0, 0)
+;    2.0        ;; length of the cylinder
+;    1.0        ;; cylinder radius
+;  ))
+; for 2D hexagonal confinement with cylinder pipe,
+;  (define confinement '(
+;    "hex2d"
+;    10.0    ;; cavity radius
+;    1.0     ;; cylinder radius
+;    12.0    ;; lattice spacing
+;  ))
+; for porous media (outside of the 3D hexagonal particle array)
+;  (define confinement '(
+;    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+;    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+;    "porous"
+;    10.0    ;; particle radius
+;    20.0    ;; lattice spacing in x (2R for touching case)
+;  ))
