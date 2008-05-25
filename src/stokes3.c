@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.30 2008/05/24 06:17:25 kichiki Exp $
+ * $Id: stokes3.c,v 1.31 2008/05/25 05:04:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.30 2008/05/24 06:17:25 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.31 2008/05/25 05:04:01 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -658,7 +658,7 @@ main (int argc, char** argv)
   sys->lubmax = guile_get_double ("lub-max", 4.0);
 
   /* set exclusion list for lub by bonds */
-  if (flag_noHI == 0 || flag_lub != 0)
+  if (flag_noHI == 0 && flag_lub != 0)
     {
       /* currently, it is only used in the lubrication calculation */
       list_ex_set_by_bonds (sys->ex_lub, bonds);
