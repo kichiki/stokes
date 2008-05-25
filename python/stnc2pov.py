@@ -1,6 +1,6 @@
 # stokes-netcdf to pov converter
-# Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stnc2pov.py,v 1.7 2007/08/12 19:37:34 kichiki Exp $
+# Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: stnc2pov.py,v 1.8 2008/05/25 17:52:45 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -369,21 +369,103 @@ def move_camera (camera, lookat):
 
 
 def usage():
-    print '$Id: stnc2pov.py,v 1.7 2007/08/12 19:37:34 kichiki Exp $'
+    print '$Id: stnc2pov.py,v 1.8 2008/05/25 17:52:45 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-b or --ball : use pool balls'
+    print '\t-step n      : output the config only at the step n\n'\
+          '\t\t n starts from 1 and ends at 1001 for 1000-step run.\n'
     sys.exit ()
 
+
+def render_one_step(i, nc, pos, a, q, xf0, af, lattice, flag_ball):
+    file = 'test%04d.pov'%i
+    try:
+        f = open(file, 'w')
+    except IOError:
+        print 'cannot open', file
+        sys.exit()
+
+    stokes.stokes_nc_get_data (nc, "x", i, pos)
+
+    if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
+        # non-periodic boundary
+        (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, pos)
+        if lx > lz:
+            l = lx
+        else:                  
+            l = lz
+        # prevent to go far away
+        if l > 50: l = 50
+
+        camera = [cx, cy-2*l, cz]
+        lookat = [cx, cy,   cz]
+        write_pov_header_open (f, lattice, camera, lookat, flag_ball)
+
+    else:
+        # periodic boundary
+        #move_camera (camera, lookat)
+        write_pov_header (f, lattice, camera, lookat, flag_ball)
+
+    if nc.flag_q != 0:
+        # with quaternion
+        stokes.stokes_nc_get_data (nc, "q", i, q)
+        for j in range(nc.np):
+            x = pos[j*3]
+            y = pos[j*3+1]
+            z = pos[j*3+2]
+            if a != []:
+                rad = a[j]
+            else:
+                rad = 1.0
+
+            if flag_ball == 0:
+                write_pov_particle_Q (f, x, y, z, rad,\
+                                      [q[j*4+0],q[j*4+1],\
+                                       q[j*4+2],q[j*4+3]])
+            else:
+                write_pov_particle_Balls_Q (f, x, y, z, rad,\
+                                            [q[j*4+0],q[j*4+1],\
+                                             q[j*4+2],q[j*4+3]],\
+                                            j)
+    else:
+        # no quaternion
+        for j in range(nc.np):
+            x = pos[j*3]
+            y = pos[j*3+1]
+            z = pos[j*3+2]
+            if a != []:
+                write_pov_particle (f, x, y, z, a[j])
+            else:
+                write_pov_particle (f, x, y, z, 1.0)
+
+    # fixed particles
+    for j in range(nc.npf):
+        x = xf0[j*3]
+        y = xf0[j*3+1]
+        z = xf0[j*3+2]
+        if af != []:
+            write_pov_particle_fixed (f, x, y, z, af[j])
+        else:
+            write_pov_particle_fixed (f, x, y, z, 1.0)
+
+    # done
+    f.close()
+    
 
 def main():
     filename = ''
     flag_ball = 0
+    step = -1
     nm = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
+            i += 2
+        elif sys.argv[i] == '-step':
+            step = int(sys.argv[i+1])
+            step -= 1
             i += 2
         elif sys.argv[i] == '-b' or sys.argv[i] == '--ball':
             flag_ball = 1
@@ -422,6 +504,8 @@ def main():
     if nc.npf > 0:
         xf0 = stokes.darray(nc.npf * nc.nvec)
         stokes.stokes_nc_get_data0 (nc, "xf0", xf0)
+    else:
+        xf0 = []
 
     if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
         # periodic boundary
@@ -435,79 +519,17 @@ def main():
         camera = [0.5 * lattice[0], -0.8*l, 0.28 * lattice[2]]
         lookat = [0.5 * lattice[0],  0.0, 0.3 * lattice[2]]
 
-    for i in range(nc.ntime):
-        file = 'test%04d.pov'%i
-        try:
-            f = open(file, 'w')
-        except IOError:
-            print 'cannot open', file
-            sys.exit()
-
-        stokes.stokes_nc_get_data (nc, "x", i, pos)
-
-        if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
-            # non-periodic boundary
-            (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, pos)
-            if lx > lz:
-                l = lx
-            else:                  
-                l = lz
-            # prevent to go far away
-            if l > 50: l = 50
-
-            camera = [cx, cy-2*l, cz]
-            lookat = [cx, cy,   cz]
-            write_pov_header_open (f, lattice, camera, lookat, flag_ball)
-
-        else:
-            # periodic boundary
-            #move_camera (camera, lookat)
-            write_pov_header (f, lattice, camera, lookat, flag_ball)
-
-        if nc.flag_q != 0:
-            # with quaternion
-            stokes.stokes_nc_get_data (nc, "q", i, q)
-            for j in range(nc.np):
-                x = pos[j*3]
-                y = pos[j*3+1]
-                z = pos[j*3+2]
-                if a != []:
-                    rad = a[j]
-                else:
-                    rad = 1.0
-
-                if flag_ball == 0:
-                    write_pov_particle_Q (f, x, y, z, rad,\
-                                          [q[j*4+0],q[j*4+1],\
-                                           q[j*4+2],q[j*4+3]])
-                else:
-                    write_pov_particle_Balls_Q (f, x, y, z, rad,\
-                                                [q[j*4+0],q[j*4+1],\
-                                                 q[j*4+2],q[j*4+3]],\
-                                                j)
-        else:
-            # no quaternion
-            for j in range(nc.np):
-                x = pos[j*3]
-                y = pos[j*3+1]
-                z = pos[j*3+2]
-                if a != []:
-                    write_pov_particle (f, x, y, z, a[j])
-                else:
-                    write_pov_particle (f, x, y, z, 1.0)
-
-        # fixed particles
-        for j in range(nc.npf):
-            x = xf0[j*3]
-            y = xf0[j*3+1]
-            z = xf0[j*3+2]
-            if af != []:
-                write_pov_particle_fixed (f, x, y, z, af[j])
-            else:
-                write_pov_particle_fixed (f, x, y, z, 1.0)
-
-        # done
-        f.close()
+    # extract the config at the step
+    if step >= 0:
+        if step > nc.ntime:
+            print 'out of the range %d <= %d'%(step, nc.ntime)
+            sys.exit(1)
+        render_one_step(step, nc,
+                        pos, a, q, xf0, af, lattice, flag_ball)
+    else:
+        for i in range(nc.ntime):
+            render_one_step(i, nc,
+                            pos, a, q, xf0, af, lattice, flag_ball)
 
 
 if __name__ == "__main__":
