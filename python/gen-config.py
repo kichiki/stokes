@@ -1,6 +1,6 @@
 # configuration generating script
-# Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: gen-config.py,v 1.3 2007/11/29 04:35:04 kichiki Exp $
+# Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+# $Id: gen-config.py,v 1.4 2008/06/03 02:59:06 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -264,7 +264,7 @@ def hcp (nx, ny, nz, r):
         print 'np %d != 4*nx*ny*nz = %d'%(np, 4*nx*ny*nz)
         sys.exit(1)
     # check for the distance
-    tiny = 2.0e-13
+    tiny = 1.0e-10
     for ix in range(nx-1):
         for iy in range(ny-1):
             for iz in range(nz-1):
@@ -435,7 +435,7 @@ def print_config (x):
 
 
 def usage():
-    print '$Id: gen-config.py,v 1.3 2007/11/29 04:35:04 kichiki Exp $'
+    print '$Id: gen-config.py,v 1.4 2008/06/03 02:59:06 kichiki Exp $'
     print 'USAGE:'
     print '\t-n : number of particles'
     print 'CONFIGURATION OPTIONS'
