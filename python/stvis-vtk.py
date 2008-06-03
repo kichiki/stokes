@@ -1,6 +1,6 @@
 # visualization program for stokes-nc file by VTK
 # Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stvis-vtk.py,v 1.14 2008/05/08 03:11:41 kichiki Exp $
+# $Id: stvis-vtk.py,v 1.15 2008/06/03 03:00:39 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,8 +29,83 @@ import stokes
 import ryuon_vtk
 
 
+# INPUT
+#  r     : radius of the cylinder
+#  x0[3] : one end of the cylinder
+#  x1[3] : the other end of the cylinder
+#  rgb : color
+#  opacity :
+def make_cylinderActor (r, x0, x1, rgb, opacity):
+    points = vtk.vtkPoints()
+    lines  = vtk.vtkCellArray()
+    lines.InsertNextCell(2)
+    # point 0
+    points.InsertNextPoint(x0[0], x0[1], x0[2])
+    lines.InsertCellPoint(0)
+    # point 1
+    points.InsertNextPoint(x1[0], x1[1], x1[2])
+    lines.InsertCellPoint(1)
+
+    cData = vtk.vtkPolyData()
+    cData.SetPoints(points)
+    cData.SetLines(lines)
+
+    c = vtk.vtkTubeFilter()
+    c.SetNumberOfSides(8)
+    c.SetInput(cData)
+    c.SetRadius(r)
+
+    cMapper = vtk.vtkPolyDataMapper()
+    cMapper.SetInput(c.GetOutput())
+
+    cActor = vtk.vtkActor()
+    cActor.SetMapper(cMapper)
+    cActor.GetProperty().SetColor(rgb[0], rgb[1], rgb[2])
+    cActor.GetProperty().SetOpacity(opacity)
+
+    return cActor
+
+# INPUT
+#  x[3]  : center of the sphere
+#  r     : radius of the sphere
+#  rgb : color
+#  opacity :
+def make_sphereActor (x, r, rgb, opacity):
+    points = vtk.vtkPoints()
+    points.InsertNextPoint(x[0], x[1], x[2])
+
+    diameter = vtk.vtkDoubleArray()
+    diameter.SetNumberOfComponents(1)
+    diameter.InsertNextTuple1(2.0*r)
+
+    pData = vtk.vtkPolyData()
+    pData.SetPoints(points)
+    pData.GetPointData().SetScalars(diameter)
+
+    pSource = vtk.vtkSphereSource()
+    pSource.SetPhiResolution(16)
+    pSource.SetThetaResolution(16)
+
+    pGlyph = vtk.vtkGlyph3D()
+    pGlyph.SetSource(pSource.GetOutput())
+    pGlyph.SetInput(pData)
+    pGlyph.ScalingOn()
+    pGlyph.SetScaleModeToScaleByScalar()
+
+    pMapper = vtk.vtkPolyDataMapper()
+    pMapper.ScalarVisibilityOff()
+    pMapper.SetInput(pGlyph.GetOutput())
+
+    pActor = vtk.vtkActor()
+    pActor.SetMapper(pMapper)
+    pActor.GetProperty().SetColor(rgb[0], rgb[1], rgb[2])
+    pActor.GetProperty().SetOpacity(opacity)
+
+    return pActor
+
+
 def usage():
-    print '$Id: stvis-vtk.py,v 1.14 2008/05/08 03:11:41 kichiki Exp $'
+    print '$Id: stvis-vtk.py,v 1.15 2008/06/03 03:00:39 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-step n      : draw every n steps (default: 1, all frames)'
@@ -41,6 +116,17 @@ def usage():
     print '\t             : (default) follow the center of mass'
     print '\t             : this option is valid only for non-periodic system'
     print '\t-p or --pic  : generate PNG images'
+    print '\t-c or --cylinder : give radius to show cylinder'
+    print '\t--sphere         : give radius to show radius'
+    print '\t-d or --dumbbell : give 4 parameters (R1, R2, L, r), where'
+    print '\t                   R1 : left cavity radius'
+    print '\t                   R2 : right cavity radius'
+    print '\t                   L  : length of the cylinder'
+    print '\t                   r  : radius of the cylinder'
+    print '\t--hex2d          : give 3 parameters (R, r, L), where'
+    print '\t                   R : cavity radius'
+    print '\t                   r : cylinder radius'
+    print '\t                   L : lattice spacing'
     sys.exit ()
 
 
@@ -51,6 +137,10 @@ def main():
     flag_step = 0
     flag_bottom = 0
     flag_pic = 0
+    flag_cylinder = 0
+    flag_sphere = 0
+    flag_dumbbell = 0
+    flag_hex2d = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
@@ -74,6 +164,27 @@ def main():
         elif sys.argv[i] == '-p' or sys.argv[i] == '--pic':
             flag_pic = 1
             i += 1
+        elif sys.argv[i] == '-c' or sys.argv[i] == '--cylinder':
+            flag_cylinder = 1
+            cylinder_radius = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '--sphere':
+            flag_sphere = 1
+            cavity_radius = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-d' or sys.argv[i] == '--dumbbell':
+            flag_dumbbell = 1
+            cavity1_radius = float(sys.argv[i+1])
+            cavity2_radius = float(sys.argv[i+2])
+            cylinder_length = float(sys.argv[i+3])
+            cylinder_radius = float(sys.argv[i+4])
+            i += 5
+        elif sys.argv[i] == '--hex2d':
+            flag_hex2d = 1
+            cavity_radius = float(sys.argv[i+1])
+            cylinder_radius = float(sys.argv[i+2])
+            lattice_spacing = float(sys.argv[i+3])
+            i += 4
         else:
             usage()
     if filename == '' : usage()
@@ -172,7 +283,70 @@ def main():
     textActor = ryuon_vtk.make_textActor()
     ren.AddActor(textActor)
 
+    # cylinder
+    if flag_cylinder != 0:
+        cActor = make_cylinderActor (r=cylinder_radius,
+                                     x0=(0.0, 0.0, 0.0),
+                                     x1=(200.0, 0.0, 0.0),
+                                     rgb=(0.0, 0.5, 0.0),
+                                     opacity=0.3)
+        ren.AddActor(cActor)
 
+    # sphere
+    if flag_sphere != 0:
+        cavActor = make_sphereActor (x=(0.0, 0.0, 0.0),
+                                      r=cavity_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cavActor)
+
+    # dumbbell
+    if flag_dumbbell != 0:
+        cActor = make_cylinderActor (r=cylinder_radius,
+                                     x0=(-0.5 * cylinder_length, 0.0, 0.0),
+                                     x1=(+0.5 * cylinder_length, 0.0, 0.0),
+                                     rgb=(0.0, 0.5, 0.0),
+                                     opacity=0.3)
+        ren.AddActor(cActor)
+
+        theta1 = math.asin(cylinder_radius / cavity1_radius)
+        cav1Actor = make_sphereActor (x=(-0.5 * cylinder_length\
+                                         -cavity1_radius * math.cos(theta1),
+                                         0.0, 0.0),
+                                      r=cavity1_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cav1Actor)
+        
+        theta2 = math.asin(cylinder_radius / cavity2_radius)
+        cav2Actor = make_sphereActor (x=(+0.5 * cylinder_length\
+                                         +cavity2_radius * math.cos(theta2),
+                                         0.0, 0.0),
+                                      r=cavity2_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cav2Actor)
+        
+    # hex2d
+    if flag_hex2d != 0:
+        cav1Actor = make_sphereActor (x=(0.0, 0.0, 0.0),
+                                      r=cavity_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cav1Actor)
+        
+        cav2Actor = make_sphereActor (x=(lattice_spacing, 0.0, 0.0),
+                                      r=cavity_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cav2Actor)
+        
+        cav3Actor = make_sphereActor (x=(0.5*lattice_spacing, math.sqrt(3.0) * 0.5 *lattice_spacing, 0.0),
+                                      r=cavity_radius,
+                                      rgb=(0.0, 0.5, 0.0),
+                                      opacity=0.3)
+        ren.AddActor(cav3Actor)
+        
     aCamera = vtk.vtkCamera()
     ren.SetActiveCamera (aCamera)
 
@@ -227,7 +401,8 @@ def main():
                 else:                  
                     l = lz
                 # prevent to go far away
-                if l > 50: l = 50
+                #if l > 50: l = 50
+                if l > 100: l = 100
     
                 if flag_bottom == 0:
                     aCamera.SetFocalPoint (cx, cy,       cz)
