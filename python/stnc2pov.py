@@ -1,6 +1,6 @@
 # stokes-netcdf to pov converter
 # Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stnc2pov.py,v 1.8 2008/05/25 17:52:45 kichiki Exp $
+# $Id: stnc2pov.py,v 1.9 2008/06/03 02:57:43 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -53,6 +53,19 @@ def write_T_Particle(f):
             '    }\n'\
             '  }\n'\
             '}\n')
+def write_T_Particles_with_Bonds(f, color):
+    f.write('#declare T_Particles_with_Bonds = texture {\n'\
+            '  pigment { color %s }\n'\
+            '  finish {\n'\
+            '    ambient .1\n'\
+            '    diffuse .4\n'\
+            '    reflection {\n'\
+            '      .75\n'\
+            '      metallic\n'\
+            '    }\n'\
+            '    specular 1\n'\
+            '  }\n'\
+            '}\n'%(color))
 
 def write_M_RYUON(f):
     # M_RYUON
@@ -134,7 +147,10 @@ def bounding_box (np, x):
 #  camera = (cx,cy,cz)  
 #  lookat = (lax,lay,laz)
 #  flag_ball : 0 => checker, 1 => pool balls
-def write_pov_header (f, lattice, camera, lookat, flag_ball=0):
+#  flag_bonds :
+#  bond_color : '' is accepted (for Red)
+def write_pov_header (f, lattice, camera, lookat,
+                      flag_ball=0, flag_bonds=0, bond_color=''):
     # note that in POVRAY,
     # y is the vertical direction
     # z is the depth direction
@@ -151,57 +167,72 @@ def write_pov_header (f, lattice, camera, lookat, flag_ball=0):
     laz = lookat[1]/100.0
     lay = lookat[2]/100.0
 
-    f.write('#include "colors.inc"\n')
-    #f.write('#include "woods.inc"\n\n')
-    # place the ground
-    f.write('// floor\nplane {\n'\
-            '  y, -0.1\n'\
-            '  texture {\n'\
-            #'    T_Wood6\n'\
-            #'    finish{ ambient 1 }\n'\
-            '    pigment { checker color White, color <.7, .7, .7> }\n'\
-            '    scale .3\n'\
-            '    finish{ ambient .4 }\n'\
-            '  }\n'\
-            '}\n')
-    # place the walls
-    f.write('// back wall\n'\
-            'plane {\n'\
-            '  z, 1\n'\
-            '  pigment { color rgb <1,1,0.8> }\n'\
-            '  finish{ ambient 0.4 }\n'\
-            '}\n')
-    f.write('// ceiling\n'\
-            'plane {\n'\
-            '  y, 5\n'\
-            '  pigment { color White }\n'\
-            '}\n')
-    f.write('// right wall\n'\
-            'plane {\n'\
-            '  x, 5\n'\
-            '  pigment { color White }\n'\
-            '}\n')
-    f.write('// left wall\n'\
-            'plane {\n'\
-            '  x, -5\n'\
-            '  pigment { color White }\n'\
-            '}\n')
-    f.write('// behind wall\n'\
-            'plane {\n  z, -5\n'\
-            '  pigment { color White }\n'\
-            '}\n\n')
-    # place the box
-    f.write('box {\n'\
-            '  <0, 0, 0>,  // Near lower left corner\n'\
-            '  <%f, %f, %f>   // Far upper right corner\n'\
-            '  pigment { color rgbf <0.9, 0.99, 1, 1> }\n'\
-            '}\n\n'%(lx, ly, lz))
+    if flag_bonds == 0:
+        f.write('#include "colors.inc"\n')
+        #f.write('#include "woods.inc"\n\n')
+        # place the ground
+        f.write('// floor\nplane {\n'\
+                '  y, -0.1\n'\
+                '  texture {\n'\
+                #'    T_Wood6\n'\
+                #'    finish{ ambient 1 }\n'\
+                '    pigment { checker color White, color <.7, .7, .7> }\n'\
+                '    scale .3\n'\
+                '    finish{ ambient .4 }\n'\
+                '  }\n'\
+                '}\n')
+        # place the walls
+        f.write('// back wall\n'\
+                'plane {\n'\
+                '  z, 1\n'\
+                '  pigment { color rgb <1,1,0.8> }\n'\
+                '  finish{ ambient 0.4 }\n'\
+                '}\n')
+        f.write('// ceiling\n'\
+                'plane {\n'\
+                '  y, 5\n'\
+                '  pigment { color White }\n'\
+                '}\n')
+        f.write('// right wall\n'\
+                'plane {\n'\
+                '  x, 5\n'\
+                '  pigment { color White }\n'\
+                '}\n')
+        f.write('// left wall\n'\
+                'plane {\n'\
+                '  x, -5\n'\
+                '  pigment { color White }\n'\
+                '}\n')
+        f.write('// behind wall\n'\
+                'plane {\n  z, -5\n'\
+                '  pigment { color White }\n'\
+                '}\n\n')
+        # place the box
+        f.write('box {\n'\
+                '  <0, 0, 0>,  // Near lower left corner\n'\
+                '  <%f, %f, %f>   // Far upper right corner\n'\
+                '  pigment { color rgbf <0.9, 0.99, 1, 1> }\n'\
+                '}\n\n'%(lx, ly, lz))
 
-    f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
-    f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
-    f.write('light_source { <2, 4.9, -3> color White}\n\n')
+        f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
+        f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
+        f.write('light_source { <2, 4.9, -3> color White}\n\n')
 
-    write_T_Particle(f)
+        write_T_Particle(f)
+    else:
+        f.write('#include "colors.inc"\n')
+        f.write('background { color White }\n')
+
+        f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
+        f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
+        f.write('light_source { <2, 4.9, -3> color White}\n\n')
+
+        write_T_Particle(f)
+        if bond_color == '':
+            write_T_Particles_with_Bonds(f, 'Red')
+        else:
+            write_T_Particles_with_Bonds(f, bond_color)
+
     if flag_ball == 0:
         write_M_RYUON (f)
         write_T_CHECKER(f)
@@ -216,7 +247,10 @@ def write_pov_header (f, lattice, camera, lookat, flag_ball=0):
 #  camera = (cx,cy,cz)  
 #  lookat = (lax,lay,laz) 
 #  flag_ball : 1 => pool balls
-def write_pov_header_open (f, lattice, camera, lookat, flag_ball=0):
+#  flag_bonds :
+#  bond_color : '' is accepted (for Red)
+def write_pov_header_open (f, lattice, camera, lookat,
+                           flag_ball=0, flag_bonds=0, bond_color=''):
     # note that in POVRAY,
     # y is the vertical direction
     # z is the depth direction
@@ -235,23 +269,39 @@ def write_pov_header_open (f, lattice, camera, lookat, flag_ball=0):
 
     f.write('#include \"colors.inc\"\n')
     f.write('#include "woods.inc"\n\n')
-    # place the walls
-    f.write('// back wall\n'\
-            'plane {\n'\
-            '  z, 2\n'\
-            '  pigment { checker color White, color <0.6, 0.8, 1> }\n'\
-            '  scale 0.1\n}\n')
-    f.write('// behind wall\n'\
-            'plane {\n'\
-            '  z, -5\n'\
-            '  pigment { color White }\n'\
-            '}\n\n')
-    #
-    f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
-    f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
-    f.write('light_source { <2, 4.9, -3> color White}\n\n')
 
-    write_T_Particle(f)
+    if flag_bonds == 0:
+        # place the walls
+        f.write('// back wall\n'\
+                'plane {\n'\
+                '  z, 2\n'\
+                '  pigment { checker color White, color <0.6, 0.8, 1> }\n'\
+                '  scale 0.1\n}\n')
+        f.write('// behind wall\n'\
+                'plane {\n'\
+                '  z, -5\n'\
+                '  pigment { color White }\n'\
+                '}\n\n')
+
+        f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
+        f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
+        f.write('light_source { <2, 4.9, -3> color White}\n\n')
+
+        write_T_Particle(f)
+    else:
+        f.write('#include "colors.inc"\n')
+        f.write('background { color White }\n')
+
+        f.write('camera {\n  location <%f, %f, %f>\n'%(cx, cy, cz))
+        f.write('  look_at  <%f, %f,  %f>\n}\n\n'%(lax, lay, laz))
+        f.write('light_source { <2, 4.9, -3> color White}\n\n')
+
+        write_T_Particle(f)
+        if bond_color == '':
+            write_T_Particles_with_Bonds(f, 'Red')
+        else:
+            write_T_Particles_with_Bonds(f, bond_color)
+
     if flag_ball == 0:
         write_M_RYUON (f)
         write_T_CHECKER(f)
@@ -278,6 +328,48 @@ def write_pov_particle_fixed (f, x, y, z, a):
     f.write('  <%f, %f, %f>, %f\n'%(x/100.0, z/100.0, y/100.0, a/100.0))
     f.write('  texture { T_Particle }\n}\n')
 
+
+def write_pov_particles_with_bonds (f, nm, pos, a, br):
+    # note that in POVRAY,
+    # y is the vertical direction
+    # z is the depth direction
+    # scale factor = 1/100 (0.01 radius = 1 in POV)
+
+    # all objects are merged
+    f.write('merge {\n')
+    # sheres
+    for j in range(nm):
+        if a == []: rad = 1.0
+        else:       rad = a[j]
+        x = pos[j*3]
+        y = pos[j*3+1]
+        z = pos[j*3+2]
+        f.write('  sphere {\n')
+        f.write('    <%f, %f, %f>, %f\n'\
+                %(x/100.0, z/100.0, y/100.0, rad/100.0))
+        f.write('  }\n')
+    # bonds
+    for j in range(nm-1):
+        if a == []: rad = 1.0
+        else:       rad = a[j]
+
+        if br > 0.0:
+            rad = br / 100.0
+        else:
+            # set cylinder's radius the half
+            rad = 0.5 * rad / 100.0
+        x0 = pos[j*3  ] / 100.0
+        y0 = pos[j*3+1] / 100.0
+        z0 = pos[j*3+2] / 100.0
+        x1 = pos[(j+1)*3  ] / 100.0
+        y1 = pos[(j+1)*3+1] / 100.0
+        z1 = pos[(j+1)*3+2] / 100.0
+        f.write('  cylinder {\n')
+        f.write('    <%f, %f, %f>, <%f, %f, %f>, %f\n'\
+                %(x0, z0, y0, x1, z1, y1, rad))
+        f.write('  }\n')
+    f.write('  texture { T_Particles_with_Bonds }\n')
+    f.write('}\n')
 
 # make transform matrix (3x3) by quaternion
 def Q2M (q1,q2,q3,q4):
@@ -369,77 +461,193 @@ def move_camera (camera, lookat):
 
 
 def usage():
-    print '$Id: stnc2pov.py,v 1.8 2008/05/25 17:52:45 kichiki Exp $'
+    print '$Id: stnc2pov.py,v 1.9 2008/06/03 02:57:43 kichiki Exp $'
     print 'USAGE:'
-    print '\t-f or --file : stokes-nc-file'
-    print '\t-b or --ball : use pool balls'
-    print '\t-step n      : output the config only at the step n\n'\
+    print '\t-f or --file  : stokes-nc-file'
+    print '\t-o or --out   : output filename'
+    print '\t-ball         : use pool balls'
+    print '\t-bonds        : connect particles with bonds'
+    print '\t-br           : radius of bond cylinder'
+    print '\t-bc           : bond color (default: Red)\n'\
+          '\t\t ex.1 -bc \'rgb <0, .5, 1>\'\n'\
+          '\t\t ex.2 -bc \'color red 0.623529 green 0.623529 blue 0.372549\'\n'
+    print '\t-step n       : output the config only at the step n\n'\
           '\t\t n starts from 1 and ends at 1001 for 1000-step run.\n'
+    print '\t-nsteps n     : output every n steps\n'
+    print '\t-sphere r     : draw sphere with radius r'
+    print '\t-cylinder r   : draw cylinder with radius r'
+    print '\t-camera r     : set the distance to the camera by r'
+    print '\t-top          : the top-view (default: side view)'
+    print '\t-bottom       : the bottom-view (default: side view)'
+    print '\t-lookat x y z : set the lookat point fixed by (x,y,z)'
     sys.exit ()
 
 
-def render_one_step(i, nc, pos, a, q, xf0, af, lattice, flag_ball):
-    file = 'test%04d.pov'%i
+def render_one_step(str_argv, outfile, i,
+                    nc, pos, a, q, xf0, af, lattice,
+                    flag_ball, flag_bonds, bond_radius, bond_color,
+                    flag_lookat, lk_arg, camera_dist, camera_dir,
+                    sphere_radius, cylinder_radius, flag_bb):
+    file = '%s-%05d.pov'%(outfile, i)
     try:
         f = open(file, 'w')
     except IOError:
         print 'cannot open', file
         sys.exit()
 
+    # write argv[0]
+    f.write('/* generated for %d step by\n'%(i))
+    f.write(' * %s\n'%(str_argv))
+    f.write(' */\n')
+    
     stokes.stokes_nc_get_data (nc, "x", i, pos)
 
+    # set camera direction
+    (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, pos)
+    if flag_lookat == 0:
+        if cylinder_radius > 0.0:
+            # only x is adjustable
+            lk = [cx, 0, 0]
+        else:
+            lk = [cx, cy, cz]
+    else:
+        lk = [lk_arg[0], lk_arg[1], lk_arg[2]]
+    
+    if camera_dir == 'top':
+        # top view
+        if camera_dist == 0.0:
+            if lx > ly:
+                l = lx
+            else:                  
+                l = ly
+            # prevent to go too far away
+            if l > 50: l = 50
+
+            camera = [lk[0], lk[1], lk[2]+2*l]
+        else:
+            camera = [lk[0], lk[1], lk[2]+camera_dist]
+    elif camera_dir == 'bottom':
+        # bottom view
+        if camera_dist == 0.0:
+            if lx > ly:
+                l = lx
+            else:                  
+                l = ly
+            # prevent to go too far away
+            if l > 50: l = 50
+    
+            camera = [lk[0], lk[1], lk[2]-2*l]
+        else:
+            camera = [lk[0], lk[1], lk[2]-camera_dist]
+    else:
+        # side view
+        if camera_dist == 0.0:
+            if lx > lz:
+                l = lx
+            else:                  
+                l = lz
+            # prevent to go too far away
+            if l > 50: l = 50
+    
+            camera = [lk[0], lk[1]-2*l, lk[2]]
+        else:
+            camera = [lk[0], lk[1]-camera_dist, lk[2]]
+
+    # write header part
     if lattice[0] == 0.0 and lattice[1] == 0.0 and lattice[2] == 0.0:
         # non-periodic boundary
-        (cx,cy,cz, lx,ly,lz) = bounding_box (nc.np, pos)
-        if lx > lz:
-            l = lx
-        else:                  
-            l = lz
-        # prevent to go far away
-        if l > 50: l = 50
-
-        camera = [cx, cy-2*l, cz]
-        lookat = [cx, cy,   cz]
-        write_pov_header_open (f, lattice, camera, lookat, flag_ball)
-
+        write_pov_header_open (f, lattice, camera, lk,
+                               flag_ball, flag_bonds, bond_color)
     else:
         # periodic boundary
-        #move_camera (camera, lookat)
-        write_pov_header (f, lattice, camera, lookat, flag_ball)
+        #move_camera (camera, lk)
+        write_pov_header (f, lattice, camera, lk,
+                          flag_ball, flag_bonds, bond_color)
 
-    if nc.flag_q != 0:
-        # with quaternion
-        stokes.stokes_nc_get_data (nc, "q", i, q)
-        for j in range(nc.np):
-            x = pos[j*3]
-            y = pos[j*3+1]
-            z = pos[j*3+2]
-            if a != []:
-                rad = a[j]
-            else:
-                rad = 1.0
+    if flag_bb != 0:
+        # write bounding box for periodic system
+        if lattice[0] != 0.0 or lattice[1] != 0.0 or lattice[2] != 0.0:
+            f.write('box {\n')
+            f.write('  <0, 0, 0>,\n')
+            f.write('  <%f, %f, %f>\n'\
+                    %(lattice[0]/100.0, lattice[2]/100.0, lattice[1]/100.0))
+            f.write('  pigment {\n')
+            f.write('    rgbf <.9,1,.9, .95>\n')
+            f.write('  }\n')
+            f.write('  finish {\n')
+            f.write('    ambient .2\n')
+            f.write('    diffuse .6\n')
+            f.write('  }\n')
+            f.write('}\n')
 
-            if flag_ball == 0:
-                write_pov_particle_Q (f, x, y, z, rad,\
-                                      [q[j*4+0],q[j*4+1],\
-                                       q[j*4+2],q[j*4+3]])
-            else:
-                write_pov_particle_Balls_Q (f, x, y, z, rad,\
-                                            [q[j*4+0],q[j*4+1],\
-                                             q[j*4+2],q[j*4+3]],\
-                                            j)
+    # write confinement
+    if sphere_radius > 0.0:
+        # draw sphere
+        f.write('sphere {\n')
+        f.write('  <0, 0, 0>, %f\n'%(sphere_radius/100.0)) # scale factor 100
+        f.write('  pigment {\n')
+        f.write('    rgbf <.9,1,.9, .95>\n')
+        f.write('  }\n')
+        f.write('  finish {\n')
+        f.write('    ambient .2\n')
+        f.write('    diffuse .6\n')
+        f.write('  }\n')
+        f.write('}\n')
+
+    if cylinder_radius > 0.0:
+        # draw cylinder
+        f.write('cylinder {\n')
+        f.write('  <%f, 0, 0>,\n'%((cx-lx)*0.01)) # scale factor 0.01
+        f.write('  <%f, 0, 0>,\n'%((cx+lx)*0.01)) # scale factor 0.01
+        f.write('  %f\n'%(cylinder_radius*0.01)) # scale factor 0.01
+        f.write('  pigment {\n')
+        f.write('    rgbf <.9,1,.9, .95>\n')
+        f.write('  }\n')
+        f.write('  finish {\n')
+        f.write('    ambient .2\n')
+        f.write('    diffuse .6\n')
+        f.write('  }\n')
+        f.write('}\n')
+
+    # write mobile particles
+    if flag_bonds == 0:
+        # no bond
+        if nc.flag_q != 0:
+            # with quaternion
+            stokes.stokes_nc_get_data (nc, "q", i, q)
+            for j in range(nc.np):
+                x = pos[j*3]
+                y = pos[j*3+1]
+                z = pos[j*3+2]
+                if a != []:
+                    rad = a[j]
+                else:
+                    rad = 1.0
+    
+                if flag_ball == 0:
+                    write_pov_particle_Q (f, x, y, z, rad,\
+                                          [q[j*4+0],q[j*4+1],\
+                                           q[j*4+2],q[j*4+3]])
+                else:
+                    write_pov_particle_Balls_Q (f, x, y, z, rad,\
+                                                [q[j*4+0],q[j*4+1],\
+                                                 q[j*4+2],q[j*4+3]],\
+                                                j)
+        else:
+            # no quaternion
+            for j in range(nc.np):
+                x = pos[j*3]
+                y = pos[j*3+1]
+                z = pos[j*3+2]
+                if a != []:
+                    write_pov_particle (f, x, y, z, a[j])
+                else:
+                    write_pov_particle (f, x, y, z, 1.0)
     else:
-        # no quaternion
-        for j in range(nc.np):
-            x = pos[j*3]
-            y = pos[j*3+1]
-            z = pos[j*3+2]
-            if a != []:
-                write_pov_particle (f, x, y, z, a[j])
-            else:
-                write_pov_particle (f, x, y, z, 1.0)
+        # bond
+        write_pov_particles_with_bonds (f, nc.np, pos, a, bond_radius)
 
-    # fixed particles
+    # write fixed particles
     for j in range(nc.npf):
         x = xf0[j*3]
         y = xf0[j*3+1]
@@ -455,24 +663,82 @@ def render_one_step(i, nc, pos, a, q, xf0, af, lattice, flag_ball):
 
 def main():
     filename = ''
+    outfile = ''
     flag_ball = 0
+    flag_bonds = 0
+    bond_radius = 0.0
+    bond_color = ''
+    sphere_radius = 0.0
+    cylinder_radius = 0.0
+    flag_bb = 0
+    camera_dist = 0.0
+    flag_lookat = 0
+    lk_x = 0.0
+    lk_y = 0.0
+    lk_z = 0.0
+    camera_dir = ''
     step = -1
+    nsteps = 1
     nm = 0
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == '-f' or sys.argv[i] == '--file':
             filename = sys.argv[i+1]
             i += 2
+        elif sys.argv[i] == '-o' or sys.argv[i] == '--out':
+            outfile = sys.argv[i+1]
+            i += 2
         elif sys.argv[i] == '-step':
             step = int(sys.argv[i+1])
             step -= 1
             i += 2
-        elif sys.argv[i] == '-b' or sys.argv[i] == '--ball':
+        elif sys.argv[i] == '-nsteps':
+            nsteps = int(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-ball':
             flag_ball = 1
             i += 1
+        elif sys.argv[i] == '-bonds':
+            flag_bonds = 1
+            i += 1
+        elif sys.argv[i] == '-br':
+            bond_radius = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-bc':
+            bond_color = sys.argv[i+1]
+            i += 2
+        elif sys.argv[i] == '-sphere':
+            sphere_radius = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-cylinder':
+            cylinder_radius = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-bbox':
+            flag_bb = 1
+            i += 1
+        elif sys.argv[i] == '-camera':
+            camera_dist = float(sys.argv[i+1])
+            i += 2
+        elif sys.argv[i] == '-top':
+            camera_dir = 'top'
+            i += 1
+        elif sys.argv[i] == '-bottom':
+            camera_dir = 'bottom'
+            i += 1
+        elif sys.argv[i] == '-lookat':
+            flag_lookat = 1
+            lk_x = float(sys.argv[i+1])
+            lk_y = float(sys.argv[i+2])
+            lk_z = float(sys.argv[i+3])
+            i += 4
         else:
             usage()
     if filename == '': usage()
+    if outfile == '': outfile = 'test'
+
+    str_argv = ''
+    for i in range(len(sys.argv)):
+        str_argv += ' %s'%(sys.argv[i])
 
     nc = stokes.stokes_nc_open (filename)
     #stokes.stokes_nc_print_actives(nc, stokes.get_stdout())
@@ -524,12 +790,23 @@ def main():
         if step > nc.ntime:
             print 'out of the range %d <= %d'%(step, nc.ntime)
             sys.exit(1)
-        render_one_step(step, nc,
-                        pos, a, q, xf0, af, lattice, flag_ball)
+        render_one_step(str_argv, outfile, step, nc,
+                        pos, a, q, xf0, af, lattice,
+                        flag_ball, flag_bonds, bond_radius, bond_color,
+                        flag_lookat, (lk_x, lk_y, lk_z),
+                        camera_dist, camera_dir,
+                        sphere_radius, cylinder_radius, flag_bb)
     else:
-        for i in range(nc.ntime):
-            render_one_step(i, nc,
-                            pos, a, q, xf0, af, lattice, flag_ball)
+        nloop = nc.ntime / nsteps
+        for i in range(nloop):
+            ii = i * nsteps
+            print '%d step'%(ii)
+            render_one_step(str_argv, outfile, ii, nc,
+                            pos, a, q, xf0, af, lattice,
+                            flag_ball, flag_bonds, bond_radius, bond_color,
+                            flag_lookat, (lk_x, lk_y, lk_z),
+                            camera_dist, camera_dir,
+                            sphere_radius, cylinder_radius, flag_bb)
 
 
 if __name__ == "__main__":
