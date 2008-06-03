@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.31 2008/05/25 05:04:01 kichiki Exp $
+ * $Id: stokes3.c,v 1.32 2008/06/03 02:50:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.31 2008/05/25 05:04:01 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.32 2008/06/03 02:50:45 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -542,6 +542,10 @@ main (int argc, char** argv)
   double length = guile_get_double ("length", 1.0);
   int BD_seed = guile_get_int ("BD-seed", 0);
 
+  int flag_BD = 0;
+  if (peclet >= 0.0) flag_BD = 1;
+
+
   // chebyshev polynomials
   int n_minv = guile_get_int ("n-cheb-minv", 0);
   int n_lub  = guile_get_int ("n-cheb-lub", 0);
@@ -919,7 +923,7 @@ main (int argc, char** argv)
 
   struct BD_params *BD_params = NULL;
   struct BD_imp *BDimp = NULL;
-  if (peclet < 0.0) // no Brownian force
+  if (flag_BD == 0) // no Brownian force
     {
       ode_params = ode_params_init (sys,
 				    F, T, E,
@@ -1093,6 +1097,10 @@ main (int argc, char** argv)
 		       "at nc_get_var1_double() for shear_shift in main\n");
 	    }
 	}
+      if (flag_BD != 0) // Brownian
+	{
+	  stokes_nc_get_rng (nc, l0, BD_params->rng);
+	}
     }
   else
     {
@@ -1103,7 +1111,8 @@ main (int argc, char** argv)
 				    Ui, Oi, Ei, F, T, E,
 				    uf, of, ef, x + nm3, // xf
 				    lat,
-				    shear_mode, shear_rate);
+				    shear_mode, shear_rate,
+				    flag_BD);
       CHECK_MALLOC (nc, "main");
 
       // set the loop parameters
@@ -1122,6 +1131,10 @@ main (int argc, char** argv)
       if (sys->shear_mode != 0)
 	{
 	  stokes_nc_set_shear_shift (nc, l0, shear_shift);
+	}
+      if (flag_BD != 0) // Brownian
+	{
+	  stokes_nc_set_rng (nc, l0, BD_params->rng);
 	}
 
       // flush the data
@@ -1145,7 +1158,7 @@ main (int argc, char** argv)
       double t_out = t + dt_out;
 
       // set reference for the shear_shift at t = t (not t_out)
-      if (peclet < 0.0) // non Brownian
+      if (flag_BD == 0) // non Brownian
 	{
 	  ode_set_shear_shift_ref (ode_params, t, shear_shift);
 	}
@@ -1155,7 +1168,7 @@ main (int argc, char** argv)
 	}
 
       // loop for dt_out
-      if (peclet < 0.0) // non Brownian
+      if (flag_BD == 0) // non Brownian
 	{
 	  // GSL integrator is adaptive scheme
 	  while (t < t_out)
@@ -1253,7 +1266,7 @@ main (int argc, char** argv)
 	}
       if (sys->shear_mode != 0)
 	{
-	  if (peclet < 0.0) // non Brownian
+	  if (flag_BD == 0) // non Brownian
 	    {
 	      shear_shift
 		= stokes_get_shear_shift (sys, t,
@@ -1266,6 +1279,10 @@ main (int argc, char** argv)
 					  BD_params->t0, BD_params->s0);
 	    }
 	  stokes_nc_set_shear_shift (nc, l+1, shear_shift);
+	}
+      if (flag_BD != 0) // Brownian
+	{
+	  stokes_nc_set_rng (nc, l+1, BD_params->rng);
 	}
 
       // flush the data
