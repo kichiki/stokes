@@ -1,6 +1,6 @@
 ; test code for libstokes
-; Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
-; $Id: test-stokes.scm,v 1.9 2007/12/26 06:49:17 kichiki Exp $
+; Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+; $Id: test-stokes.scm,v 1.10 2008/06/03 02:51:32 kichiki Exp $
 ;
 ; This program is free software; you can redistribute it and/or
 ; modify it under the terms of the GNU General Public License
@@ -125,6 +125,7 @@
 			     0 ; flag_Q
 			     0 ; flag_it (time-dependent imposed flow)
 			     0 ; shear_mode
+			     0 ; flag_BD
 			     ))
 ;; f0, x, u are active
 
