@@ -1,5 +1,5 @@
 # makefile for guile binding of libstokes
-# $Id: Makefile,v 1.4 2007/12/26 06:50:19 kichiki Exp $
+# $Id: Makefile,v 1.5 2008/06/03 02:52:10 kichiki Exp $
 
 SWIG		= /usr/local/bin/swig
 GUILE		= /usr/local/bin/guile
@@ -22,7 +22,7 @@ GUILE_LIB = `guile-config link`
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
 	-larpack
 # for SUSE-Linux
