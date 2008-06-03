@@ -1,6 +1,6 @@
 # dump stokes-netcdf
 # Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
-# $Id: stncdump.py,v 1.10 2008/05/14 03:47:52 kichiki Exp $
+# $Id: stncdump.py,v 1.11 2008/06/03 02:55:55 kichiki Exp $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,14 +21,13 @@ import stokes
 
 
 def usage():
-    print '$Id: stncdump.py,v 1.10 2008/05/14 03:47:52 kichiki Exp $'
+    print '$Id: stncdump.py,v 1.11 2008/06/03 02:55:55 kichiki Exp $'
     print 'USAGE:'
     print '\t-f or --file : stokes-nc-file'
     print '\t-line        : all particles are in a single line for each time\n'\
           '\t\t (default: one particle per line)'
     print '\t-step n      : write the config at step n\n'\
-          '\t\t step 1000 is the last step for 1000 run.\n'\
-          '\t\t (step 0, the initial config, does not exist in the nc file.)\n'
+          '\t\t n starts from 1 and ends at 1001 for 1000-step run.\n'
     print '\t-com x y z   : shift the COM to (x,y,z) with -step option.\n'
     sys.exit ()
 
