@@ -1,5 +1,5 @@
 # makefile for ruby binding of libstokes
-# $Id: Makefile,v 1.5 2008/06/03 03:02:09 kichiki Exp $
+# $Id: Makefile,v 1.6 2008/06/05 03:55:53 kichiki Exp $
 
 SWIG		= /usr/local/bin/swig
 RUBY		= /usr/local/bin/ruby
@@ -18,6 +18,7 @@ RYUON_LIB = -L/usr/local/lib -liter -lstokes
 #RYUON_LIB = -liter -lstokes
 
 GSL_LIB = `pkg-config --libs gsl`
+NITSOL_LIB = -L/usr/local/lib -lnitsol
 GUILE_LIB = `guile-config link`
 
 #ATLAS_LIBS	= \
@@ -38,7 +39,8 @@ LIB_STOKES	= \
 	$(ATLAS_LIBS)		\
 	-lnetcdf		\
 	$(GUILE_LIB)		\
-	$(GSL_LIB)
+	$(GSL_LIB)		\
+	$(NITSOL_LIB)
 
 CFLAGS		= -Wall -I/usr/local/include
 

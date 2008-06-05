@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2008/04/26 18:54:33 kichiki Exp $
+# $Id: Makefile,v 1.13 2008/06/05 03:57:17 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
@@ -19,6 +19,9 @@ OPTS = \
 
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
+
+NITSOL_INC = -I/usr/local/include
+NITSOL_LIB = -L/usr/local/lib -lnitsol
 
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
@@ -44,7 +47,8 @@ CFLAGS = -Wall		\
 	$(OPTS)		\
 	$(RYUON_INC)	\
 	$(GUILE_INC)	\
-	$(GSL_INC)
+	$(GSL_INC)	\
+	$(NITSOL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
@@ -66,7 +70,8 @@ LIB_STOKES	= \
 	$(ATLAS_LIBS)		\
 	-lnetcdf		\
 	$(GUILE_LIB)		\
-	$(GSL_LIB)
+	$(GSL_LIB)		\
+	$(NITSOL_LIB)
 
 LIBS		= $(LIB_STOKES)
 

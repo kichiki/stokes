@@ -1,5 +1,5 @@
 # makefile for python binding of libstokes
-# $Id: Makefile,v 1.7 2008/05/08 03:12:32 kichiki Exp $
+# $Id: Makefile,v 1.8 2008/06/05 03:56:47 kichiki Exp $
 
 SWIG		= /usr/local/bin/swig
 PYTHON		= /usr/local/bin/python
@@ -18,6 +18,7 @@ RYUON_LIB = -L/usr/local/lib -liter -lstokes
 #RYUON_LIB = -L/home/ichiki/RYUON/lib -liter -lstokes
 
 GSL_LIB = `pkg-config --libs gsl`
+NITSOL_LIB = -L/usr/local/lib -lnitsol
 GUILE_LIB = `guile-config link`
 
 #ATLAS_LIBS	= \
@@ -41,7 +42,8 @@ LIB_STOKES	= \
 	$(ATLAS_LIBS)		\
 	-lnetcdf		\
 	$(GUILE_LIB)		\
-	$(GSL_LIB)
+	$(GSL_LIB)		\
+	$(NITSOL_LIB)
 
 CFLAGS = -Wall		\
 	$(RYUON_INC)
