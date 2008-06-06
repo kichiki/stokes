@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.15 2008/05/24 06:17:47 kichiki Exp $
+; $Id: stokes3.scm,v 1.16 2008/06/06 04:24:53 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -138,6 +138,12 @@
 ; "JendrejackEtal00" Jendrejack et al (2000)
 ; "semi-implicit-PC" semi-implicit predictor-corrector
 (define BB-n   100)    ; step parameter for Banchio-Brady-2003 algorithm
+
+; nonlinear solver for implicit schemes
+(define BD-nl-solver "GSL")
+; the following solvers are available
+; "GSL"    GSL multiroot solver
+; "NITSOL" Newton-GMRES solver by Pernice and Walker (1998)
 
 ; dt-adjustment parameters
 ; NOTE: if 'rmin' above is defined by non-zero, dt-adjustment is just skipped.
