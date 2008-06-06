@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.32 2008/06/03 02:50:45 kichiki Exp $
+ * $Id: stokes3.c,v 1.33 2008/06/06 04:23:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.32 2008/06/03 02:50:45 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.33 2008/06/06 04:23:47 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -310,24 +310,29 @@ usage (const char *argv0)
 	   );
   fprintf (stdout, "* Brownian dynamics' parameters\n");
   fprintf (stdout,
-	   "\tpeclet     : peclet number (negative means no Brownian force)\n");
+	   "\tpeclet       : peclet number (negative means no Brownian force)\n");
   fprintf (stdout,
-	   "\tlength     : unit of the length scale [nm]\n");
+	   "\tlength       : unit of the length scale [nm]\n");
   fprintf (stdout,
-	   "\tBD-seed    : seed for Brownian force random number generator\n");
+	   "\tBD-seed      : seed for Brownian force random number generator\n");
   fprintf (stdout,
-	   "\tn-cheb-minv: number of Chebyshev coefficients for M^{-1}\n");
+	   "\tn-cheb-minv  : number of Chebyshev coefficients for M^{-1}\n");
   fprintf (stdout,
-	   "\tn-cheb-lub : number of Chebyshev coefficients for L\n"
-	   "\t             (if zero is given, use Cholesky decomposition)\n");
-  fprintf (stdout, "\tBD-scheme : Brownian dynamics time integration scheme\n"
+	   "\tn-cheb-lub   : number of Chebyshev coefficients for L\n"
+	   "\t\t(if zero is given, use Cholesky decomposition)\n");
+  fprintf (stdout,
+	   "\tBD-scheme    : Brownian dynamics time integration scheme\n"
 	   "\t\t\"mid-point\"        The mid-point algorithm.\n"
 	   "\t\t\"BanchioBrady03\"   Banchio and Brady (2003).\n"
 	   "\t\t\"BallMelrose97\"    Ball and Melrose (1997).\n"
 	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n"
 	   "\t\t\"semi-implicit-PC\" semi-implicit predictor-corrector.\n");
   fprintf (stdout,
-	   "\tBB-n        : step parameter for Banchio-Brady03 algorithm.\n");
+	   "\tBB-n         : step parameter for Banchio-Brady03 algorithm.\n");
+  fprintf (stdout,
+	   "\tBD-nl-solver : nonlinear solver for implicit schemes\n"
+	   "\t\t\"GSL\"    GSL multiroot solver\n"
+	   "\t\t\"NITSOL\" Newton-GMRES solver by Pernice and Walker (1998)\n");
   fprintf (stdout, "* dt-ajustment parameters for Brownian dynamics\n"
 	   "\tNOTE: if rmin is defined by non-zero, the process is skipped.\n");
   fprintf (stdout,
@@ -580,11 +585,29 @@ main (int argc, char** argv)
   free (str_BD_scheme);
   // step parameter for BB03 algorithm
   double BB_n = guile_get_double ("BB-n", 100.0);
+
+  // nonlinear solver for implicit schemes
+  char *str_BD_nl_solver = guile_get_string ("BD-nl-solver");
+  int BD_nl_solver;
+  if (strcmp (str_BD_scheme, "GSL") == 0)
+    {
+      BD_nl_solver = 0;
+    }
+  else if (strcmp (str_BD_scheme, "NITSOL") == 0)
+    {
+      BD_nl_solver = 1;
+    }
+  else
+    {
+      fprintf (stderr, "invalid BD-nl-solver %s", str_BD_nl_solver);
+      exit (1);
+    }
+  free (str_BD_nl_solver);
+
   // factor for overlap check for dt-adjustment process in BD
   double BD_rmin = guile_get_double ("BD-rmin", 1.0);
   // lower bound to shrink dt to prevent overlaps
   double dt_lim = guile_get_double ("dt-lim", 1.0e-12);
-
 
   /**
    * bonds
@@ -1033,6 +1056,7 @@ main (int argc, char** argv)
       if (BD_scheme > 2) // either JendrejackEtal00 or semi-implicit-PC
 	{
 	  BDimp = BD_imp_init (BD_params,
+			       BD_nl_solver,
 			       1000,  // itmax
 			       ode_eps
 			       );
