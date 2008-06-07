@@ -1,5 +1,5 @@
 # makefile for perl binding of libstokes
-# $Id: Makefile,v 1.6 2008/06/05 03:54:27 kichiki Exp $
+# $Id: Makefile,v 1.7 2008/06/07 03:08:45 kichiki Exp $
 
 SWIG		= /usr/local/bin/swig
 PERL		= /usr/local/bin/perl
@@ -20,11 +20,19 @@ CC		= /usr/bin/cc
 RYUON_INC = -I/usr/local/include
 RYUON_LIB = -L/usr/local/lib -liter -lstokes
 # for openSUSE
-#RYUON_INC = 
-#RYUON_LIB = -liter -lstokes
+#RYUON_INC = -I/home/ichiki/RYUON/include
+#RYUON_LIB = -L/home/ichiki/RYUON/lib -liter -lstokes
 
+GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
+
+NITSOL_INC = -I/usr/local/include
 NITSOL_LIB = -L/usr/local/lib -lnitsol
+# for SUSE-Linux
+#NITSOL_INC = -I/home/ichiki/RYUON/include
+#NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
+
+GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
 
 #ATLAS_LIBS	= \
@@ -32,12 +40,15 @@ GUILE_LIB = `guile-config link`
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
 	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 # for SUSE-Linux
 # for openSUSE
 #ATLAS_LIBS	= \
 #	-lgfortran -lblas -llapack\
+#	-larpack
+#ATLAS_LIBS	= \
+#	-llapack -lptcblas -lptf77blas -latlas\
 #	-larpack
 
 LIB_STOKES	= \
@@ -48,7 +59,8 @@ LIB_STOKES	= \
 	$(GSL_LIB)		\
 	$(NITSOL_LIB)
 
-CFLAGS		= -Wall -I/usr/local/include
+CFLAGS = -Wall		\
+	$(RYUON_INC)
 
 LIBS		= $(LIB_STOKES)
 

@@ -1,7 +1,8 @@
-# $Id: Makefile,v 1.13 2008/06/05 03:57:17 kichiki Exp $
+# $Id: Makefile,v 1.14 2008/06/07 03:02:55 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
+# for SUSE-Linux
 #LD           = $(CC) -Wl,-R/home/ichiki/RYUON/lib
 
 OPTS = \
@@ -17,23 +18,42 @@ OPTS = \
 #	-pipe -O3 -fomit-frame-pointer -ffast-math
 
 
-GSL_INC = `pkg-config --cflags gsl`
-GSL_LIB = `pkg-config --libs gsl`
-
-NITSOL_INC = -I/usr/local/include
-NITSOL_LIB = -L/usr/local/lib -lnitsol
-
-GUILE_INC = `guile-config compile`
-GUILE_LIB = `guile-config link`
+# for header file besides libstokes.h
+RYUON_SRC = -I../../libstokes/src
 
 RYUON_INC = -I/usr/local/include
 RYUON_LIB = -L/usr/local/lib -liter -lstokes
 # for openSUSE
 #RYUON_INC = -I/home/ichiki/RYUON/include
-#RYUON_LIB = -I/home/ichiki/RYUON/lib -liter -lstokes
+#RYUON_LIB = -L/home/ichiki/RYUON/lib -liter -lstokes
 
-# for header file besides libstokes.h
-RYUON_SRC = -I../../libstokes/src
+GSL_INC = `pkg-config --cflags gsl`
+GSL_LIB = `pkg-config --libs gsl`
+
+NITSOL_INC = -I/usr/local/include
+NITSOL_LIB = -L/usr/local/lib -lnitsol
+# for SUSE-Linux
+#NITSOL_INC = -I/home/ichiki/RYUON/include
+#NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
+
+GUILE_INC = `guile-config compile`
+GUILE_LIB = `guile-config link`
+
+#ATLAS_LIBS	= \
+#	-lg2c -lblas -llapack\
+#	-lcblas -lf77blas -latlas
+ATLAS_LIBS	= \
+	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
+	-larpack
+# for SUSE-Linux
+# for openSUSE
+#ATLAS_LIBS	= \
+#	-lgfortran -lblas -llapack\
+#	-larpack
+#ATLAS_LIBS	= \
+#	-llapack -lptcblas -lptf77blas -latlas\
+#	-larpack
 
 ## for OpenGL, GLUT
 GL_CFLAGS	= -I/usr/X11R6/include
@@ -49,19 +69,6 @@ CFLAGS = -Wall		\
 	$(GUILE_INC)	\
 	$(GSL_INC)	\
 	$(NITSOL_INC)
-
-#ATLAS_LIBS	= \
-#	-lg2c -lblas -llapack\
-#	-lcblas -lf77blas -latlas
-ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas	\
-	-larpack
-# for SUSE-Linux
-# for openSUSE
-#ATLAS_LIBS	= \
-#	-lgfortran -lblas -llapack\
-#	-larpack
 
 LDFLAGS      =
 
