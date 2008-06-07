@@ -1,6 +1,6 @@
 /* octave wrapper of calc_res_3f()
- * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes_res_3f.cc,v 1.3 2007/08/12 19:59:40 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes_res_3f.cc,v 1.4 2008/06/07 03:06:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +50,8 @@ f = stokes_res_3f (pos, u, l)\n\
 
   if (nargin < 3 || nargin > 4)
     {
-      print_usage ("stokes");
+      //print_usage ("stokes");
+      print_usage ();
       return retval;
     }
 
@@ -72,7 +73,7 @@ f = stokes_res_3f (pos, u, l)\n\
 	}
       else
 	{
-	  print_usage ("stokes_res_3f");
+	  print_usage ();
 	  return retval;
 	}
     }
@@ -101,8 +102,7 @@ f = stokes_res_3f (pos, u, l)\n\
       return retval;
     }
 
-  struct stokes *sys;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
   stokes_set_np (sys, np, np);
 
   sys->periodic = 1; // periodic boundary condition
@@ -120,12 +120,9 @@ f = stokes_res_3f (pos, u, l)\n\
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stdout);
 
   int i;
-  double *d_pos = NULL;
-  double *d_u   = NULL;
-  double *d_f   = NULL;
-  d_pos = (double *)calloc (n, sizeof (double));
-  d_u   = (double *)calloc (n, sizeof (double));
-  d_f   = (double *)calloc (n, sizeof (double));
+  double *d_pos = (double *)calloc (n, sizeof (double));
+  double *d_u   = (double *)calloc (n, sizeof (double));
+  double *d_f   = (double *)calloc (n, sizeof (double));
   for (i = 0; i < n; i ++)
     {
       d_pos[i] = pos(i);
