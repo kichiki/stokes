@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.33 2008/06/06 04:23:47 kichiki Exp $
+ * $Id: stokes3.c,v 1.34 2008/06/07 03:02:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.33 2008/06/06 04:23:47 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.34 2008/06/07 03:02:17 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -589,11 +589,11 @@ main (int argc, char** argv)
   // nonlinear solver for implicit schemes
   char *str_BD_nl_solver = guile_get_string ("BD-nl-solver");
   int BD_nl_solver;
-  if (strcmp (str_BD_scheme, "GSL") == 0)
+  if (strcmp (str_BD_nl_solver, "GSL") == 0)
     {
       BD_nl_solver = 0;
     }
-  else if (strcmp (str_BD_scheme, "NITSOL") == 0)
+  else if (strcmp (str_BD_nl_solver, "NITSOL") == 0)
     {
       BD_nl_solver = 1;
     }
