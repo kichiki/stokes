@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.34 2008/06/07 03:02:17 kichiki Exp $
+ * $Id: stokes3.c,v 1.35 2008/06/13 03:26:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.34 2008/06/07 03:02:17 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.35 2008/06/13 03:26:10 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -139,6 +139,30 @@ usage (const char *argv0)
   fprintf (stdout, "\tT0     : applied torque"
 	   " (list or vector of length 3)\n");
   fprintf (stdout, "\tstokes : effective stokes number\n");
+  fprintf (stdout, "* constraint parameters\n");
+  fprintf (stdout, "\tconstraints : list in the following format;\n"
+           "\t (define constraints '(\n"
+           "\t  ; system parameters\n"
+           "\t  1.0e-6    ; 1) tolerance\n"
+           "\t  \"nitsol\"  ; 2) scheme for solving nonlinear equations\n"
+           "\t                 \"linear\" for iterative scheme in linear approximation\n"
+           "\t                 \"nitsol\" for Newton-GMRES scheme by NITSOL library\n"
+           "\t  ; the following is for each constraint\n"
+           "\t  (         ; 3) constraint type 1\n"
+           "\t   5.0      ; 3-1) distance [nm]\n"
+           "\t   (        ; 3-2) list of particle-pairs\n"
+           "\t    (0 1)\n"
+           "\t    (1 2)\n"
+           "\t    (2 3)\n"
+           "\t   )\n"
+           "\t  (         ; 4) constraint type 2\n"
+           "\t   10.0     ; 4-1) distance [nm]\n"
+           "\t   (        ; 4-2) list of particle-pairs\n"
+           "\t    (3 4)\n"
+           "\t    (4 5)\n"
+           "\t   )\n"
+           "\t ))\n"
+	   );
   fprintf (stdout, "* bond parameters (for chains)\n");
   fprintf (stdout, "\tbonds      : bonds among particles,"
 	   " list in the following form\n"
@@ -610,6 +634,11 @@ main (int argc, char** argv)
   double dt_lim = guile_get_double ("dt-lim", 1.0e-12);
 
   /**
+   * constraints
+   */
+  struct BeadRod *br = BeadRod_guile_get ("constraints");
+
+  /**
    * bonds
    */
   struct bonds *bonds = bonds_guile_get ("bonds");
@@ -1034,6 +1063,7 @@ main (int argc, char** argv)
 				  flag_noHI,
 				  flag_lub, flag_mat,
 				  st,
+				  br,
 				  bonds,
 				  gamma,
 				  ev,

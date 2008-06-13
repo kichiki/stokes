@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.16 2008/06/06 04:24:53 kichiki Exp $
+; $Id: stokes3.scm,v 1.17 2008/06/13 03:26:33 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -153,7 +153,33 @@
                        ; set "dt" (or larger value) if you don't want 
                        ; to adjust "dt" but just reject it.
 
-;; bond parameters
+;; constraint parameters
+(define constraints '())
+; an example of constraints
+; note that the distance unit should be the same for "length" above.
+;(define constraints '(
+; ; system parameters
+; 1.0e-6    ; 1) tolerance
+; "nitsol"  ; 2) scheme for solving nonlinear equations
+;                "linear" for iterative scheme in linear approximation
+;                "nitsol" for Newton-GMRES scheme by NITSOL library
+; ; the following is for each constraint
+; (         ; 3) constraint type 1
+;  5.0      ; 3-1) distance [nm]
+;  (        ; 3-2) list of particle-pairs
+;   (0 1)
+;   (1 2)
+;   (2 3)
+;  )
+; (         ; 4) constraint type 2
+;  10.0     ; 4-1) distance [nm]
+;  (        ; 4-2) list of particle-pairs
+;   (3 4)
+;   (4 5)
+;  )
+;))
+
+; bond parameters
 (define bonds '())
 (define flag-relax #f) ; #f => stokesian dynamics with bond interactions
                        ; #t => relaxation dynamics only with bond interactions
