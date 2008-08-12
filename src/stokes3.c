@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.35 2008/06/13 03:26:10 kichiki Exp $
+ * $Id: stokes3.c,v 1.36 2008/08/12 05:53:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.35 2008/06/13 03:26:10 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.36 2008/08/12 05:53:35 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -141,27 +141,27 @@ usage (const char *argv0)
   fprintf (stdout, "\tstokes : effective stokes number\n");
   fprintf (stdout, "* constraint parameters\n");
   fprintf (stdout, "\tconstraints : list in the following format;\n"
-           "\t (define constraints '(\n"
-           "\t  ; system parameters\n"
-           "\t  1.0e-6    ; 1) tolerance\n"
-           "\t  \"nitsol\"  ; 2) scheme for solving nonlinear equations\n"
-           "\t                 \"linear\" for iterative scheme in linear approximation\n"
-           "\t                 \"nitsol\" for Newton-GMRES scheme by NITSOL library\n"
-           "\t  ; the following is for each constraint\n"
-           "\t  (         ; 3) constraint type 1\n"
-           "\t   5.0      ; 3-1) distance [nm]\n"
-           "\t   (        ; 3-2) list of particle-pairs\n"
-           "\t    (0 1)\n"
-           "\t    (1 2)\n"
-           "\t    (2 3)\n"
-           "\t   )\n"
-           "\t  (         ; 4) constraint type 2\n"
-           "\t   10.0     ; 4-1) distance [nm]\n"
-           "\t   (        ; 4-2) list of particle-pairs\n"
-           "\t    (3 4)\n"
-           "\t    (4 5)\n"
-           "\t   )\n"
+           "\t(define constraints '(\n"
+           "\t ; system parameters\n"
+           "\t 1.0e-6    ; 1) tolerance\n"
+           "\t \"NITSOL\"  ; 2) scheme for solving nonlinear equations\n"
+           "\t             ;  \"linear\" for iterative scheme in linear approximation\n"
+           "\t             ;  \"NITSOL\" for Newton-GMRES scheme by NITSOL library\n"
+           "\t ; the following is for each constraint\n"
+           "\t (         ; 3) constraint type 1\n"
+           "\t  5.0      ; 3-1) distance [nm]\n"
+           "\t  (        ; 3-2) list of particle-pairs\n"
+           "\t   (0 1)\n"
+           "\t   (1 2)\n"
+           "\t   (2 3)\n"
            "\t ))\n"
+           "\t (         ; 4) constraint type 2\n"
+           "\t  10.0     ; 4-1) distance [nm]\n"
+           "\t  (        ; 4-2) list of particle-pairs\n"
+           "\t   (3 4)\n"
+           "\t   (4 5)\n"
+           "\t ))\n"
+           "\t))\n"
 	   );
   fprintf (stdout, "* bond parameters (for chains)\n");
   fprintf (stdout, "\tbonds      : bonds among particles,"
@@ -172,7 +172,7 @@ usage (const char *argv0)
            "\t   (       ; 2) spring parameters (list with 3 elements)\n"
            "\t    0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})\n"
            "\t    1.0    ;    p1   = A^{sp}, scaled spring constant\n"
-           "\t    2.1)   ;    p2   = L_{s} / a, scaled max extension\n"
+           "\t    2.1)   ;    p2   = L_{s} / length, scaled max extension\n"
            "\t   ((0 1)  ; 3) list of pairs\n"
            "\t    (1 2)\n"
            "\t    (2 3))\n"
@@ -183,14 +183,28 @@ usage (const char *argv0)
            "\t   (       ; 2) spring parameters (list with 3 elements)\n"
            "\t    1      ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})\n"
            "\t    19.8   ;    p1 = N_{K,s}, the Kuhn steps for a spring\n"
-           "      106.0) ;    p2 = b_{K} [nm], the Kuhn length\n"
+           "\t    106.0) ;    p2 = b_{K} [nm], the Kuhn length\n"
            "\t           ;    note that, for dWLC (type == 6),\n"
-           "             ;    (p1, p2) = (k, r0 [nm]), where the potential is\n"
+           "\t           ;    (p1, p2) = (k, r0 [nm]), where the potential is\n"
            "\t           ;    (k/2) * (kT / r0^2) * (r-r0)^2\n"
            "\t   ((4 5)  ; 3) list of pairs\n"
            "\t    (5 6)\n"
            "\t    (6 7))\n"
-           "\t     1)    ; 4) number of exclusion for lubrication\n"
+           "\t    1)     ; 4) number of exclusion for lubrication\n"
+           "\t  (; bond 3\n"
+           "\t   7       ; 1) spring type (FENE-Fraenkel)\n"
+           "\t   (       ; 2) spring parameters (list with 4 elements)\n"
+           "\t    0      ;    fene = 0 means (p1, p2, p3) = (H, r0 [nm], tol)\n"
+           "\t    1.0e6  ;    p1 = H, the spring constant\n"
+           "\t    0.5    ;    p2 = r0 [nm], the natural length of the spring\n"
+           "\t    0.01)  ;    p3 = tol, the tolerance parameter \"s\"\n"
+           "\t           ;    note that, for FENE-Fraenkel (type == 7),\n"
+           "\t           ;    the scalar part of the force is\n"
+           "\t           ;    fr = H * (r/hat(r0) - 1.0) / (1 - ((1-r/hat(r0))/tol)^2)\n"
+           "\t           ;    where hat(r0) = r0 / L0 (L0 is given by \"length\" [nm])\n"
+           "\t   ((8 9)  ; 3) list of pairs\n"
+           "\t    (9 10))\n"
+           "\t    0)     ; 4) number of exclusion for lubrication\n"
            "\t ))\n"
            "\twhere spring types are\n"
            "\t  0 : Hookean spring (Asp * (r - Ls)\n"
@@ -200,21 +214,16 @@ usage (const char *argv0)
            "\t  4 : Warner spring\n"
            "\t  5 : Hookean spring (Asp * r / Ls)\n"
            "\t  6 : Hookean spring for dWLC\n"
+           "\t  7 : FENE-Fraenkel\n"
 	   );
   fprintf (stdout,
 	   "\tflag_relax : #f stokesian dynamics,\n"
 	   "\t           : #t relaxation dynamics for bonds.\n");
   fprintf (stdout,
 	   "\tgamma      : friction coefficient for the relaxation dynamics\n");
-  fprintf (stdout, "* Excluded-Volume parameters\n");
-  fprintf (stdout,
-	   "\tev-v       : v [nm^3] for each chain type\n"
-	   "\t             (list or vector with length of bonds' length)\n");
-  fprintf (stdout,
-	   "\tev-lim     : maximum distance for EV interaction [nm]\n");
   fprintf (stdout, "* angle parameters (for chains)\n");
-  fprintf (stdout, "\tangles      : angles among particles,"
-	   " list in the following form\n"
+  fprintf (stdout, "\tangles : angles among particles,"
+	   " list in the following form;\n"
            "\t(define angles '(\n"
            "\t  (; angle type 1\n"
            "\t   10.0    ; 1) constant (k^{angle})\n"
@@ -238,21 +247,41 @@ usage (const char *argv0)
            "\t  )\n"
            "\t))\n"
 	   );
-  fprintf (stdout, "* Excluded-Volume Debye-Huckel parameters\n");
-  fprintf (stdout, "\tev-dh       : list in the following form\n"
+  fprintf (stdout, "* excluded-volume parameters\n");
+  fprintf (stdout, "\tev : list in the following form;\n"
+           "\t(define ev '(\n"
+           "\t 5.0     ; max distance [nm] (or in the same dimension of \"length\")\n"
+           "\t ( ; for EV type 1\n"
+           "\t  0.0012 ; v [nm^3] (or in the same dimension of \"length\")\n"
+           "\t  0      ; fene flag. if fene == 0, (p1,p2) = (A^{sp},L_{s})\n"
+           "\t  1.0    ; p1 = A^{sp}, scaled spring const\n"
+           "\t  2.1    ; p2 = L_{s} / length, scaled max extension\n"
+           "\t  (0 1 2); list of particles belongs to the EV parameters\n"
+           "\t )\n"
+           "\t ( ; for EV type 2\n"
+           "\t  0.002  ; v [nm^3] (or in the same dimension of \"length\")\n"
+           "\t  1      ; fene flag. if fene == 1, (p1,p2) = (N_{K,s},b_{K})\n"
+           "\t  19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring\n"
+           "\t  106.0  ; p2 = b_{K} [nm], the Kuhn length\n"
+           "\t  (3 4)  ; list of particles belongs to the EV parameters\n"
+           "\t )\n"
+           "\t))\n"
+	   );
+  fprintf (stdout, "* excluded-volume Debye-Huckel parameters\n");
+  fprintf (stdout, "\tev-dh : list in the following form;\n"
            "\t(define ev-dh '(\n"
            "\t  ; system parameters\n"
 	   "\t  1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction\n"
            "\t  298.0    ; 2) temperature [K]\n"
            "\t  80.0     ; 3) dielectric constant of the solution\n"
            "\t  3.07     ; 4) Debye length [nm]\n"
-           "\t  (        ; 5) list of chain types\n"
-           "\t   (; chain type 1\n"
+           "\t  (        ; 5) list of DH types\n"
+           "\t   (; DH type 1\n"
            "\t    2.43    ; 1) nu [e/nm]\n"
            "\t    5.00    ; 2) l0 [nm]\n"
            "\t    (0 1 2) ; 3) list of particles\n"
            "\t   )\n"
-           "\t   (; chain type 2\n"
+           "\t   (; DH type 2\n"
            "\t    2.00    ; 1) nu [e/nm]\n"
            "\t    4.00    ; 2) l0 [nm]\n"
            "\t    (3 4)   ; 3) list of particles\n"
@@ -260,8 +289,8 @@ usage (const char *argv0)
            "\t  )\n"
            "\t))\n"
 	   );
-  fprintf (stdout, "* Excluded-Volume Lennard-Jones parameters\n");
-  fprintf (stdout, "\tev-LJ       : list in the following form\n"
+  fprintf (stdout, "* excluded-volume Lennard-Jones parameters\n");
+  fprintf (stdout, "\tev-LJ : list in the following form;\n"
            "\t(define ev-LJ '(\n"
            "\t (; LJ type 1\n"
            "\t  10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)\n"
@@ -280,57 +309,57 @@ usage (const char *argv0)
            "\t))\n"
 	   );
   fprintf (stdout, "* Confinement force parameters\n");
-  fprintf (stdout, "\tconfinement : list in the following form\n"
+  fprintf (stdout, "\tconfinement : list in the following form;\n"
            "\tfor spherical confinement,\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"sphere\"\n"
-           "\t   10.0 ;; radius of the cavity at (0, 0, 0)\n"
-           "\t ))\n"
-           "\tfor spherical confinement with a hole,\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"sphere+hole\"\n"
-           "\t   10.0 ;; radius of the cavity at (0, 0, 0)\n"
-           "\t   1.0  ;; radius of the hole at (0, 0, 1) direction\n"
-           "\t ))\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"sphere\"\n"
+           "\t  10.0 ;; radius of the cavity at (0, 0, 0)\n"
+           "\t))\n"
+           "\tor spherical confinement with a hole,\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"sphere+hole\"\n"
+           "\t  10.0 ;; radius of the cavity at (0, 0, 0)\n"
+           "\t  1.0  ;; radius of the hole at (0, 0, 1) direction\n"
+           "\t))\n"
            "\tfor cylindrical confinement,\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"cylinder\" ;; the cylinder center goes through (0,0,0) and (x,y,z)\n"
-           "\t   10.0       ;; radius of the cylinder\n"
-           "\t   1.0  0.0  0.0 ;; direction vector (x, y, z) of the cylinder\n"
-           "\t ))\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"cylinder\" ;; the cylinder center goes through (0,0,0) and (x,y,z)\n"
+           "\t  10.0       ;; radius of the cylinder\n"
+           "\t  1.0  0.0  0.0 ;; direction vector (x, y, z) of the cylinder\n"
+           "\t))\n"
            "\tfor dumbbell confinement,\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"dumbbell\" ;; the origin is at the center of the cylinder\n"
-           "\t   10.0       ;; left cavity radius centered at (center1, 0, 0)\n"
-           "\t   10.0       ;; right cavity radius centered at (center2, 0, 0)\n"
-           "\t   2.0        ;; length of the cylinder\n"
-           "\t   1.0        ;; cylinder radius\n"
-           "\t ))\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"dumbbell\" ;; the origin is at the center of the cylinder\n"
+           "\t  10.0       ;; left cavity radius centered at (center1, 0, 0)\n"
+           "\t  10.0       ;; right cavity radius centered at (center2, 0, 0)\n"
+           "\t  2.0        ;; length of the cylinder\n"
+           "\t  1.0        ;; cylinder radius\n"
+           "\t))\n"
            "\tfor 2D hexagonal confinement with cylinder pipe,\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"hex2d\"\n"
-           "\t   10.0    ;; cavity radius\n"
-           "\t   1.0     ;; cylinder radius\n"
-           "\t   12.0    ;; lattice spacing\n"
-           "\t ))\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"hex2d\"\n"
+           "\t  10.0    ;; cavity radius\n"
+           "\t  1.0     ;; cylinder radius\n"
+           "\t  12.0    ;; lattice spacing\n"
+           "\t))\n"
            "\tfor porous media (outside of the 3D hexagonal particle array)\n"
-           "\t (define confinement '(\n"
-           "\t   10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
-           "\t   1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
-           "\t   \"porous\"\n"
-           "\t   10.0    ;; particle radius\n"
-           "\t   20.0    ;; lattice spacing in x (2R for touching case)\n"
-           "\t ))\n"
+           "\t(define confinement '(\n"
+           "\t  10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)\n"
+           "\t  1.0  ;; LJ parameter r0 in \"length\" (so this is dimensionless value)\n"
+           "\t  \"porous\"\n"
+           "\t  10.0    ;; particle radius\n"
+           "\t  20.0    ;; lattice spacing in x (2R for touching case)\n"
+           "\t))\n"
 	   );
   fprintf (stdout, "* Brownian dynamics' parameters\n");
   fprintf (stdout,
@@ -350,13 +379,15 @@ usage (const char *argv0)
 	   "\t\t\"BanchioBrady03\"   Banchio and Brady (2003).\n"
 	   "\t\t\"BallMelrose97\"    Ball and Melrose (1997).\n"
 	   "\t\t\"JendrejackEtal00\" Jendrejack et al (2000).\n"
-	   "\t\t\"semi-implicit-PC\" semi-implicit predictor-corrector.\n");
+	   "\t\t\"semi-implicit-PC\" semi-implicit predictor-corrector.\n"
+	   "\t\t\"SI-connector\"     semi-implicit for connector vectors.\n");
   fprintf (stdout,
 	   "\tBB-n         : step parameter for Banchio-Brady03 algorithm.\n");
   fprintf (stdout,
 	   "\tBD-nl-solver : nonlinear solver for implicit schemes\n"
 	   "\t\t\"GSL\"    GSL multiroot solver\n"
-	   "\t\t\"NITSOL\" Newton-GMRES solver by Pernice and Walker (1998)\n");
+	   "\t\t\"NITSOL\" Newton-GMRES solver by Pernice and Walker (1998)\n"
+	   "\t\t\"fastSI\" fast semi-implicit solver (only for \"SI-connector\")\n");
   fprintf (stdout, "* dt-ajustment parameters for Brownian dynamics\n"
 	   "\tNOTE: if rmin is defined by non-zero, the process is skipped.\n");
   fprintf (stdout,
@@ -371,8 +402,6 @@ usage (const char *argv0)
 	   "\thowever, we can use [micro m] if we replace everything, that is,\n"
 	   "\t\t\"length\"\n"
 	   "\t\tp2 for \"bonds\" with fene=1\n"
-	   "\t\t\"ev-v\"\n"
-	   "\t\t\"ev-lim\"\n"
 	   "\t\tmax. distance, Debye length, nu, and l0 in \"ev-dh\"\n"
 	   );
 }
@@ -601,6 +630,10 @@ main (int argc, char** argv)
     {
       BD_scheme = 4;
     }
+  else if (strcmp (str_BD_scheme, "SI-connector") == 0)
+    {
+      BD_scheme = 5;
+    }
   else
     {
       fprintf (stderr, "invalid BD-scheme %s", str_BD_scheme);
@@ -621,6 +654,10 @@ main (int argc, char** argv)
     {
       BD_nl_solver = 1;
     }
+  else if (strcmp (str_BD_nl_solver, "fastSI") == 0)
+    {
+      BD_nl_solver = 2;
+    }
   else
     {
       fprintf (stderr, "invalid BD-nl-solver %s", str_BD_nl_solver);
@@ -633,23 +670,27 @@ main (int argc, char** argv)
   // lower bound to shrink dt to prevent overlaps
   double dt_lim = guile_get_double ("dt-lim", 1.0e-12);
 
+
   /**
-   * constraints
+   * constraints -- struct stokes *sys is necessary,
+   * so initialize later.
    */
-  struct BeadRod *br = BeadRod_guile_get ("constraints");
+
 
   /**
    * bonds
    */
-  struct bonds *bonds = bonds_guile_get ("bonds");
+  struct BONDS *bonds = BONDS_guile_get ("bonds");
   if (bonds != NULL)
     {
-      bonds_set_FENE (bonds, length, peclet);
+      BONDS_set_FENE (bonds, length, peclet);
     }
+  /*
   else
     {
-      bonds = bonds_init ();
+      bonds = BONDS_init ();
     }
+  */
   // bonds == NULL means no bond interaction
 
   // relaxation dynamics only with bond interaction
@@ -658,10 +699,13 @@ main (int argc, char** argv)
   /**
    * excluded volume
    */
+  /*
   double ev_lim = guile_get_double ("ev-lim", 1.0);
   ev_lim /= length; // scale by length
   double ev_r2 = ev_lim * ev_lim;
   struct EV *ev = EV_guile_get ("ev-v", bonds, length, peclet, ev_r2, np);
+  */
+  struct EV *ev = EV_guile_get ("ev-v", np, length, peclet);
   // ev == NULL means no EV interaction
 
   /**
@@ -717,7 +761,7 @@ main (int argc, char** argv)
   if (flag_noHI == 0 && flag_lub != 0)
     {
       /* currently, it is only used in the lubrication calculation */
-      list_ex_set_by_bonds (sys->ex_lub, bonds);
+      //list_ex_set_by_bonds (sys->ex_lub, bonds);
     }
 
   // iterative solver
@@ -863,6 +907,12 @@ main (int argc, char** argv)
 	}
     }
 
+  /**
+   * constraints
+   */
+  struct BeadRod *br = BeadRod_guile_get ("constraints",
+					  sys,
+					  length);
 
   /**
    * set constant parameters for ode_params
@@ -1356,7 +1406,7 @@ main (int argc, char** argv)
   free (y);
 
   stokes_free (sys);
-  bonds_free (bonds);
+  BONDS_free (bonds);
   angles_free (ang);
 
   free (F);

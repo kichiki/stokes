@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.17 2008/06/13 03:26:33 kichiki Exp $
+; $Id: stokes3.scm,v 1.18 2008/08/12 05:54:08 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -137,6 +137,7 @@
 ; "BallMelrose97"    Ball-Melrose (1997)
 ; "JendrejackEtal00" Jendrejack et al (2000)
 ; "semi-implicit-PC" semi-implicit predictor-corrector
+; "SI-connector"     semi-implicit for connector vectors
 (define BB-n   100)    ; step parameter for Banchio-Brady-2003 algorithm
 
 ; nonlinear solver for implicit schemes
@@ -144,6 +145,7 @@
 ; the following solvers are available
 ; "GSL"    GSL multiroot solver
 ; "NITSOL" Newton-GMRES solver by Pernice and Walker (1998)
+; "fastSI" fast semi-implicit solver (only for "SI-connector")
 
 ; dt-adjustment parameters
 ; NOTE: if 'rmin' above is defined by non-zero, dt-adjustment is just skipped.
@@ -160,9 +162,9 @@
 ;(define constraints '(
 ; ; system parameters
 ; 1.0e-6    ; 1) tolerance
-; "nitsol"  ; 2) scheme for solving nonlinear equations
-;                "linear" for iterative scheme in linear approximation
-;                "nitsol" for Newton-GMRES scheme by NITSOL library
+; "NITSOL"  ; 2) scheme for solving nonlinear equations
+;           ;    "linear" for iterative scheme in linear approximation
+;           ;    "NITSOL" for Newton-GMRES scheme by NITSOL library
 ; ; the following is for each constraint
 ; (         ; 3) constraint type 1
 ;  5.0      ; 3-1) distance [nm]
@@ -170,13 +172,13 @@
 ;   (0 1)
 ;   (1 2)
 ;   (2 3)
-;  )
+; ))
 ; (         ; 4) constraint type 2
 ;  10.0     ; 4-1) distance [nm]
 ;  (        ; 4-2) list of particle-pairs
 ;   (3 4)
 ;   (4 5)
-;  )
+; ))
 ;))
 
 ; bond parameters
@@ -192,7 +194,7 @@
 ;   (       ; 2) spring parameters (list with 3 elements)
 ;    0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
 ;    1.0    ;    p1   = A^{sp}, scaled spring constant
-;    2.1)   ;    p2   = L_{s} / a, scaled max extension
+;    2.1)   ;    p2   = L_{s} / length, scaled max extension
 ;   ((0 1)  ; 3) list of pairs
 ;    (1 2)
 ;    (2 3))
@@ -223,8 +225,27 @@
 
 ;; excluded volume parameters
 ; note that the length unit should be the same for "length" above.
-(define ev-v   '())    ; v [nm^3] (or [micro m^3]) for each chain type
-(define ev-lim 5.0)    ; max distance for F^{EV} [nm] (or [micro m])
+;(define ev-v   '())    ; v [nm^3] (or [micro m^3]) for each chain type
+;(define ev-lim 5.0)    ; max distance for F^{EV} [nm] (or [micro m])
+(define ev '())
+; an example
+;(define ev '(
+; 5.0     ; max distance [nm] (or in the same dimension of "length")
+; ( ; for the EV 1
+;  0.0012 ; v [nm^3] (or in the same dimension of "length")
+;  0      ; fene
+;  1.0    ; p1 = A^{sp}, scaled spring const
+;  2.1    ; p2 = L_{s} / length, scaled max extension
+;  (0 1 2); list of particles belongs to the EV parameters
+; )
+; ( ; for the EV 2
+;  0.002  ; v [nm^3] (or in the same dimension of "length")
+;  1      ; fene
+;  19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
+;  106.0  ; p2 = b_{K} [nm], the Kuhn length
+;  (3 4)  ; list of particles belongs to the EV parameters
+; )
+;))
 
 ;; angle parameters
 (define angles '())
