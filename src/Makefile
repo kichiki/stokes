@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2008/06/07 03:02:55 kichiki Exp $
+# $Id: Makefile,v 1.15 2008/10/08 03:30:40 kichiki Exp $
 
 CC           = cc
 LD           = $(CC)
@@ -43,7 +43,7 @@ GUILE_LIB = `guile-config link`
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.5 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 # for SUSE-Linux
@@ -87,7 +87,8 @@ all:	test-stokes	\
 	xi3		\
 	bench3		\
 	stokes3		\
-	stvis-glut
+	stvis-glut	\
+	stnc
 
 
 # test-stokes
@@ -146,10 +147,22 @@ stvis-glut:	$(stvis-glut-OBJ)
 	$(LIBS)			\
 	-L/usr/X11R6/lib -lglut
 
+## stnc
+stnc-OBJ =	\
+	stnc.o	\
+	file.o
+
+stnc:	$(stnc-OBJ)
+	$(LD) $(LDFLAGS)\
+	-o stnc		\
+	$(stnc-OBJ)	\
+	$(LIBS)
+
 clean:	
 	rm -f *~ *.o	\
 	test-stokes	\
 	xi3		\
 	bench3		\
 	stokes3		\
-	stvis-glut
+	stvis-glut	\
+	stnc
