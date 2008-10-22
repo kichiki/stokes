@@ -1,6 +1,6 @@
 /* stokes-netcdf utility tool
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stnc.c,v 1.1 2008/10/08 03:30:07 kichiki Exp $
+ * $Id: stnc.c,v 1.2 2008/10/22 06:51:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "stokes-netcdf utility tool\n");
-  fprintf (stdout, "$Id: stnc.c,v 1.1 2008/10/08 03:30:07 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stnc.c,v 1.2 2008/10/22 06:51:48 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS]\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -210,7 +210,7 @@ main (int argc, char** argv)
 
   int l;
   double shear_shift;
-  int index = 0;
+  size_t index = 0;
   for (l = i0; l <= i1; l++)
     {
       //fprintf (stdout, "%d steps\n", l);
