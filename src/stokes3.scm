@@ -1,6 +1,6 @@
 ; sample initialization file for stokes3
 ; SC lattice config of 8 particles in (5,5,5) box
-; $Id: stokes3.scm,v 1.18 2008/08/12 05:54:08 kichiki Exp $
+; $Id: stokes3.scm,v 1.19 2008/11/01 05:57:45 kichiki Exp $
 
 ;; output parameters
 (define outfile    "stokes3.SC8.nc") ; output filename
@@ -283,13 +283,14 @@
 ;  298.0    ; 2) temperature [K]
 ;  80.0     ; 3) dielectric constant of the solution
 ;  3.07     ; 4) Debye length [nm] (or [micro m])
-;  (        ; 5) list of chain types
-;   (; chain type 1
+;  1        ; 5) flag_grid (0 == particle-particle loop, 1 == grid loop)
+;  (        ; 6) list of DH types
+;   (; DH type 1
 ;    2.43    ; 1) nu [e/nm] (or [e/micro m])
 ;    5.00    ; 2) l0 [nm] (or [micro m])
 ;    (0 1 2) ; 3) list of particles
 ;   )
-;   (; chain type 2
+;   (; DH type 2
 ;    2.00    ; 1) nu [e/nm] (or [e/micro m])
 ;    4.00    ; 2) l0 [nm] (or [micro m])
 ;    (3 4)   ; 3) list of particles

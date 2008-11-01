@@ -1,6 +1,6 @@
 /* stokesian dynamics simulator for both periodic and non-periodic systems
  * Copyright (C) 1997-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes3.c,v 1.36 2008/08/12 05:53:35 kichiki Exp $
+ * $Id: stokes3.c,v 1.37 2008/11/01 05:57:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,7 @@ void
 usage (const char *argv0)
 {
   fprintf (stdout, "Stokesian dynamics simulator\n");
-  fprintf (stdout, "$Id: stokes3.c,v 1.36 2008/08/12 05:53:35 kichiki Exp $\n\n");
+  fprintf (stdout, "$Id: stokes3.c,v 1.37 2008/11/01 05:57:22 kichiki Exp $\n\n");
   fprintf (stdout, "USAGE\n");
   fprintf (stdout, "%s [OPTIONS] init-file\n", argv0);
   fprintf (stdout, "\t-h or --help     : this message.\n");
@@ -43,7 +43,6 @@ usage (const char *argv0)
   fprintf (stdout, "Parameters in the init-file:\n");
   fprintf (stdout, "* output parameters\n");
   fprintf (stdout, "\toutfile    : filename for NetCDF output\n");
-  //fprintf (stdout, "\tdt         : time interval for outputs\n");
   fprintf (stdout, "\tdt         : time interval for the integrator\n");
   fprintf (stdout, "\tnout       : frequency of data outputs\n");
   fprintf (stdout,
@@ -275,7 +274,8 @@ usage (const char *argv0)
            "\t  298.0    ; 2) temperature [K]\n"
            "\t  80.0     ; 3) dielectric constant of the solution\n"
            "\t  3.07     ; 4) Debye length [nm]\n"
-           "\t  (        ; 5) list of DH types\n"
+           "\t  1        ; 5) flag_grid (0 == particle-particle loop, 1 == grid loop)\n"
+           "\t  (        ; 6) list of DH types\n"
            "\t   (; DH type 1\n"
            "\t    2.43    ; 1) nu [e/nm]\n"
            "\t    5.00    ; 2) l0 [nm]\n"
