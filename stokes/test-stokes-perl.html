@@ -1,0 +1,125 @@
+<html>
+<head>
+  <title>test-stokes.pl</title>
+</head>
+<body bgcolor="#ffffff" text="#000000">
+<pre>
+<font color="#444444"># test code for libstokes
+# Copyright (C) 2006 Kengo Ichiki &lt;kichiki@users.sourceforge.net&gt;
+# $Id: test-stokes.pl,v 1.3 2006/10/19 18:51:43 ichiki Exp $
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+</font><strong>use</strong> stokes;
+
+<font color="#2040a0">$sys</font> = stokes::stokes_init<font color="4444FF"><strong>(</strong></font><font color="4444FF"><strong>)</strong></font>;
+
+<font color="#2040a0">$np</font> = 8;
+<font color="#2040a0">$nm</font> = 8;
+stokes::stokes_set_np<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$np</font>, <font color="#2040a0">$nm</font><font color="4444FF"><strong>)</strong></font>;
+<font color="#444444"># you must call stokes_set_np() because
+# this also allocate the memory for pos.
+
+</font><font color="#2040a0">$lx</font> = 10.0;
+<font color="#2040a0">$ly</font> = 10.0;
+<font color="#2040a0">$lz</font> = 10.0;
+stokes::stokes_set_l<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$lx</font>, <font color="#2040a0">$ly</font>, <font color="#2040a0">$lz</font><font color="4444FF"><strong>)</strong></font>;
+
+<font color="#2040a0">$tratio</font> = 60.25;
+<font color="#2040a0">$xi</font> = stokes::xi_by_tratio<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$tratio</font><font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$cutlim</font> = 1.0e-12;
+stokes::stokes_set_xi<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$xi</font>, <font color="#2040a0">$cutlim</font><font color="4444FF"><strong>)</strong></font>;
+
+<font color="a52a2a"><strong>print</strong></font> <font color="#008000">&quot;xi = &quot;</font>, <font color="#2040a0">$xi</font>, <font color="#008000">&quot;<font color="#77dd77">\n</font>&quot;</font>;
+
+<font color="#2040a0">$sys</font>-&gt;<font color="4444FF"><strong>{</strong></font>lubcut<font color="4444FF"><strong>}</strong></font> = 2.0000000001;
+stokes::stokes_set_iter<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#008000">&quot;gmres&quot;</font>, 2000, 20, 1.0e-6,
+			1, stokes::get_stdout<font color="4444FF"><strong>(</strong></font><font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>;
+
+<font color="#2040a0">$pos</font> = <strong>new</strong> stokes::darray<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$np</font>*3<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$u</font>   = <strong>new</strong> stokes::darray<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$np</font>*3<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$f</font>   = <strong>new</strong> stokes::darray<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$np</font>*3<font color="4444FF"><strong>)</strong></font>;
+
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 0, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#444444"># x component
+</font><font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 1, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#444444"># y component
+</font><font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 2, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#444444"># z component
+</font><font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 3, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 4, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 5, 0.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 6, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 7, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 8, 0.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font> 9, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>10, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>11, 5.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>12, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>13, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>14, 0.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>15, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>16, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>17, 5.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>18, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>19, 0.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>20, 5.0<font color="4444FF"><strong>)</strong></font>;
+<font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>21, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>22, 5.0<font color="4444FF"><strong>)</strong></font>; <font color="#2040a0">$pos</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font>23, 5.0<font color="4444FF"><strong>)</strong></font>;
+
+<strong>for</strong> <font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>=0; <font color="#2040a0">$i</font> &lt; <font color="#2040a0">$np</font>*3; <font color="#2040a0">$i</font>++<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>{</strong></font>
+    <font color="#2040a0">$u</font>-&gt;setitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>, 1.0<font color="4444FF"><strong>)</strong></font>;
+<font color="4444FF"><strong>}</strong></font>
+
+<font color="a52a2a"><strong>print</strong></font> <font color="#008000">&quot;pos:<font color="#77dd77">\n</font>&quot;</font>;
+<strong>for</strong> <font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>=0; <font color="#2040a0">$i</font> &lt; <font color="#2040a0">$np</font>; <font color="#2040a0">$i</font>++<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>{</strong></font>
+    <font color="a52a2a"><strong>printf</strong></font> <font color="4444FF"><strong>(</strong></font><font color="#008000">&quot;<font color="#2040a0">%d</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font><font color="#77dd77">\n</font>&quot;</font>,
+	    <font color="#2040a0">$i</font>,
+	    <font color="#2040a0">$pos</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$pos</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+1<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$pos</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+2<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>;
+<font color="4444FF"><strong>}</strong></font>
+<font color="a52a2a"><strong>print</strong></font> <font color="#008000">&quot;u:<font color="#77dd77">\n</font>&quot;</font>;
+<strong>for</strong> <font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>=0; <font color="#2040a0">$i</font> &lt; <font color="#2040a0">$np</font>; <font color="#2040a0">$i</font>++<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>{</strong></font>
+    <font color="a52a2a"><strong>printf</strong></font> <font color="4444FF"><strong>(</strong></font><font color="#008000">&quot;<font color="#2040a0">%d</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font><font color="#77dd77">\n</font>&quot;</font>,
+	    <font color="#2040a0">$i</font>,
+	    <font color="#2040a0">$u</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$u</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+1<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$u</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+2<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>;
+<font color="4444FF"><strong>}</strong></font>
+
+<font color="#444444">#$sys-&gt;{pos} = $pos;
+</font>stokes::stokes_set_pos<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$pos</font><font color="4444FF"><strong>)</strong></font>;
+stokes::solve_res_ewald_3f<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$sys</font>, <font color="#2040a0">$u</font>, <font color="#2040a0">$f</font><font color="4444FF"><strong>)</strong></font>;
+
+<font color="#2040a0">$nc_f</font> = stokes::stokes_nc_mob_f_init<font color="4444FF"><strong>(</strong></font><font color="#008000">&quot;test-stokes.res-3f.nc&quot;</font>, <font color="#2040a0">$np</font><font color="4444FF"><strong>)</strong></font>;
+<font color="#444444"># f0, x, u are active
+</font>stokes::stokes_nc_set_f0<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$nc_f</font>, <font color="#2040a0">$f</font><font color="4444FF"><strong>)</strong></font>;
+stokes::stokes_nc_set_time<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$nc_f</font>, 0, 0.0<font color="4444FF"><strong>)</strong></font>;
+stokes::stokes_nc_set_x<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$nc_f</font>, 0, 0.0, <font color="#2040a0">$pos</font><font color="4444FF"><strong>)</strong></font>;
+stokes::stokes_nc_set_u<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$nc_f</font>, 0, 0.0, <font color="#2040a0">$u</font><font color="4444FF"><strong>)</strong></font>;
+
+stokes::stokes_nc_free<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$nc_f</font><font color="4444FF"><strong>)</strong></font>;
+
+
+<font color="a52a2a"><strong>print</strong></font> <font color="#008000">&quot;f:<font color="#77dd77">\n</font>&quot;</font>;
+<strong>for</strong> <font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>=0; <font color="#2040a0">$i</font> &lt; <font color="#2040a0">$np</font>; <font color="#2040a0">$i</font>++<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>{</strong></font>
+    <font color="a52a2a"><strong>printf</strong></font> <font color="4444FF"><strong>(</strong></font><font color="#008000">&quot;<font color="#2040a0">%d</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font> <font color="#2040a0">%f</font><font color="#77dd77">\n</font>&quot;</font>,
+	    <font color="#2040a0">$i</font>,
+	    <font color="#2040a0">$f</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$f</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+1<font color="4444FF"><strong>)</strong></font>,
+	    <font color="#2040a0">$f</font>-&gt;getitem<font color="4444FF"><strong>(</strong></font><font color="#2040a0">$i</font>*3+2<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>;
+<font color="4444FF"><strong>}</strong></font>
+
+</pre>
+<hr>
+syntax highlighted by <a href="http://www.palfrader.org/code2html">Code2HTML</a>, v. 0.9.1
+
+<p>
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=177943&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" /></a>
+
+<!-- motigo counter for RYUON -->
+<a id="mws4533786" href="http://webstats.motigo.com/">
+<img width="18" height="18" border="0" alt="Free counter and web stats" src="http://m1.webstats.motigo.com/n.gif?id=AEUuGg/tT1n/h/qxzqXhiFixRW8w" /></a>
+<script type="text/javascript" src="http://m1.webstats.motigo.com/c.js?id=4533786"></script>
+
+</p>
+
+</body>
+</html>

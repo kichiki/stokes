@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+
+    <title>RYUON/stokes/xi3</title>
+    <link rev="made" href="mailto:kichiki@users.sourceforge.net" />
+    <link rel="stylesheet" type="text/css" href="../main.css" />
+    <script type="text/javascript" src="../LaTeXMathML.js"></script>
+  </head>
+
+<body>
+
+<div class="center">
+<h1>xi3 : tuning program for ewald summation parameter</h1>
+</div>
+
+<p class="navi">
+<a href="../index.html">RYUON</a>|
+<a href="../manual/index.html">manual</a>|
+<a href="index.html">stokes</a>|
+<a href="../libstokes.html">libstokes</a>
+<a href="../libiter.html">libiter</a>|
+<a href="../twobody.html">twobody</a>
+<br />
+<a href="#outline">outline</a>
+</p>
+
+<hr />
+
+<h2><a id="outline" name="outline"></a>Outline</h2>
+<p>
+<b>xi3</b> in <a href="index.html">RYUON-stokes</a> package
+is a tuning program for ewald summation parameter $\xi$.
+</p>
+
+<hr />
+
+<h2>Sample Run</h2>
+<p>
+Here is a sample procedure of how to use <b>xi3</b> in practice.
+We are looking at the problem of 8 particles at SC lattice sites
+in (5, 5, 5) periodic box.
+A sample configuration file (<b>xi3.scm</b>)is given in the package:
+<blockquote>
+<pre>
+<font color="#444444">; sample set file for xi3</font>
+<font color="#444444">; SC lattice config of 8 particles in (5,5,5) box</font>
+<font color="#444444">; $Id: xi3.scm,v 1.2 2006/10/23 17:18:11 kichiki Exp $</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">version</font>    <font color="#008000">&quot;F&quot;</font><font color="4444FF"><strong>)</strong></font>     <font color="#444444">; version. &quot;F&quot;, &quot;FT&quot;, or &quot;FTS&quot;</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">flag-mat</font>   #<font color="#2040a0">t</font><font color="4444FF"><strong>)</strong></font>      <font color="#444444">; #t =&gt; matrix scheme, #f =&gt; atimes scheme</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">flag-notbl</font> #<font color="#2040a0">f</font><font color="4444FF"><strong>)</strong></font>      <font color="#444444">; #t =&gt; no-table,      #f =&gt; with table</font>
+
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">np</font>         <font color="#FF0000">8</font><font color="4444FF"><strong>)</strong></font>       <font color="#444444">; number of particles</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">ewald-eps</font>  <font color="#FF0000">1</font>.<font color="#FF0000">0</font><font color="#2040a0">e-</font><font color="#FF0000">12</font><font color="4444FF"><strong>)</strong></font> <font color="#444444">; cut-off limit for Ewald summation</font>
+
+<font color="#444444">; lattice vector</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">lattice</font> '<font color="4444FF"><strong>(</strong></font><font color="#FF0000">5</font>.<font color="#FF0000">0</font>  <font color="#FF0000">5</font>.<font color="#FF0000">0</font>  <font color="#FF0000">5</font>.<font color="#FF0000">0</font><font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>
+
+<font color="#444444">; configuration of particles</font>
+<font color="4444FF"><strong>(</strong></font><font color="#2040a0">define</font> <font color="#2040a0">x</font> #<font color="4444FF"><strong>(</strong></font>
+<font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>
+<font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>
+<font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>
+<font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>
+<font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>
+<font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>
+<font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">0</font>.<font color="#FF0000">0</font>
+<font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>  <font color="#FF0000">2</font>.<font color="#FF0000">5</font>
+<font color="4444FF"><strong>)</strong></font><font color="4444FF"><strong>)</strong></font>
+
+<font color="#444444">; list of time ratio Tr/Tk for Ewald summation (optional)</font>
+<font color="#444444">;(define ewald-trs</font>
+<font color="#444444">;  '(0.1</font>
+<font color="#444444">;    1.0</font>
+<font color="#444444">;    10.0</font>
+<font color="#444444">;    100.0</font>
+<font color="#444444">;    ))</font>
+</pre>
+</blockquote>
+</p>
+
+<p>
+In <b>xi3</b> program as well as <a href="../libstokes.html">libstokes</a>
+library, another parameter $R_T$ instead of $\xi$ is used.
+$R_T$ is a rough estimation of time ratio for real and reciprocal summations
+and related to $\xi$ as
+<blockquote>$
+  R_T
+  =
+  \frac{
+    \left(
+      l_x l_y l_z
+      \xi^3
+    \right)^2
+  }{\pi^3}   
+  =
+  \frac{T_{real}}{T_{recip}}
+  ,
+$</blockquote>
+where
+<blockquote>$
+  T_{real}
+  \propto
+  l_x l_y l_z
+  \xi^3
+  ,
+  \quad
+  T_{recip}
+  \propto
+  k_x k_y k_z
+  =
+  \frac{\pi^3}{l_x l_y l_z \xi^3}
+  .
+$</blockquote>
+Next figure shows $\xi$ vs. $R_T$:
+<blockquote>
+<a href="data/FIG-xi3-xi.png">
+<img src="data/FIG-xi3-xi_t.png" width="320" height="240" />
+</a>
+</blockquote>
+Note that this is implemented in the routine
+<b>xi_by_tratio ()</b>.
+</p>
+
+<p>
+Changing $R_T$, the number of lattice points in real and reciprocal
+summations are changing: The former is decreasing
+and the latter increasing as $R_T$ is increasing.
+Because the calculation result is independent of $\xi$ and therefore $R_T$,
+we can use this parameter to tune the calculation of the Ewald summation.
+That is, we can take a specific value of $\xi$ which minimize
+the calculation cost.
+This is the whole purpose of <b>xi3</b> program.
+Next figure shows CPU times for real and reciprocal spaces and the total.
+<blockquote>
+<a href="data/FIG-xi3-CPU.png">
+<img src="data/FIG-xi3-CPU_t.png" width="320" height="240" />
+</a>
+</blockquote>
+As we see, there is an obvious minimum point on the total CPU time.
+In this example (for SC lattice of N=8 particles in (5, 5, 5) periodic box),
+the minimum is around $R_T\approx 4$.
+</p>
+
+<p>
+Previously, I wrote that
+the calculation result is independent of $\xi$ and therefore $R_T$.
+This is the mathematical conclusion and therefore this is a good 
+check for the code:
+<blockquote>
+The results should be the same for various $\xi$ (and therefore $R_T$).
+</blockquote>
+Actually, we truncate the lattice summations at the point where
+the term is small enough. The criteria is given by another parameter
+<b>ewald_eps</b>.
+In this example, we take <b>ewald_eps</b> = 1.0e-12.
+(Small enough, isn't it?)
+In the code of <b>xi3</b>, we calculate not physical problems
+but the plain $\mathbf{A}\cdot\mathbf{x}$ calculation
+(cf. <a href="../libstokes.html#atimes">A-times forms</a>)
+for the mobility matrix $\mathbf{A}$ and
+a vector $\mathbf{x} = (1,1,\cdots,1)^\dagger$.
+The 6th column of the result <b>xi3</b> generates
+is the average of $\mathbf{A}\cdot\mathbf{x}$, that is,
+a kind of averaged velocity. (&quot;a kind of&quot; means
+that the average is taken element-wise rather than particle-wise.)
+Next figure shows the calculated results versus $R_T$.
+<blockquote>
+<a href="data/FIG-xi3-err.png">
+<img src="data/FIG-xi3-err_t.png" width="320" height="240" />
+</a>
+</blockquote>
+The values in y-axis is the absolute value of the difference
+to a point at $R_T \approx 10$, which I just pick to see the 
+fluctuations, in other words, the empirical error. (You should 
+note that if everything is working good, this approach works,
+but otherwise it is not.)
+It looks OK.
+Actually, my cut-off criteria with <b>ewald_eps</b> might be 
+a liitle hard (because the error is less than 1.0e-13, one order 
+lower than expected). But it does not harm and I leave it.
+</p>
+
+<hr />
+
+<h2>Help</h2>
+<pre>
+$ ./xi3 --help
+USAGE
+./xi3 init-file
+        where init-file is a SCM file (default: xi3.scm)
+
+Parameters in the init-file:
+        version    : "F", "FT", or "FTS"
+        flag-mat   : #t for matrix-scheme
+                   : #f for atimes-scheme
+        flag-notbl : calculation scheme for the ewald-summation
+                   : #t for no-table
+                   : #f for with table
+        lattice    : dimensions of the periodic box (list or vector of length 3)
+        ewald-eps  : tolerance value for ewald-summation cut-off
+        np         : number of particles
+        x          : particle configuration (list or vector with length 3*np)
+        ewald-trs  : (optional) list of ewald_tr parameters
+                   : (list or vector with any length)
+</pre>
+
+<hr />
+
+<div class="navi">
+<a href="#outline">outline</a>|
+<br />
+<a href="../index.html">RYUON</a>|
+<a href="../manual/index.html">manual</a>|
+<a href="index.html">stokes</a>|
+<a href="../libstokes.html">libstokes</a>
+<a href="../libiter.html">libiter</a>|
+<a href="../twobody.html">twobody</a>
+<br />
+<br />
+<address>
+e-mail:
+  <a href="mailto:kichiki@users.sourceforge.net">
+  kichiki@users.sourceforge.net</a></address>
+Copyright (C) 2006 Kengo Ichiki.  All rights reserved.
+<br />
+<a href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=177943&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" /></a>
+
+<!-- motigo counter for RYUON -->
+<a id="mws4533786" href="http://webstats.motigo.com/">
+<img width="18" height="18" border="0" alt="Free counter and web stats" src="http://m1.webstats.motigo.com/n.gif?id=AEUuGg/tT1n/h/qxzqXhiFixRW8w" /></a>
+<script type="text/javascript" src="http://m1.webstats.motigo.com/c.js?id=4533786"></script>
+
+</div>
+
+</body>
+</html>
