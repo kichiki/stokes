@@ -1,0 +1,15 @@
+body {
+  font-family: arial,verdana,sans-serif;
+  font-size: 12px;
+}
+.navi { text-align: center; }
+
+.center { text-align: center; }
+
+.red   { color: red; }
+.green { color: green; }
+.blue  { color: blue; }
+
+.author {
+  text-align: right;
+}
